@@ -1,0 +1,449 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Heritage Automatic 01",
+      "slug": "heritage-automatic-01",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 1,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>ساعتی کلاسیک با طراحی مینیمال، موتور اتوماتیک و پرداخت ظریف بدنه برای استفاده روزمره و رسمی.</p>",
+      "price": 128000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "brown",
+          "name": "قهوه‌ای",
+          "hex": "#6B4532",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 18,
+      "isHero": true,
+      "heroOrder": 1,
+      "createdAt": 1787184000000
+    },
+    {
+      "id": 2,
+      "name": "Élite Moonphase",
+      "slug": "elite-moonphase",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 5,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>مدلی رسمی با نمایشگر Moonphase، قاب باریک و طراحی مناسب استایل‌های رسمی.</p>",
+      "price": 174000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#C4C4C4",
+          "quantity": 5
+        },
+        {
+          "id": "gold",
+          "name": "طلایی",
+          "hex": "#B59A67",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 12,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787443200000
+    },
+    {
+      "id": 3,
+      "name": "Aero Racing GT",
+      "slug": "aero-racing-gt",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 7,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>کرنوگراف اسپرت الهام‌گرفته از دنیای موتوراسپرت با خوانایی بالا و طراحی جسورانه.</p>",
+      "price": 146000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "navy",
+          "name": "سرمه‌ای",
+          "hex": "#17324D",
+          "quantity": 4
+        },
+        {
+          "id": "orange",
+          "name": "نارنجی",
+          "hex": "#C96A32",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 26,
+      "isHero": true,
+      "heroOrder": 2,
+      "createdAt": 1787702400000
+    },
+    {
+      "id": 4,
+      "name": "Ocean Depth 300",
+      "slug": "ocean-depth-300",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 10,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>ساعت غواصی حرفه‌ای با طراحی مقاوم، خوانایی بالا و ظاهری مناسب استفاده روزمره.</p>",
+      "price": 192000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "blue",
+          "name": "آبی",
+          "hex": "#174A6E",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 22,
+      "isHero": true,
+      "heroOrder": 3,
+      "createdAt": 1787961600000
+    },
+    {
+      "id": 5,
+      "name": "Chronos Flyback",
+      "slug": "chronos-flyback",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 15,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>مدل Flyback با طراحی متعادل صفحه، جزئیات دقیق و عملکرد حرفه‌ای کرنوگراف.</p>",
+      "price": 221000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BABABA",
+          "quantity": 4
+        },
+        {
+          "id": "green",
+          "name": "سبز",
+          "hex": "#234D3C",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 15,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788220800000
+    },
+    {
+      "id": 6,
+      "name": "Tourbillon No. 08",
+      "slug": "tourbillon-no-08",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 17,
+      "thumbnail": "/images/products/watch-placeholder.webp",
+      "images": [
+        "/images/products/watch-placeholder.webp",
+        "/images/products/watch-placeholder.webp"
+      ],
+      "description": "<p>نسخه محدود با نمایش مکانیزم Tourbillon و تولید محدود برای مجموعه‌داران.</p>",
+      "price": 680000000,
+      "quantity": 2,
+      "variants": [
+        {
+          "id": "rose-gold",
+          "name": "رزگلد",
+          "hex": "#B77B6C",
+          "quantity": 1
+        },
+        {
+          "id": "platinum",
+          "name": "پلاتینی",
+          "hex": "#D6D5D2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 5,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788566400000
+    }
+  ],
+
+  "category": [
+    {
+      "id": 1,
+      "name": "کلاسیک",
+      "slug": "classic",
+      "icon": "watch",
+      "coverImage": "/images/categories/classic.webp",
+      "featured": true,
+      "homeOrder": 1,
+      "landingEnabled": true,
+      "landingOrder": 1
+    },
+    {
+      "id": 2,
+      "name": "رسمی",
+      "slug": "dress",
+      "icon": "gem",
+      "coverImage": "/images/categories/dress.webp",
+      "featured": true,
+      "homeOrder": 2,
+      "landingEnabled": true,
+      "landingOrder": 2
+    },
+    {
+      "id": 3,
+      "name": "اسپرت",
+      "slug": "sport",
+      "icon": "timer",
+      "coverImage": "/images/categories/sport.webp",
+      "featured": true,
+      "homeOrder": 3,
+      "landingEnabled": true,
+      "landingOrder": 3
+    },
+    {
+      "id": 4,
+      "name": "غواصی",
+      "slug": "diver",
+      "icon": "waves",
+      "coverImage": "/images/categories/diver.webp",
+      "featured": true,
+      "homeOrder": 4,
+      "landingEnabled": true,
+      "landingOrder": 4
+    },
+    {
+      "id": 5,
+      "name": "کرنوگراف",
+      "slug": "chronograph",
+      "icon": "gauge",
+      "coverImage": "/images/categories/chronograph.webp",
+      "featured": true,
+      "homeOrder": 5,
+      "landingEnabled": true,
+      "landingOrder": 5
+    },
+    {
+      "id": 6,
+      "name": "نسخه محدود",
+      "slug": "limited-edition",
+      "icon": "sparkles",
+      "coverImage": "/images/categories/limited.webp",
+      "featured": true,
+      "homeOrder": 6,
+      "landingEnabled": true,
+      "landingOrder": 6
+    }
+  ],
+
+  "subcategory": [
+    {
+      "id": 1,
+      "name": "اتوماتیک",
+      "slug": "automatic",
+      "category": 1
+    },
+    {
+      "id": 2,
+      "name": "کوکی",
+      "slug": "hand-wound",
+      "category": 1
+    },
+    {
+      "id": 3,
+      "name": "هریتیج",
+      "slug": "heritage",
+      "category": 1
+    },
+
+    {
+      "id": 4,
+      "name": "مینیمال",
+      "slug": "minimal",
+      "category": 2
+    },
+    {
+      "id": 5,
+      "name": "مون‌فیز",
+      "slug": "moonphase",
+      "category": 2
+    },
+    {
+      "id": 6,
+      "name": "اولترا تین",
+      "slug": "ultra-thin",
+      "category": 2
+    },
+
+    {
+      "id": 7,
+      "name": "ریسینگ",
+      "slug": "racing",
+      "category": 3
+    },
+    {
+      "id": 8,
+      "name": "هوانوردی",
+      "slug": "aviation",
+      "category": 3
+    },
+    {
+      "id": 9,
+      "name": "فیلد",
+      "slug": "field",
+      "category": 3
+    },
+
+    {
+      "id": 10,
+      "name": "دایور حرفه‌ای",
+      "slug": "professional-diver",
+      "category": 4
+    },
+    {
+      "id": 11,
+      "name": "سرامیک",
+      "slug": "ceramic",
+      "category": 4
+    },
+    {
+      "id": 12,
+      "name": "دیپ سی",
+      "slug": "deep-sea",
+      "category": 4
+    },
+
+    {
+      "id": 13,
+      "name": "Bi-Compax",
+      "slug": "bi-compax",
+      "category": 5
+    },
+    {
+      "id": 14,
+      "name": "Tri-Compax",
+      "slug": "tri-compax",
+      "category": 5
+    },
+    {
+      "id": 15,
+      "name": "Flyback",
+      "slug": "flyback",
+      "category": 5
+    },
+
+    {
+      "id": 16,
+      "name": "اسکلتون",
+      "slug": "skeleton",
+      "category": 6
+    },
+    {
+      "id": 17,
+      "name": "توربیلون",
+      "slug": "tourbillon",
+      "category": 6
+    },
+    {
+      "id": 18,
+      "name": "Artistic",
+      "slug": "artistic",
+      "category": 6
+    }
+  ],
+
+  "reviews": [
+    {
+      "id": 1,
+      "productId": 1,
+      "name": "کاربر مهمان",
+      "rating": 5,
+      "comment": "طراحی بسیار زیبا و کیفیت ساخت عالی.",
+      "approved": true,
+      "createdAt": 1788566400000
+    },
+    {
+      "id": 2,
+      "productId": 4,
+      "name": "کاربر مهمان",
+      "rating": 4,
+      "comment": "ظاهر ساعت بسیار جذاب است.",
+      "approved": true,
+      "createdAt": 1788566400000
+    }
+  ],
+
+  "orders": [],
+
+  "whoami": {
+    "name": "Watch Store Administrator",
+    "username": "admin",
+    "password": "admin",
+    "role": "admin"
+  },
+
+  "users": [
+    {
+      "id": 1,
+      "name": "Watch Store Administrator",
+      "username": "admin",
+      "password": "admin",
+      "role": "admin"
+    }
+  ],
+
+  "protection": {
+    "products.get": false,
+    "orders.post": false,
+    "products.post": false,
+    "orders.get": false,
+    "orders.patch": false,
+    "upload.post": false,
+
+    "upload": true,
+    "orders": "admin",
+    "products": "admin",
+    "users": "admin",
+    "protection": "admin"
+  }
+}
