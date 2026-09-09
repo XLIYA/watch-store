@@ -108,3 +108,15 @@ export async function getProductById(
 
   return response.data;
 }
+
+export async function getHeroProducts(): Promise<Product[]> {
+  const response = await apiClient.get<Product[]>("/products", {
+    params: {
+      isHero: true,
+      _sort: "heroOrder",
+      _order: "asc",
+    },
+  });
+
+  return response.data;
+}
