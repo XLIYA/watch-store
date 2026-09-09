@@ -7,12 +7,8 @@
       "brand": "Aurel",
       "category": 1,
       "subcategory": 1,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": ["/images/products/watch-placeholder-1.webp"],
       "description": "<p>ساعتی کلاسیک با طراحی مینیمال، موتور اتوماتیک و پرداخت ظریف بدنه برای استفاده روزمره و رسمی.</p>",
       "price": 128000000,
       "quantity": 7,
@@ -42,11 +38,8 @@
       "brand": "Velmont",
       "category": 2,
       "subcategory": 5,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": ["/images/products/watch-placeholder-1.webp"],
       "description": "<p>مدلی رسمی با نمایشگر Moonphase، قاب باریک و طراحی مناسب استایل‌های رسمی.</p>",
       "price": 174000000,
       "quantity": 7,
@@ -76,11 +69,8 @@
       "brand": "Rivane",
       "category": 3,
       "subcategory": 7,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": ["/images/products/watch-placeholder-2.webp"],
       "description": "<p>کرنوگراف اسپرت الهام‌گرفته از دنیای موتوراسپرت با خوانایی بالا و طراحی جسورانه.</p>",
       "price": 146000000,
       "quantity": 6,
@@ -110,11 +100,8 @@
       "brand": "Aurel",
       "category": 4,
       "subcategory": 10,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": ["/images/products/watch-placeholder-3.webp"],
       "description": "<p>ساعت غواصی حرفه‌ای با طراحی مقاوم، خوانایی بالا و ظاهری مناسب استفاده روزمره.</p>",
       "price": 192000000,
       "quantity": 5,
@@ -144,11 +131,8 @@
       "brand": "Montreux",
       "category": 5,
       "subcategory": 15,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": ["/images/products/watch-placeholder-2.webp"],
       "description": "<p>مدل Flyback با طراحی متعادل صفحه، جزئیات دقیق و عملکرد حرفه‌ای کرنوگراف.</p>",
       "price": 221000000,
       "quantity": 7,
@@ -178,11 +162,8 @@
       "brand": "Velmont",
       "category": 6,
       "subcategory": 17,
-      "thumbnail": "/images/products/watch-placeholder.webp",
-      "images": [
-        "/images/products/watch-placeholder.webp",
-        "/images/products/watch-placeholder.webp"
-      ],
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": ["/images/products/watch-placeholder-3.webp"],
       "description": "<p>نسخه محدود با نمایش مکانیزم Tourbillon و تولید محدود برای مجموعه‌داران.</p>",
       "price": 680000000,
       "quantity": 2,

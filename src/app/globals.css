@@ -387,3 +387,33 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #aaa399;
 }
+
+/*
+ * Swiper — Luxury Hero
+ */
+
+.swiper-button-next,
+.swiper-button-prev {
+  width: 3rem !important;
+  height: 3rem !important;
+  color: white !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+}
+
+.swiper-pagination-bullet {
+  width: 1.75rem !important;
+  height: 1px !important;
+  margin-inline: 0.25rem !important;
+  border-radius: 0 !important;
+  background: rgb(255 255 255 / 45%) !important;
+  opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: white !important;
+}
