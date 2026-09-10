@@ -58,7 +58,7 @@
   --color-forest: var(--forest);
   --color-forest-light: var(--forest-light);
 
-  --font-sans: var(--font-vazirmatn);
+  --font-sans: "Estedad Variable", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-cormorant);
 
@@ -416,4 +416,31 @@
 
 .swiper-pagination-bullet-active {
   background: white !important;
+}
+
+/* Product Gallery */
+.product-gallery-prev.swiper-button-disabled,
+.product-gallery-next.swiper-button-disabled {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.product-gallery-prev::after,
+.product-gallery-next::after {
+  display: none;
+}
+
+.product-gallery-prev,
+.product-gallery-next {
+  position: absolute !important;
+}
+
+.product-gallery-prev + *,
+.product-gallery-next + * {
+  pointer-events: auto;
+}
+
+.product-gallery-prev,
+.product-gallery-next {
+  margin-top: 0 !important;
 }

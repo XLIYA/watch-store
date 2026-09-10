@@ -67,3 +67,33 @@ export async function getSubcategoryBySlug(
 
   return response.data[0] ?? null;
 }
+
+export async function getCategoryById(
+  categoryId: number,
+): Promise<Category | null> {
+  try {
+    const response =
+      await apiClient.get<Category>(
+        `/category/${categoryId}`,
+      );
+
+    return response.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function getSubcategoryById(
+  subcategoryId: number,
+): Promise<Subcategory | null> {
+  try {
+    const response =
+      await apiClient.get<Subcategory>(
+        `/subcategory/${subcategoryId}`,
+      );
+
+    return response.data;
+  } catch {
+    return null;
+  }
+}

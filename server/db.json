@@ -8,7 +8,9 @@
       "category": 1,
       "subcategory": 1,
       "thumbnail": "/images/products/watch-placeholder-1.webp",
-      "images": ["/images/products/watch-placeholder-1.webp"],
+      "images": [
+        "/images/products/watch-placeholder-1.webp"
+      ],
       "description": "<p>ساعتی کلاسیک با طراحی مینیمال، موتور اتوماتیک و پرداخت ظریف بدنه برای استفاده روزمره و رسمی.</p>",
       "price": 128000000,
       "quantity": 7,
@@ -39,7 +41,9 @@
       "category": 2,
       "subcategory": 5,
       "thumbnail": "/images/products/watch-placeholder-1.webp",
-      "images": ["/images/products/watch-placeholder-1.webp"],
+      "images": [
+        "/images/products/watch-placeholder-1.webp"
+      ],
       "description": "<p>مدلی رسمی با نمایشگر Moonphase، قاب باریک و طراحی مناسب استایل‌های رسمی.</p>",
       "price": 174000000,
       "quantity": 7,
@@ -70,7 +74,9 @@
       "category": 3,
       "subcategory": 7,
       "thumbnail": "/images/products/watch-placeholder-2.webp",
-      "images": ["/images/products/watch-placeholder-2.webp"],
+      "images": [
+        "/images/products/watch-placeholder-2.webp"
+      ],
       "description": "<p>کرنوگراف اسپرت الهام‌گرفته از دنیای موتوراسپرت با خوانایی بالا و طراحی جسورانه.</p>",
       "price": 146000000,
       "quantity": 6,
@@ -101,7 +107,9 @@
       "category": 4,
       "subcategory": 10,
       "thumbnail": "/images/products/watch-placeholder-3.webp",
-      "images": ["/images/products/watch-placeholder-3.webp"],
+      "images": [
+        "/images/products/watch-placeholder-3.webp"
+      ],
       "description": "<p>ساعت غواصی حرفه‌ای با طراحی مقاوم، خوانایی بالا و ظاهری مناسب استفاده روزمره.</p>",
       "price": 192000000,
       "quantity": 5,
@@ -132,7 +140,9 @@
       "category": 5,
       "subcategory": 15,
       "thumbnail": "/images/products/watch-placeholder-2.webp",
-      "images": ["/images/products/watch-placeholder-2.webp"],
+      "images": [
+        "/images/products/watch-placeholder-2.webp"
+      ],
       "description": "<p>مدل Flyback با طراحی متعادل صفحه، جزئیات دقیق و عملکرد حرفه‌ای کرنوگراف.</p>",
       "price": 221000000,
       "quantity": 7,
@@ -163,7 +173,9 @@
       "category": 6,
       "subcategory": 17,
       "thumbnail": "/images/products/watch-placeholder-3.webp",
-      "images": ["/images/products/watch-placeholder-3.webp"],
+      "images": [
+        "/images/products/watch-placeholder-3.webp"
+      ],
       "description": "<p>نسخه محدود با نمایش مکانیزم Tourbillon و تولید محدود برای مجموعه‌داران.</p>",
       "price": 680000000,
       "quantity": 2,
@@ -185,9 +197,1028 @@
       "isHero": false,
       "heroOrder": null,
       "createdAt": 1788566400000
+    },
+    {
+      "id": 7,
+      "name": "Heritage Classic 38",
+      "slug": "heritage-classic-38",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 1,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Heritage Classic 38 ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 118000000,
+      "quantity": 3,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 11,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1789026353154
+    },
+    {
+      "id": 8,
+      "name": "Tradition Hand Wound",
+      "slug": "tradition-hand-wound",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 2,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Tradition Hand Wound ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 137000000,
+      "quantity": 8,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 22,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788939953154
+    },
+    {
+      "id": 9,
+      "name": "Maison Automatic",
+      "slug": "maison-automatic",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 3,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Maison Automatic ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 152000000,
+      "quantity": 9,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 33,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788853553154
+    },
+    {
+      "id": 10,
+      "name": "Vintage Sector 40",
+      "slug": "vintage-sector-40",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 1,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Vintage Sector 40 ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 164000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 44,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788767153154
+    },
+    {
+      "id": 11,
+      "name": "Heritage Small Seconds",
+      "slug": "heritage-small-seconds",
+      "brand": "Aurel",
+      "category": 1,
+      "subcategory": 2,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Heritage Small Seconds ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 179000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 55,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788680753154
+    },
+    {
+      "id": 12,
+      "name": "Élite Slim 39",
+      "slug": "elite-slim-39",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 4,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Élite Slim 39 ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 155000000,
+      "quantity": 4,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 13,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788594353154
+    },
+    {
+      "id": 13,
+      "name": "Luna Moonphase",
+      "slug": "luna-moonphase",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 5,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Luna Moonphase ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 188000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 24,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788507953154
+    },
+    {
+      "id": 14,
+      "name": "Épure Ultra Thin",
+      "slug": "epure-ultra-thin",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 6,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Épure Ultra Thin ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 205000000,
+      "quantity": 10,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 35,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788421553154
+    },
+    {
+      "id": 15,
+      "name": "Maison Dress 01",
+      "slug": "maison-dress-01",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 4,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Maison Dress 01 ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 168000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 46,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788335153154
+    },
+    {
+      "id": 16,
+      "name": "Velmont Réserve",
+      "slug": "velmont-reserve",
+      "brand": "Velmont",
+      "category": 2,
+      "subcategory": 5,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Velmont Réserve ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 232000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 57,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788248753154
+    },
+    {
+      "id": 17,
+      "name": "Aero Sport RS",
+      "slug": "aero-sport-rs",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 7,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Aero Sport RS ساعتی از مجموعه Rivane با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 132000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 15,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788162353154
+    },
+    {
+      "id": 18,
+      "name": "Pilot Automatic 42",
+      "slug": "pilot-automatic-42",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 8,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Pilot Automatic 42 ساعتی از مجموعه Rivane با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 149000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 26,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1788075953154
+    },
+    {
+      "id": 19,
+      "name": "Field Expedition",
+      "slug": "field-expedition",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 9,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Field Expedition ساعتی از مجموعه Rivane با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 97000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 37,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787989553154
+    },
+    {
+      "id": 20,
+      "name": "Racing Carbon GT",
+      "slug": "racing-carbon-gt",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 7,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Racing Carbon GT ساعتی از مجموعه Rivane با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 184000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 48,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787903153154
+    },
+    {
+      "id": 21,
+      "name": "Aviation GMT",
+      "slug": "aviation-gmt",
+      "brand": "Rivane",
+      "category": 3,
+      "subcategory": 8,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Aviation GMT ساعتی از مجموعه Rivane با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 176000000,
+      "quantity": 8,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 59,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787816753154
+    },
+    {
+      "id": 22,
+      "name": "Ocean Professional 500",
+      "slug": "ocean-professional-500",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 10,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Ocean Professional 500 ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 214000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 17,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787730353154
+    },
+    {
+      "id": 23,
+      "name": "Deep Sea Ceramic",
+      "slug": "deep-sea-ceramic",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 11,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Deep Sea Ceramic ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 238000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 28,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787643953154
+    },
+    {
+      "id": 24,
+      "name": "Abyss Automatic",
+      "slug": "abyss-automatic",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 12,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Abyss Automatic ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 198000000,
+      "quantity": 8,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 39,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787557553154
+    },
+    {
+      "id": 25,
+      "name": "Ocean GMT 300",
+      "slug": "ocean-gmt-300",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 10,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Ocean GMT 300 ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 226000000,
+      "quantity": 4,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 50,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787471153154
+    },
+    {
+      "id": 26,
+      "name": "Mariner Black",
+      "slug": "mariner-black",
+      "brand": "Aurel",
+      "category": 4,
+      "subcategory": 11,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Mariner Black ساعتی از مجموعه Aurel با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 187000000,
+      "quantity": 9,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 61,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787384753154
+    },
+    {
+      "id": 27,
+      "name": "Chronos Bi Compax",
+      "slug": "chronos-bi-compax",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 13,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Chronos Bi Compax ساعتی از مجموعه Montreux با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 196000000,
+      "quantity": 3,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 19,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787298353154
+    },
+    {
+      "id": 28,
+      "name": "Circuit Tri Compax",
+      "slug": "circuit-tri-compax",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 14,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Circuit Tri Compax ساعتی از مجموعه Montreux با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 209000000,
+      "quantity": 8,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 30,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787211953154
+    },
+    {
+      "id": 29,
+      "name": "Flyback Racing 42",
+      "slug": "flyback-racing-42",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 15,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Flyback Racing 42 ساعتی از مجموعه Montreux با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 245000000,
+      "quantity": 9,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 41,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787125553154
+    },
+    {
+      "id": 30,
+      "name": "Chronograph Heritage",
+      "slug": "chronograph-heritage",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 13,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Chronograph Heritage ساعتی از مجموعه Montreux با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 189000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 52,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1787039153154
+    },
+    {
+      "id": 31,
+      "name": "Montreux Tachymeter",
+      "slug": "montreux-tachymeter",
+      "brand": "Montreux",
+      "category": 5,
+      "subcategory": 14,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Montreux Tachymeter ساعتی از مجموعه Montreux با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 228000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 63,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786952753154
+    },
+    {
+      "id": 32,
+      "name": "Skeleton No. 12",
+      "slug": "skeleton-no-12",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 16,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Skeleton No. 12 ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 420000000,
+      "quantity": 4,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 2
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 21,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786866353154
+    },
+    {
+      "id": 33,
+      "name": "Tourbillon Atelier",
+      "slug": "tourbillon-atelier",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 17,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Tourbillon Atelier ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 740000000,
+      "quantity": 5,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 4
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 1
+        }
+      ],
+      "soldCount": 32,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786779953154
+    },
+    {
+      "id": 34,
+      "name": "Métiers Artistic 01",
+      "slug": "metiers-artistic-01",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 18,
+      "thumbnail": "/images/products/watch-placeholder-1.webp",
+      "images": [
+        "/images/products/watch-placeholder-1.webp",
+        "/images/products/watch-placeholder-2.webp"
+      ],
+      "description": "<p>Métiers Artistic 01 ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 510000000,
+      "quantity": 10,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 6
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 4
+        }
+      ],
+      "soldCount": 43,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786693553154
+    },
+    {
+      "id": 35,
+      "name": "Openworked Reserve",
+      "slug": "openworked-reserve",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 16,
+      "thumbnail": "/images/products/watch-placeholder-2.webp",
+      "images": [
+        "/images/products/watch-placeholder-2.webp",
+        "/images/products/watch-placeholder-3.webp"
+      ],
+      "description": "<p>Openworked Reserve ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 465000000,
+      "quantity": 6,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 3
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 3
+        }
+      ],
+      "soldCount": 54,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786607153154
+    },
+    {
+      "id": 36,
+      "name": "Grand Complication 06",
+      "slug": "grand-complication-06",
+      "brand": "Velmont",
+      "category": 6,
+      "subcategory": 17,
+      "thumbnail": "/images/products/watch-placeholder-3.webp",
+      "images": [
+        "/images/products/watch-placeholder-3.webp",
+        "/images/products/watch-placeholder-1.webp"
+      ],
+      "description": "<p>Grand Complication 06 ساعتی از مجموعه Velmont با طراحی دقیق، کیفیت ساخت بالا و هویتی متمایز برای استفاده روزمره و حرفه‌ای است.</p>",
+      "price": 890000000,
+      "quantity": 7,
+      "variants": [
+        {
+          "id": "black",
+          "name": "مشکی",
+          "hex": "#111111",
+          "quantity": 5
+        },
+        {
+          "id": "silver",
+          "name": "نقره‌ای",
+          "hex": "#BFC0C2",
+          "quantity": 2
+        }
+      ],
+      "soldCount": 5,
+      "isHero": false,
+      "heroOrder": null,
+      "createdAt": 1786520753154
     }
   ],
-
   "category": [
     {
       "id": 1,
@@ -256,7 +1287,6 @@
       "landingOrder": 6
     }
   ],
-
   "subcategory": [
     {
       "id": 1,
@@ -276,7 +1306,6 @@
       "slug": "heritage",
       "category": 1
     },
-
     {
       "id": 4,
       "name": "مینیمال",
@@ -295,7 +1324,6 @@
       "slug": "ultra-thin",
       "category": 2
     },
-
     {
       "id": 7,
       "name": "ریسینگ",
@@ -314,7 +1342,6 @@
       "slug": "field",
       "category": 3
     },
-
     {
       "id": 10,
       "name": "دایور حرفه‌ای",
@@ -333,7 +1360,6 @@
       "slug": "deep-sea",
       "category": 4
     },
-
     {
       "id": 13,
       "name": "Bi-Compax",
@@ -352,7 +1378,6 @@
       "slug": "flyback",
       "category": 5
     },
-
     {
       "id": 16,
       "name": "اسکلتون",
@@ -372,7 +1397,6 @@
       "category": 6
     }
   ],
-
   "reviews": [
     {
       "id": 1,
@@ -393,16 +1417,13 @@
       "createdAt": 1788566400000
     }
   ],
-
   "orders": [],
-
   "whoami": {
     "name": "Watch Store Administrator",
     "username": "admin",
     "password": "admin",
     "role": "admin"
   },
-
   "users": [
     {
       "id": 1,
@@ -412,7 +1433,6 @@
       "role": "admin"
     }
   ],
-
   "protection": {
     "products.get": false,
     "orders.post": false,
@@ -420,7 +1440,6 @@
     "orders.get": false,
     "orders.patch": false,
     "upload.post": false,
-
     "upload": true,
     "orders": "admin",
     "products": "admin",

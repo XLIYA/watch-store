@@ -120,3 +120,20 @@ export async function getHeroProducts(): Promise<Product[]> {
 
   return response.data;
 }
+
+export async function getPopularProducts(
+  limit = 6,
+): Promise<Product[]> {
+  const response = await apiClient.get<Product[]>(
+    "/products",
+    {
+      params: {
+        _sort: "soldCount",
+        _order: "desc",
+        _limit: limit,
+      },
+    },
+  );
+
+  return response.data;
+}
