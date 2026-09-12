@@ -1417,7 +1417,60 @@
       "createdAt": 1788566400000
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09999999999"
+      },
+      "delivery": {
+        "postalCode": "1111111111",
+        "address": "کرج و گوهردشت و خیابان اصلی و بلوار کشفی و ساختمان صورتی",
+        "plaque": "۱۲",
+        "unit": "۲",
+        "latitude": 35.85624939429401,
+        "longitude": 50.97334059971768,
+        "deliveryDate": "2026-09-20",
+        "deliveryTime": "13:00",
+        "note": "توضیحات"
+      },
+      "items": [
+        {
+          "lineId": "26:black",
+          "productId": 26,
+          "variantId": "black",
+          "name": "Mariner Black",
+          "thumbnail": "/images/products/watch-placeholder-2.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 187000000,
+          "quantity": 1,
+          "totalPrice": 187000000
+        },
+        {
+          "lineId": "31:silver",
+          "productId": 31,
+          "variantId": "silver",
+          "name": "Montreux Tachymeter",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "نقره‌ای",
+          "colorHex": "#BFC0C2",
+          "unitPrice": 228000000,
+          "quantity": 1,
+          "totalPrice": 228000000
+        }
+      ],
+      "itemsCount": 2,
+      "subtotal": 415000000,
+      "shippingCost": 0,
+      "totalPrice": 415000000,
+      "status": "pending_payment",
+      "paymentStatus": "pending",
+      "createdAt": 1789217682016,
+      "paidAt": null,
+      "id": 1
+    }
+  ],
   "whoami": {
     "name": "Watch Store Administrator",
     "username": "admin",
