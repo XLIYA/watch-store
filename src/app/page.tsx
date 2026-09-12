@@ -1,28 +1,79 @@
-import Link from "next/link";
+import { AllCollections } from "@/components/landing/all-collections";
+import { CollectionStory } from "@/components/landing/collection-story";
+import { LandingCta } from "@/components/landing/landing-cta";
+import { LandingFooter } from "@/components/landing/landing-footer";
+import { LandingHero } from "@/components/landing/landing-hero";
+import { LandingReveal } from "@/components/landing/landing-reveal";
 
-export default function LandingPage() {
+import { getCategories } from "@/services/categories.service";
+import {
+  getHeroProducts,
+  getProducts,
+} from "@/services/products.service";
+
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const [categories, heroProducts] =
+    await Promise.all([
+      getCategories(),
+      getHeroProducts(),
+    ]);
+
+  const landingCategories = categories
+    .filter(
+      (category) => category.landingEnabled,
+    )
+    .sort(
+      (a, b) =>
+        a.landingOrder - b.landingOrder,
+    );
+
+  const collections = await Promise.all(
+    landingCategories.map(
+      async (category) => {
+        const result = await getProducts({
+          category: category.id,
+          page: 1,
+          limit: 3,
+          sort: "newest",
+        });
+
+        return {
+          category,
+          products: result.data,
+        };
+      },
+    ),
+  );
+
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <p className="font-heading text-6xl font-medium tracking-[0.16em]">
-          WATCH STORE
-        </p>
+    <LandingReveal>
+      <main>
+        <LandingHero
+          products={heroProducts}
+        />
 
-        <h1 className="mt-6 text-3xl font-medium">
-          فروشگاه تخصصی ساعت
-        </h1>
+        {collections.map(
+          (
+            { category, products },
+            index,
+          ) => (
+            <CollectionStory
+              key={category.id}
+              category={category}
+              products={products}
+              index={index}
+            />
+          ),
+        )}
 
-        <p className="mt-3 text-sm text-muted-foreground">
-          تجربه‌ای متفاوت از انتخاب ساعت‌های لوکس
-        </p>
-
-        <Link
-          href="/shop"
-          className="mt-10 inline-block border-b border-foreground pb-1 text-sm"
-        >
-          ورود به فروشگاه
-        </Link>
-      </div>
-    </main>
+        <AllCollections
+          categories={landingCategories}
+        />
+        <LandingCta />
+        <LandingFooter />
+      </main>
+    </LandingReveal>
   );
 }
