@@ -6,10 +6,11 @@ import {
 } from "next/font/google";
 
 import { StoreProvider } from "@/store/store-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 
 import "@fontsource-variable/estedad/wght.css";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -40,7 +41,9 @@ export default function RootLayout({
         className={`${cormorant.variable} ${geistMono.variable}`}
       >
         <StoreProvider>
-          {children}
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
         </StoreProvider>
 
         <Toaster
