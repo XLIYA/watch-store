@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Eye } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 import {
     Select,
@@ -25,27 +34,42 @@ import {
 } from "@/components/ui/table";
 
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+    useAdminOrdersQuery,
+} from "@/features/admin/orders/queries/use-admin-orders-query";
 
-import {
-    getAdminOrders,
-    type AdminOrderDeliveryFilter,
+import type {
+    AdminOrderDeliveryFilter,
 } from "@/services/orders.service";
 
 import type { Order } from "@/types/order";
 
 const PAGE_SIZE = 10;
 
+/*
+ * هدف:
+ * نمایش مبلغ سفارش با فرمت عددی فارسی.
+ *
+ * محل استفاده:
+ * ستون مبلغ کل در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * Intl.NumberFormat مقدار عددی را با Locale فارسی فرمت می‌کند.
+ */
 function formatPrice(value: number) {
     return new Intl.NumberFormat("fa-IR").format(value);
 }
 
+/*
+ * هدف:
+ * نمایش تاریخ ثبت سفارش با فرمت فارسی.
+ *
+ * محل استفاده:
+ * ستون تاریخ ثبت در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * timestamp ذخیره‌شده در Order به Date تبدیل شده
+ * و سپس با Intl.DateTimeFormat به فرمت فارسی نمایش داده می‌شود.
+ */
 function formatDate(timestamp: number) {
     return new Intl.DateTimeFormat("fa-IR", {
         year: "numeric",
@@ -56,7 +80,20 @@ function formatDate(timestamp: number) {
     }).format(new Date(timestamp));
 }
 
-function getOrderStatusLabel(status: Order["status"]) {
+/*
+ * هدف:
+ * تبدیل مقدار فنی status سفارش به Label فارسی.
+ *
+ * محل استفاده:
+ * ستون وضعیت سفارش در جدول Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار status دریافتی از Backend با Type اصلی Order تطبیق داده می‌شود
+ * و Label مناسب فارسی برگردانده می‌شود.
+ */
+function getOrderStatusLabel(
+    status: Order["status"],
+) {
     switch (status) {
         case "pending_payment":
             return "در انتظار پرداخت";
@@ -72,6 +109,16 @@ function getOrderStatusLabel(status: Order["status"]) {
     }
 }
 
+/*
+ * هدف:
+ * تبدیل وضعیت فنی پرداخت به Label فارسی.
+ *
+ * محل استفاده:
+ * ستون وضعیت پرداخت در جدول Admin Orders.
+ *
+ * نحوه کار:
+ * paymentStatus دریافتی از Backend به متن فارسی مناسب تبدیل می‌شود.
+ */
 function getPaymentStatusLabel(
     status: Order["paymentStatus"],
 ) {
@@ -88,73 +135,112 @@ function getPaymentStatusLabel(
 }
 
 export default function AdminOrdersPage() {
-    const [orders, setOrders] = useState<Order[]>([]);
-
+    /*
+     * هدف:
+     * نگهداری شماره صفحه فعلی Pagination.
+     *
+     * محل استفاده:
+     * در Query سفارش‌ها و کنترل Pagination صفحه.
+     *
+     * نحوه کار:
+     * با تغییر page، Query Key تغییر می‌کند و React Query
+     * اطلاعات همان صفحه را از Cache یا Backend دریافت می‌کند.
+     */
     const [page, setPage] = useState(1);
 
-    const [totalPages, setTotalPages] = useState(1);
-
+    /*
+     * هدف:
+     * نگهداری فیلتر فعلی سفارش‌ها.
+     *
+     * محل استفاده:
+     * در Select بالای جدول و Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * با تغییر Filter، صفحه به 1 برمی‌گردد و React Query
+     * بر اساس پارامتر جدید اطلاعات را دریافت می‌کند.
+     */
     const [filter, setFilter] =
-        useState<AdminOrderDeliveryFilter>("all");
+        useState<AdminOrderDeliveryFilter>(
+            "all",
+        );
 
-    const [isLoading, setIsLoading] =
-        useState(true);
+    /*
+     * هدف:
+     * دریافت Server State مربوط به سفارش‌ها با React Query.
+     *
+     * محل استفاده:
+     * منبع اصلی اطلاعات Table و Pagination صفحه Admin Orders.
+     *
+     * نحوه کار:
+     * page، limit و filter به Hook داده می‌شوند.
+     * Hook مسئول Request، Cache، Loading و Error خواهد بود.
+     */
+    const {
+        data,
+        isPending,
+        isError,
+    } = useAdminOrdersQuery({
+        page,
+        limit: PAGE_SIZE,
+        deliveryStatus: filter,
+    });
 
-    const [error, setError] =
-        useState<string | null>(null);
+    /*
+     * هدف:
+     * استخراج لیست سفارش‌ها از نتیجه React Query با مقدار پیش‌فرض امن.
+     *
+     * محل استفاده:
+     * Table سفارش‌ها.
+     *
+     * نحوه کار:
+     * قبل از دریافت اولین Response، آرایه خالی استفاده می‌شود.
+     */
+    const orders =
+        data?.data ?? [];
 
-    useEffect(() => {
-        let isCancelled = false;
+    /*
+     * هدف:
+     * تعیین تعداد صفحات Pagination از Response Backend.
+     *
+     * محل استفاده:
+     * Pagination پایین جدول سفارش‌ها.
+     *
+     * نحوه کار:
+     * حداقل یک صفحه در نظر گرفته می‌شود تا Logic Pagination مقدار صفر نگیرد.
+     */
+    const totalPages = Math.max(
+        data?.totalPages ?? 1,
+        1,
+    );
 
-        getAdminOrders({
-            page,
-            limit: PAGE_SIZE,
-            deliveryStatus: filter,
-        })
-            .then((result) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                setOrders(result.data);
-                setTotalPages(
-                    Math.max(result.totalPages, 1),
-                );
-                setError(null);
-            })
-            .catch((requestError) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                console.error(
-                    "Failed to load admin orders:",
-                    requestError,
-                );
-
-                setError(
-                    "دریافت لیست سفارش‌ها با خطا مواجه شد.",
-                );
-            })
-            .finally(() => {
-                if (!isCancelled) {
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [page, filter]);
-
+    /*
+     * هدف:
+     * تغییر فیلتر و شروع نتایج از صفحه اول.
+     *
+     * محل استفاده:
+     * Select مربوط به وضعیت تحویل.
+     *
+     * نحوه کار:
+     * ابتدا Pagination به صفحه اول برمی‌گردد
+     * و سپس Filter جدید در State قرار می‌گیرد.
+     */
     const handleFilterChange = (
         value: AdminOrderDeliveryFilter,
     ) => {
-        setIsLoading(true);
         setPage(1);
         setFilter(value);
     };
 
+    /*
+     * هدف:
+     * کنترل تغییر صفحات بدون خروج از محدوده Pagination.
+     *
+     * محل استفاده:
+     * دکمه‌های Previous، Next و شماره صفحات.
+     *
+     * نحوه کار:
+     * فقط Page معتبر و متفاوت از Page فعلی در State ذخیره می‌شود.
+     */
     const handlePageChange = (
         nextPage: number,
     ) => {
@@ -166,7 +252,6 @@ export default function AdminOrdersPage() {
             return;
         }
 
-        setIsLoading(true);
         setPage(nextPage);
     };
 
@@ -260,30 +345,21 @@ export default function AdminOrdersPage() {
                     </TableHeader>
 
                     <TableBody>
-                        {isLoading ? (
+                        {isPending ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                     در حال دریافت سفارش‌ها...
                                 </TableCell>
                             </TableRow>
-                        ) : error ? (
+                        ) : isError ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-destructive"
-                                >
-                                    {error}
+                                <TableCell colSpan={8} className="h-32 text-center text-destructive">
+                                    دریافت لیست سفارش‌ها با خطا مواجه شد.
                                 </TableCell>
                             </TableRow>
                         ) : orders.length === 0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                     سفارشی یافت نشد.
                                 </TableCell>
                             </TableRow>
@@ -311,8 +387,7 @@ export default function AdminOrdersPage() {
                                     <TableCell>
                                         {formatPrice(
                                             order.totalPrice,
-                                        )}
-                                        {" "}
+                                        )}{" "}
                                         تومان
                                     </TableCell>
 
@@ -332,9 +407,7 @@ export default function AdminOrdersPage() {
                                     </TableCell>
 
                                     <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                        >
+                                        <Badge variant="outline">
                                             {getPaymentStatusLabel(
                                                 order.paymentStatus,
                                             )}
@@ -358,8 +431,8 @@ export default function AdminOrdersPage() {
                 </Table>
             </div>
 
-            {!isLoading &&
-                !error &&
+            {!isPending &&
+                !isError &&
                 totalPages > 1 && (
                     <Pagination>
                         <PaginationContent>
@@ -373,11 +446,7 @@ export default function AdminOrdersPage() {
                                             page - 1,
                                         );
                                     }}
-                                    className={
-                                        page === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === 1 ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
 
@@ -391,9 +460,7 @@ export default function AdminOrdersPage() {
 
                                     return (
                                         <PaginationItem
-                                            key={
-                                                pageNumber
-                                            }
+                                            key={pageNumber}
                                         >
                                             <PaginationLink
                                                 href="#"
@@ -411,9 +478,7 @@ export default function AdminOrdersPage() {
                                                     );
                                                 }}
                                             >
-                                                {
-                                                    pageNumber
-                                                }
+                                                {pageNumber}
                                             </PaginationLink>
                                         </PaginationItem>
                                     );
@@ -430,12 +495,7 @@ export default function AdminOrdersPage() {
                                             page + 1,
                                         );
                                     }}
-                                    className={
-                                        page ===
-                                            totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === totalPages ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
                         </PaginationContent>
