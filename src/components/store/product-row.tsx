@@ -1,25 +1,15 @@
 "use client";
 
-import { useId } from "react";
-
-import {
-    ChevronLeft,
-    ChevronRight,
-} from "lucide-react";
-
-import { Navigation } from "swiper/modules";
-
-import {
-    Swiper,
-    SwiperSlide,
-} from "swiper/react";
-
 import { ProductCard } from "@/components/store/product-card";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 import type { Product } from "@/types/product";
-
-import "swiper/css";
-import "swiper/css/navigation";
 
 interface ProductRowProps {
     products: Product[];
@@ -30,14 +20,16 @@ export function ProductRow({
     products,
     className = "",
 }: ProductRowProps) {
-    const id = useId().replace(
-        /[^a-zA-Z0-9-_]/g,
-        "",
-    );
-
-    const prevClass = `product-row-prev-${id}`;
-    const nextClass = `product-row-next-${id}`;
-
+    /*
+     * هدف:
+     * نمایش حالت خالی زمانی که هیچ محصولی برای Carousel وجود ندارد.
+     *
+     * محل استفاده:
+     * ابتدای ProductRow قبل از Render شدن Carousel.
+     *
+     * نحوه کار:
+     * اگر آرایه products خالی باشد، به‌جای Carousel پیام مناسب نمایش داده می‌شود.
+     */
     if (products.length === 0) {
         return (
             <div className="border-y border-border py-12 text-center text-sm text-muted-foreground">
@@ -47,114 +39,82 @@ export function ProductRow({
     }
 
     return (
-        <div
-            className={`relative ${className}`}
+        /*
+         * هدف:
+         * جایگزینی Swiper با Carousel رسمی shadcn.
+         *
+         * محل استفاده:
+         * در ردیف‌های محصولات صفحات فروشگاه و Landing.
+         *
+         * نحوه کار:
+         * shadcn Carousel از Embla استفاده می‌کند و با direction برابر rtl
+         * حرکت و ترتیب اسلایدها با ساختار فارسی سایت هماهنگ می‌شود.
+         */
+        <Carousel
             dir="rtl"
+            opts={{
+                align: "start",
+                direction: "rtl",
+                slidesToScroll: 1,
+            }}
+            className={`relative ${className}`}
         >
-            <Swiper
-                modules={[Navigation]}
-                dir="rtl"
-                slidesPerView={1.15}
-                spaceBetween={16}
-                watchOverflow
-                grabCursor={products.length > 1}
-                navigation={{
-                    prevEl: `.${prevClass}`,
-                    nextEl: `.${nextClass}`,
-                }}
-                breakpoints={{
-                    480: {
-                        slidesPerView: 1.55,
-                        spaceBetween: 18,
-                    },
-
-                    640: {
-                        slidesPerView: 2.15,
-                        spaceBetween: 20,
-                    },
-
-                    768: {
-                        slidesPerView: 2.6,
-                        spaceBetween: 24,
-                    },
-
-                    1024: {
-                        slidesPerView: 3.25,
-                        spaceBetween: 28,
-                    },
-
-                    1280: {
-                        slidesPerView: 4,
-                        spaceBetween: 32,
-                    },
-                }}
-                className="!overflow-visible"
-            >
+            {/*
+       * هدف:
+       * تعریف فاصله بین اسلایدها در اندازه‌های مختلف صفحه.
+       *
+       * محل استفاده:
+       * Container اصلی اسلایدهای ProductRow.
+       *
+       * نحوه کار:
+       * Margin منفی CarouselContent با Padding هر CarouselItem هماهنگ است
+       * تا فاصله‌های Responsive مشابه تنظیمات قبلی Swiper ایجاد شوند.
+       */}
+            <CarouselContent className="-mr-4 cursor-grab active:cursor-grabbing min-[480px]:-mr-[18px] sm:-mr-5 md:-mr-6 lg:-mr-7 xl:-mr-8">
                 {products.map((product) => (
-                    <SwiperSlide
+                    /*
+                     * هدف:
+                     * کنترل تعداد Product Cardهای قابل مشاهده در هر Breakpoint.
+                     *
+                     * محل استفاده:
+                     * برای هر محصول داخل ProductRow.
+                     *
+                     * نحوه کار:
+                     * basis هر Item معادل تقریبی slidesPerView قبلی Swiper تنظیم شده است.
+                     */
+                    <CarouselItem
                         key={product.id}
-                        className="!h-auto"
+                        className="h-auto basis-[86.9565%] pr-4 min-[480px]:basis-[64.5161%] min-[480px]:pr-[18px] sm:basis-[46.5116%] sm:pr-5 md:basis-[38.4615%] md:pr-6 lg:basis-[30.7692%] lg:pr-7 xl:basis-1/4 xl:pr-8"
                     >
-                        <ProductCard
-                            product={product}
-                        />
-                    </SwiperSlide>
+                        <ProductCard product={product} />
+                    </CarouselItem>
                 ))}
-            </Swiper>
+            </CarouselContent>
 
+            {/*
+       * هدف:
+       * نمایش کنترل‌های حرکت Carousel فقط زمانی که بیش از یک محصول وجود دارد.
+       *
+       * محل استفاده:
+       * پایین ProductRow.
+       *
+       * نحوه کار:
+       * CarouselPrevious و CarouselNext مستقیماً از API داخلی Embla استفاده می‌کنند
+       * و وضعیت disabled ابتدا و انتهای Carousel را نیز خودکار مدیریت می‌کنند.
+       */}
             {products.length > 1 ? (
                 <div className="mt-8 flex items-center justify-end gap-2 md:gap-3">
-                    <button
-                        type="button"
+                    <CarouselPrevious
                         aria-label="محصول قبلی"
-                        className={`
-              ${prevClass}
-              luxury-transition
-              flex
-              size-10
-              items-center
-              justify-center
-              border
-              border-border
-              bg-background
-              hover:bg-secondary
-              disabled:pointer-events-none
-              disabled:opacity-25
-              md:size-11
-            `}
-                    >
-                        <ChevronRight
-                            className="size-4"
-                            strokeWidth={1.5}
-                        />
-                    </button>
+                        className="luxury-transition static size-10 translate-y-0 rounded-none border-border bg-background hover:bg-secondary disabled:pointer-events-none disabled:opacity-25 md:size-11 [&_svg]:rotate-180"
+                    />
 
-                    <button
-                        type="button"
+                    <CarouselNext
                         aria-label="محصول بعدی"
-                        className={`
-              ${nextClass}
-              luxury-transition
-              flex
-              size-10
-              items-center
-              justify-center
-              border
-              border-border
-              bg-background
-              hover:bg-secondary
-              disabled:pointer-events-none
-              disabled:opacity-25
-              md:size-11
-            `}
-                    >
-                        <ChevronLeft
-                            className="size-4"
-                            strokeWidth={1.5}
-                        />
-                    </button>
+                        className="luxury-transition static size-10 translate-y-0 rounded-none border-border bg-background hover:bg-secondary disabled:pointer-events-none disabled:opacity-25 md:size-11 [&_svg]:rotate-180"
+                    />
                 </div>
             ) : null}
-        </div>
+        </Carousel>
     );
 }
