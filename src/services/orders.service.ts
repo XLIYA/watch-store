@@ -40,6 +40,8 @@ export interface GetAdminOrdersParams {
     limit?: number;
     status?: AdminOrderStatusFilter;
     paymentStatus?: AdminPaymentStatusFilter;
+    dateFrom?: number;
+    dateTo?: number;
 }
 
 export async function createOrder(
@@ -83,6 +85,8 @@ export async function getAdminOrders({
     limit = 10,
     status = "all",
     paymentStatus = "all",
+    dateFrom,
+    dateTo,
 }: GetAdminOrdersParams = {}): Promise<
     PaginatedResult<Order>
 > {
@@ -124,6 +128,26 @@ export async function getAdminOrders({
  */
     if (paymentStatus !== "all") {
         params.paymentStatus = paymentStatus;
+    }
+
+    /*
+ * هدف:
+ * اعمال فیلتر تاریخ ثبت سفارش روی درخواست Admin Orders.
+ *
+ * محل استفاده:
+ * داخل getAdminOrders قبل از ارسال درخواست به Backend.
+ *
+ * نحوه کار:
+ * dateFrom و dateTo به‌صورت timestamp دریافت می‌شوند.
+ * createdAt_gte حداقل تاریخ و createdAt_lte حداکثر تاریخ را
+ * برای JSON Server مشخص می‌کنند.
+ */
+    if (typeof dateFrom === "number") {
+        params.createdAt_gte = dateFrom;
+    }
+
+    if (typeof dateTo === "number") {
+        params.createdAt_lte = dateTo;
     }
 
     const accessToken =

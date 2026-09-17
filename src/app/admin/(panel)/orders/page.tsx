@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 
-import { Eye } from "lucide-react";
+import { endOfDay, startOfDay } from "date-fns";
+import { CalendarDays, Eye, X } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 
 import {
     Pagination,
@@ -15,6 +18,12 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
     Select,
@@ -80,6 +89,25 @@ function formatDate(timestamp: number) {
         minute: "2-digit",
     }).format(new Date(timestamp));
 }
+
+/*
+ * هدف:
+ * نمایش تاریخ انتخاب‌شده در فیلتر تاریخ با فرمت فارسی.
+ *
+ * محل استفاده:
+ * متن دکمه Date Range Picker.
+ *
+ * نحوه کار:
+ * Date دریافتی بدون ساعت و با فرمت تاریخ فارسی نمایش داده می‌شود.
+ */
+function formatFilterDate(date: Date) {
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(date);
+}
+
 /*
  * هدف:
  * تبدیل وضعیت فنی سفارش به متن فارسی قابل نمایش.
@@ -113,7 +141,7 @@ function getOrderStatusLabel(
 
 /*
  * هدف:
- * تبدیل وضعیت فنی پرداخت به Label فارسی.
+ * تبدیل وضعیت فنی پرداخت به متن فارسی.
  *
  * محل استفاده:
  * ستون وضعیت پرداخت در جدول Admin Orders.
@@ -152,14 +180,14 @@ export default function AdminOrdersPage() {
 
     /*
      * هدف:
-     * نگهداری فیلتر فعلی سفارش‌ها.
+     * نگهداری فیلتر وضعیت سفارش.
      *
      * محل استفاده:
-     * در Select بالای جدول و Query سفارش‌ها.
+     * Select وضعیت سفارش و Query سفارش‌ها.
      *
      * نحوه کار:
-     * با تغییر Filter، صفحه به 1 برمی‌گردد و React Query
-     * بر اساس پارامتر جدید اطلاعات را دریافت می‌کند.
+     * مقدار all یعنی تمام وضعیت‌ها و سایر مقادیر
+     * مستقیماً به Backend ارسال می‌شوند.
      */
     const [filter, setFilter] =
         useState<AdminOrderStatusFilter>(
@@ -167,16 +195,15 @@ export default function AdminOrdersPage() {
         );
 
     /*
- * هدف:
- * نگهداری فیلتر وضعیت پرداخت در صفحه سفارش‌های Admin.
- *
- * محل استفاده:
- * Select وضعیت پرداخت و Query مربوط به لیست سفارش‌ها.
- *
- * نحوه کار:
- * با تغییر مقدار، React Query به‌دلیل تغییر Query Key
- * درخواست جدید را با paymentStatus مناسب ارسال می‌کند.
- */
+     * هدف:
+     * نگهداری فیلتر وضعیت پرداخت.
+     *
+     * محل استفاده:
+     * Select وضعیت پرداخت و Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * مقدار all یعنی فیلتر پرداخت اعمال نمی‌شود.
+     */
     const [paymentFilter, setPaymentFilter] =
         useState<AdminPaymentStatusFilter>(
             "all",
@@ -184,14 +211,62 @@ export default function AdminOrdersPage() {
 
     /*
      * هدف:
-     * دریافت Server State مربوط به سفارش‌ها با React Query.
+     * نگهداری تاریخ یا بازه تاریخ انتخاب‌شده.
      *
      * محل استفاده:
-     * منبع اصلی اطلاعات Table و Pagination صفحه Admin Orders.
+     * Date Range Picker صفحه Admin Orders.
      *
      * نحوه کار:
-     * page، limit و filter به Hook داده می‌شوند.
-     * Hook مسئول Request، Cache، Loading و Error خواهد بود.
+     * اگر فقط from وجود داشته باشد همان روز فیلتر می‌شود.
+     * اگر from و to وجود داشته باشند کل بازه فیلتر می‌شود.
+     */
+    const [dateRange, setDateRange] =
+        useState<DateRange | undefined>();
+
+    /*
+     * هدف:
+     * تبدیل تاریخ شروع انتخاب‌شده به timestamp ابتدای روز.
+     *
+     * محل استفاده:
+     * پارامتر dateFrom در Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * ساعت تاریخ شروع روی ابتدای روز قرار می‌گیرد.
+     */
+    const dateFrom = dateRange?.from
+        ? startOfDay(
+            dateRange.from,
+        ).getTime()
+        : undefined;
+
+    /*
+     * هدف:
+     * تبدیل تاریخ پایان انتخاب‌شده به timestamp انتهای روز.
+     *
+     * محل استفاده:
+     * پارامتر dateTo در Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * اگر تاریخ پایان انتخاب نشده باشد،
+     * همان تاریخ شروع به‌عنوان انتهای روز استفاده می‌شود.
+     */
+    const dateTo = dateRange?.from
+        ? endOfDay(
+            dateRange.to ??
+            dateRange.from,
+        ).getTime()
+        : undefined;
+
+    /*
+     * هدف:
+     * دریافت Server State سفارش‌ها با React Query.
+     *
+     * محل استفاده:
+     * منبع اطلاعات Table و Pagination.
+     *
+     * نحوه کار:
+     * Pagination، وضعیت سفارش، وضعیت پرداخت و تاریخ
+     * همگی داخل Query Params و Query Key قرار می‌گیرند.
      */
     const {
         data,
@@ -202,30 +277,32 @@ export default function AdminOrdersPage() {
         limit: PAGE_SIZE,
         status: filter,
         paymentStatus: paymentFilter,
+        dateFrom,
+        dateTo,
     });
 
     /*
      * هدف:
-     * استخراج لیست سفارش‌ها از نتیجه React Query با مقدار پیش‌فرض امن.
+     * استخراج امن آرایه سفارش‌ها از Response.
      *
      * محل استفاده:
      * Table سفارش‌ها.
      *
      * نحوه کار:
-     * قبل از دریافت اولین Response، آرایه خالی استفاده می‌شود.
+     * پیش از دریافت Response آرایه خالی استفاده می‌شود.
      */
     const orders =
         data?.data ?? [];
 
     /*
      * هدف:
-     * تعیین تعداد صفحات Pagination از Response Backend.
+     * تعیین تعداد صفحات Pagination.
      *
      * محل استفاده:
-     * Pagination پایین جدول سفارش‌ها.
+     * Pagination پایین صفحه.
      *
      * نحوه کار:
-     * حداقل یک صفحه در نظر گرفته می‌شود تا Logic Pagination مقدار صفر نگیرد.
+     * حداقل یک صفحه در نظر گرفته می‌شود.
      */
     const totalPages = Math.max(
         data?.totalPages ?? 1,
@@ -234,14 +311,13 @@ export default function AdminOrdersPage() {
 
     /*
      * هدف:
-     * تغییر فیلتر وضعیت سفارش و بازگرداندن Pagination به صفحه اول.
+     * تغییر فیلتر وضعیت سفارش.
      *
      * محل استفاده:
-     * Select وضعیت سفارش در صفحه Admin Orders.
+     * Select وضعیت سفارش.
      *
      * نحوه کار:
-     * با تغییر Status، مقدار فیلتر در State ذخیره می‌شود
-     * و React Query بر اساس Query Key جدید داده مناسب را دریافت می‌کند.
+     * فیلتر تغییر می‌کند و Pagination به صفحه اول برمی‌گردد.
      */
     const handleFilterChange = (
         value: AdminOrderStatusFilter,
@@ -251,16 +327,15 @@ export default function AdminOrdersPage() {
     };
 
     /*
- * هدف:
- * تغییر فیلتر وضعیت پرداخت و بازگرداندن لیست به صفحه اول.
- *
- * محل استفاده:
- * Select وضعیت پرداخت در صفحه Admin Orders.
- *
- * نحوه کار:
- * مقدار جدید در State ذخیره می‌شود و Pagination ریست می‌شود
- * تا نتیجه فیلتر جدید از صفحه اول نمایش داده شود.
- */
+     * هدف:
+     * تغییر فیلتر وضعیت پرداخت.
+     *
+     * محل استفاده:
+     * Select وضعیت پرداخت.
+     *
+     * نحوه کار:
+     * فیلتر تغییر می‌کند و Pagination به صفحه اول برمی‌گردد.
+     */
     const handlePaymentFilterChange = (
         value: AdminPaymentStatusFilter,
     ) => {
@@ -270,13 +345,30 @@ export default function AdminOrdersPage() {
 
     /*
      * هدف:
+     * تغییر تاریخ یا بازه تاریخ انتخاب‌شده.
+     *
+     * محل استفاده:
+     * Calendar فیلتر تاریخ سفارش‌ها.
+     *
+     * نحوه کار:
+     * مقدار Calendar در State ذخیره شده و Pagination ریست می‌شود.
+     */
+    const handleDateRangeChange = (
+        range: DateRange | undefined,
+    ) => {
+        setDateRange(range);
+        setPage(1);
+    };
+
+    /*
+     * هدف:
      * کنترل تغییر صفحات بدون خروج از محدوده Pagination.
      *
      * محل استفاده:
-     * دکمه‌های Previous، Next و شماره صفحات.
+     * Previous، Next و شماره صفحات.
      *
      * نحوه کار:
-     * فقط Page معتبر و متفاوت از Page فعلی در State ذخیره می‌شود.
+     * فقط شماره صفحه معتبر در State ذخیره می‌شود.
      */
     const handlePageChange = (
         nextPage: number,
@@ -294,7 +386,7 @@ export default function AdminOrdersPage() {
 
     return (
         <section className="space-y-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                     <p className="section-eyebrow">
                         ORDERS
@@ -310,28 +402,27 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/*
-     * هدف:
-     * نمایش فیلترهای وضعیت سفارش و وضعیت پرداخت در کنار یکدیگر.
-     *
-     * محل استفاده:
-     * بالای جدول سفارش‌های Admin.
-     *
-     * نحوه کار:
-     * در موبایل فیلترها زیر هم نمایش داده می‌شوند
-     * و در اندازه‌های بزرگ‌تر کنار هم قرار می‌گیرند.
-     */}
-                <div className="grid w-full gap-4 sm:grid-cols-2 lg:w-auto">
+                 * هدف:
+                 * نمایش همه فیلترهای Admin Orders در یک بخش منظم.
+                 *
+                 * محل استفاده:
+                 * بالای جدول سفارش‌ها.
+                 *
+                 * نحوه کار:
+                 * در موبایل تک‌ستونه، در Tablet دو ستونه
+                 * و در صفحات بزرگ سه ستونه نمایش داده می‌شود.
+                 */}
+                <div className="grid w-full gap-4 sm:grid-cols-2 xl:w-auto xl:grid-cols-3">
                     {/*
-         * هدف:
-         * فیلتر کردن سفارش‌ها بر اساس مرحله چرخه سفارش.
-         *
-         * محل استفاده:
-         * فیلتر اول صفحه Admin Orders.
-         *
-         * نحوه کار:
-         * مقدار انتخاب‌شده داخل filter ذخیره می‌شود
-         * و React Query بر اساس status جدید داده را دریافت می‌کند.
-         */}
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس وضعیت چرخه سفارش.
+                     *
+                     * محل استفاده:
+                     * اولین فیلتر صفحه.
+                     *
+                     * نحوه کار:
+                     * مقدار انتخاب‌شده به status Query تبدیل می‌شود.
+                     */}
                     <div className="w-full sm:min-w-[220px]">
                         <p className="mb-2 text-sm font-medium">
                             وضعیت سفارش
@@ -378,16 +469,15 @@ export default function AdminOrdersPage() {
                     </div>
 
                     {/*
-         * هدف:
-         * فیلتر کردن سفارش‌ها بر اساس وضعیت پرداخت.
-         *
-         * محل استفاده:
-         * فیلتر دوم صفحه Admin Orders.
-         *
-         * نحوه کار:
-         * مقدار انتخاب‌شده داخل paymentFilter ذخیره می‌شود
-         * و React Query درخواست جدید را با paymentStatus ارسال می‌کند.
-         */}
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس وضعیت پرداخت.
+                     *
+                     * محل استفاده:
+                     * دومین فیلتر صفحه.
+                     *
+                     * نحوه کار:
+                     * مقدار انتخاب‌شده به paymentStatus Query تبدیل می‌شود.
+                     */}
                     <div className="w-full sm:min-w-[220px]">
                         <p className="mb-2 text-sm font-medium">
                             وضعیت پرداخت
@@ -423,6 +513,85 @@ export default function AdminOrdersPage() {
                                 </SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    {/*
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس یک روز یا بازه تاریخ.
+                     *
+                     * محل استفاده:
+                     * سومین فیلتر صفحه Admin Orders.
+                     *
+                     * نحوه کار:
+                     * Calendar در حالت range اجرا می‌شود.
+                     * یک روز انتخاب شود همان روز فیلتر می‌شود.
+                     * دو روز انتخاب شوند بازه کامل فیلتر می‌شود.
+                     */}
+                    <div className="w-full sm:min-w-[280px]">
+                        <p className="mb-2 text-sm font-medium">
+                            تاریخ ثبت
+                        </p>
+
+                        <div className="flex gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button type="button" variant="outline" className="min-w-0 flex-1 justify-start gap-2 font-normal">
+                                        <CalendarDays className="size-4 shrink-0" />
+
+                                        {dateRange?.from ? (
+                                            dateRange.to &&
+                                                dateRange.to.getTime() !==
+                                                dateRange.from.getTime() ? (
+                                                <span className="truncate">
+                                                    {formatFilterDate(
+                                                        dateRange.from,
+                                                    )}
+                                                    {" تا "}
+                                                    {formatFilterDate(
+                                                        dateRange.to,
+                                                    )}
+                                                </span>
+                                            ) : (
+                                                <span className="truncate">
+                                                    {formatFilterDate(
+                                                        dateRange.from,
+                                                    )}
+                                                </span>
+                                            )
+                                        ) : (
+                                            <span className="truncate text-muted-foreground">
+                                                انتخاب تاریخ
+                                            </span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+
+                                <PopoverContent dir="rtl" align="end" className="w-auto p-0">
+                                    <Calendar
+                                        mode="range"
+                                        selected={dateRange}
+                                        onSelect={handleDateRangeChange}
+                                        numberOfMonths={1}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+
+                            {dateRange?.from && (
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    title="پاک کردن فیلتر تاریخ"
+                                    onClick={() =>
+                                        handleDateRangeChange(
+                                            undefined,
+                                        )
+                                    }
+                                >
+                                    <X className="size-4" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
