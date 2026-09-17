@@ -39,6 +39,7 @@ import {
 
 import {
     type AdminOrderStatusFilter,
+    type AdminPaymentStatusFilter,
 } from "@/services/orders.service";
 
 import type { Order } from "@/types/order";
@@ -166,6 +167,22 @@ export default function AdminOrdersPage() {
         );
 
     /*
+ * هدف:
+ * نگهداری فیلتر وضعیت پرداخت در صفحه سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * Select وضعیت پرداخت و Query مربوط به لیست سفارش‌ها.
+ *
+ * نحوه کار:
+ * با تغییر مقدار، React Query به‌دلیل تغییر Query Key
+ * درخواست جدید را با paymentStatus مناسب ارسال می‌کند.
+ */
+    const [paymentFilter, setPaymentFilter] =
+        useState<AdminPaymentStatusFilter>(
+            "all",
+        );
+
+    /*
      * هدف:
      * دریافت Server State مربوط به سفارش‌ها با React Query.
      *
@@ -184,6 +201,7 @@ export default function AdminOrdersPage() {
         page,
         limit: PAGE_SIZE,
         status: filter,
+        paymentStatus: paymentFilter,
     });
 
     /*
@@ -233,6 +251,24 @@ export default function AdminOrdersPage() {
     };
 
     /*
+ * هدف:
+ * تغییر فیلتر وضعیت پرداخت و بازگرداندن لیست به صفحه اول.
+ *
+ * محل استفاده:
+ * Select وضعیت پرداخت در صفحه Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار جدید در State ذخیره می‌شود و Pagination ریست می‌شود
+ * تا نتیجه فیلتر جدید از صفحه اول نمایش داده شود.
+ */
+    const handlePaymentFilterChange = (
+        value: AdminPaymentStatusFilter,
+    ) => {
+        setPaymentFilter(value);
+        setPage(1);
+    };
+
+    /*
      * هدف:
      * کنترل تغییر صفحات بدون خروج از محدوده Pagination.
      *
@@ -258,7 +294,7 @@ export default function AdminOrdersPage() {
 
     return (
         <section className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p className="section-eyebrow">
                         ORDERS
@@ -273,49 +309,121 @@ export default function AdminOrdersPage() {
                     </p>
                 </div>
 
-                <div className="w-full sm:w-56">
-                    <p className="mb-2 text-sm font-medium">
-                        وضعیت تحویل
-                    </p>
+                {/*
+     * هدف:
+     * نمایش فیلترهای وضعیت سفارش و وضعیت پرداخت در کنار یکدیگر.
+     *
+     * محل استفاده:
+     * بالای جدول سفارش‌های Admin.
+     *
+     * نحوه کار:
+     * در موبایل فیلترها زیر هم نمایش داده می‌شوند
+     * و در اندازه‌های بزرگ‌تر کنار هم قرار می‌گیرند.
+     */}
+                <div className="grid w-full gap-4 sm:grid-cols-2 lg:w-auto">
+                    {/*
+         * هدف:
+         * فیلتر کردن سفارش‌ها بر اساس مرحله چرخه سفارش.
+         *
+         * محل استفاده:
+         * فیلتر اول صفحه Admin Orders.
+         *
+         * نحوه کار:
+         * مقدار انتخاب‌شده داخل filter ذخیره می‌شود
+         * و React Query بر اساس status جدید داده را دریافت می‌کند.
+         */}
+                    <div className="w-full sm:min-w-[220px]">
+                        <p className="mb-2 text-sm font-medium">
+                            وضعیت سفارش
+                        </p>
 
-                    <Select
-                        value={filter}
-                        onValueChange={(value) =>
-                            handleFilterChange(
-                                value as AdminOrderStatusFilter,
-                            )
-                        }
-                    >
-                        <SelectTrigger className="w-full sm:w-[220px]">
-                            <SelectValue placeholder="وضعیت سفارش" />
-                        </SelectTrigger>
+                        <Select
+                            value={filter}
+                            onValueChange={(value) =>
+                                handleFilterChange(
+                                    value as AdminOrderStatusFilter,
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="وضعیت سفارش" />
+                            </SelectTrigger>
 
-                        <SelectContent dir="rtl">
-                            <SelectItem value="all">
-                                همه سفارش‌ها
-                            </SelectItem>
+                            <SelectContent dir="rtl">
+                                <SelectItem value="all">
+                                    همه سفارش‌ها
+                                </SelectItem>
 
-                            <SelectItem value="pending">
-                                در انتظار بررسی
-                            </SelectItem>
+                                <SelectItem value="pending">
+                                    در انتظار بررسی
+                                </SelectItem>
 
-                            <SelectItem value="processing">
-                                در حال پردازش
-                            </SelectItem>
+                                <SelectItem value="processing">
+                                    در حال پردازش
+                                </SelectItem>
 
-                            <SelectItem value="shipped">
-                                ارسال شده
-                            </SelectItem>
+                                <SelectItem value="shipped">
+                                    ارسال شده
+                                </SelectItem>
 
-                            <SelectItem value="delivered">
-                                تحویل شده
-                            </SelectItem>
+                                <SelectItem value="delivered">
+                                    تحویل شده
+                                </SelectItem>
 
-                            <SelectItem value="cancelled">
-                                لغو شده
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
+                                <SelectItem value="cancelled">
+                                    لغو شده
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/*
+         * هدف:
+         * فیلتر کردن سفارش‌ها بر اساس وضعیت پرداخت.
+         *
+         * محل استفاده:
+         * فیلتر دوم صفحه Admin Orders.
+         *
+         * نحوه کار:
+         * مقدار انتخاب‌شده داخل paymentFilter ذخیره می‌شود
+         * و React Query درخواست جدید را با paymentStatus ارسال می‌کند.
+         */}
+                    <div className="w-full sm:min-w-[220px]">
+                        <p className="mb-2 text-sm font-medium">
+                            وضعیت پرداخت
+                        </p>
+
+                        <Select
+                            value={paymentFilter}
+                            onValueChange={(value) =>
+                                handlePaymentFilterChange(
+                                    value as AdminPaymentStatusFilter,
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="وضعیت پرداخت" />
+                            </SelectTrigger>
+
+                            <SelectContent dir="rtl">
+                                <SelectItem value="all">
+                                    همه وضعیت‌های پرداخت
+                                </SelectItem>
+
+                                <SelectItem value="pending">
+                                    در انتظار پرداخت
+                                </SelectItem>
+
+                                <SelectItem value="paid">
+                                    پرداخت موفق
+                                </SelectItem>
+
+                                <SelectItem value="failed">
+                                    پرداخت ناموفق
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { apiClient } from "@/services/api/api-client";
 import { getAdminAccessToken } from "@/services/auth.service";
-import { CreateOrderPayload, Order, OrderStatus } from "@/types/order";
+import { CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
 import { PaginatedResult } from "@/types/pagination";
 
 
@@ -20,10 +20,26 @@ export type AdminOrderStatusFilter =
     | "all"
     | OrderStatus;
 
+
+/*
+ * هدف:
+ * تعریف مقادیر قابل استفاده برای فیلتر وضعیت پرداخت سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار all یعنی فیلتر پرداخت اعمال نمی‌شود.
+ * سایر مقادیر مستقیماً از PaymentStatus گرفته می‌شوند.
+ */
+export type AdminPaymentStatusFilter =
+    | "all"
+    | PaymentStatus;
 export interface GetAdminOrdersParams {
     page?: number;
     limit?: number;
     status?: AdminOrderStatusFilter;
+    paymentStatus?: AdminPaymentStatusFilter;
 }
 
 export async function createOrder(
@@ -66,6 +82,7 @@ export async function getAdminOrders({
     page = 1,
     limit = 10,
     status = "all",
+    paymentStatus = "all",
 }: GetAdminOrdersParams = {}): Promise<
     PaginatedResult<Order>
 > {
@@ -91,6 +108,22 @@ export async function getAdminOrders({
      */
     if (status !== "all") {
         params.status = status;
+    }
+
+    /*
+ * هدف:
+ * اعمال فیلتر وضعیت پرداخت روی درخواست سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * داخل getAdminOrders قبل از ارسال درخواست GET.
+ *
+ * نحوه کار:
+ * اگر all انتخاب نشده باشد، مقدار paymentStatus
+ * به Query Params اضافه می‌شود تا Backend فقط
+ * سفارش‌های دارای همان وضعیت پرداخت را برگرداند.
+ */
+    if (paymentStatus !== "all") {
+        params.paymentStatus = paymentStatus;
     }
 
     const accessToken =
