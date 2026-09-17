@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "backend": "node server/server.js",
+    "test": "node --test tests/*.test.cjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

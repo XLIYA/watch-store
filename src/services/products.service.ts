@@ -1,3 +1,5 @@
+import { endpoints } from "@/config/api";
+import { toPaginatedResult } from "@/services/api/pagination";
 import { apiClient } from "@/services/api/api-client";
 
 import type { Product } from "@/types/product";
@@ -33,7 +35,7 @@ export async function getProducts({
   maxPrice,
   sort = "newest",
   search,
-}: GetProductsParams = {}): Promise<PaginatedResult<Product>> {
+}: GetProductsParams = {}, signal?: AbortSignal): Promise<PaginatedResult<Product>> {
   const params: Record<string, string | number> = {
     _page: page,
     _limit: limit,
@@ -82,35 +84,27 @@ export async function getProducts({
       break;
   }
 
-  const response = await apiClient.get<Product[]>("/products", {
+  const response = await apiClient.get<Product[]>(endpoints.products, {
     params,
+    signal,
   });
 
-  const total = Number(
-    response.headers["x-total-count"] ?? response.data.length,
-  );
-
-  return {
-    data: response.data,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  };
+  return toPaginatedResult(response.data, response.headers["x-total-count"], page, limit);
 }
 
 export async function getProductById(
   productId: number,
+  signal?: AbortSignal,
 ): Promise<Product> {
   const response = await apiClient.get<Product>(
-    `/products/${productId}`,
+    endpoints.product(productId), { signal },
   );
 
   return response.data;
 }
 
 export async function getHeroProducts(): Promise<Product[]> {
-  const response = await apiClient.get<Product[]>("/products", {
+  const response = await apiClient.get<Product[]>(endpoints.products, {
     params: {
       isHero: true,
       _sort: "heroOrder",
@@ -125,7 +119,7 @@ export async function getPopularProducts(
   limit = 6,
 ): Promise<Product[]> {
   const response = await apiClient.get<Product[]>(
-    "/products",
+    endpoints.products,
     {
       params: {
         _sort: "soldCount",

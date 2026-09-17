@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/sidebar";
 
 import { AdminSidebar } from "@/app/admin/(panel)/_components/admin-sidebar";
-import { useHydrated } from "@/hooks/use-hydrated";
-import { hasAdminSession } from "@/services/auth.service";
+import { useAdminSession } from "@/features/auth/use-admin-session";
+import { getApiErrorMessage } from "@/services/api/api-error";
+import { Button } from "@/components/ui/button";
 
 export default function AdminPanelLayout({
     children,
@@ -19,37 +20,33 @@ export default function AdminPanelLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const isHydrated = useHydrated();
-
-    const hasSession =
-        isHydrated && hasAdminSession();
+    const { data: session, isPending, isError, error, refetch } = useAdminSession();
+    const hasSession = session?.user.role === "admin";
 
     useEffect(() => {
         if (
-            isHydrated &&
+            !isPending && !isError &&
             !hasSession
         ) {
             router.replace("/admin/login");
         }
     }, [
-        isHydrated,
+        isPending,
+        isError,
         hasSession,
         router,
     ]);
 
-    if (
-        !isHydrated ||
-        !hasSession
-    ) {
-        return null;
-    }
+    // قطع شبکه با خروج از حساب فرق دارد؛ فرصت retry می‌دهیم و cookie را حذف نمی‌کنیم.
+    if (isError) return <main className="p-8 text-center" role="alert"><p>{getApiErrorMessage(error)}</p><Button className="mt-4" onClick={() => void refetch()}>تلاش دوباره</Button></main>;
+    if (isPending || !hasSession) return <main className="p-8 text-center" role="status">در حال بررسی نشست مدیریت...</main>;
 
     return (
-        <SidebarProvider dir="rtl">
+        <SidebarProvider dir="rtl" className="admin-shell">
             <AdminSidebar />
 
             <SidebarInset>
-                <header className="flex h-16 items-center gap-3 border-b border-border px-4 lg:px-6">
+                <header className="sticky top-0 z-20 flex h-20 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur lg:px-8">
                     <SidebarTrigger />
 
                     <div className="h-5 w-px bg-border" />
@@ -59,7 +56,7 @@ export default function AdminPanelLayout({
                     </p>
                 </header>
 
-                <main className="flex-1 p-4 md:p-6 lg:p-8">
+                <main className="admin-content mx-auto w-full max-w-screen-2xl flex-1 p-4 md:p-6 lg:p-8">
                     {children}
                 </main>
             </SidebarInset>

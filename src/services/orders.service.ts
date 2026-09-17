@@ -1,37 +1,13 @@
 import { apiClient } from "@/services/api/api-client";
-import { getAdminAccessToken } from "@/services/auth.service";
+import { endpoints } from "@/config/api";
+import { toPaginatedResult } from "@/services/api/pagination";
 import { CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
 import { PaginatedResult } from "@/types/pagination";
 
-
-/*
- * هدف:
- * تعریف مقادیر قابل استفاده برای فیلتر وضعیت سفارش‌های Admin.
- *
- * محل استفاده:
- * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
- *
- * نحوه کار:
- * مقدار all یعنی هیچ فیلتر Status به Backend ارسال نمی‌شود.
- * سایر مقادیر مستقیماً از OrderStatus گرفته می‌شوند تا
- * Type فیلتر همیشه با مدل اصلی سفارش هماهنگ باقی بماند.
- */
 export type AdminOrderStatusFilter =
     | "all"
     | OrderStatus;
 
-
-/*
- * هدف:
- * تعریف مقادیر قابل استفاده برای فیلتر وضعیت پرداخت سفارش‌های Admin.
- *
- * محل استفاده:
- * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
- *
- * نحوه کار:
- * مقدار all یعنی فیلتر پرداخت اعمال نمی‌شود.
- * سایر مقادیر مستقیماً از PaymentStatus گرفته می‌شوند.
- */
 export type AdminPaymentStatusFilter =
     | "all"
     | PaymentStatus;
@@ -49,7 +25,7 @@ export async function createOrder(
 ): Promise<Order> {
     const response =
         await apiClient.post<Order>(
-            "/orders",
+            endpoints.orders,
             payload,
         );
 
@@ -61,7 +37,7 @@ export async function getOrderById(
 ): Promise<Order> {
     const response =
         await apiClient.get<Order>(
-            `/orders/${orderId}`,
+            endpoints.order(orderId), { requiresAuth: true },
         );
 
     return response.data;
@@ -73,8 +49,9 @@ export async function updateOrder(
 ): Promise<Order> {
     const response =
         await apiClient.patch<Order>(
-            `/orders/${orderId}`,
+            endpoints.order(orderId),
             payload,
+            { requiresAuth: true },
         );
 
     return response.data;
@@ -87,7 +64,7 @@ export async function getAdminOrders({
     paymentStatus = "all",
     dateFrom,
     dateTo,
-}: GetAdminOrdersParams = {}): Promise<
+}: GetAdminOrdersParams = {}, signal?: AbortSignal): Promise<
     PaginatedResult<Order>
 > {
     const params: Record<
@@ -99,49 +76,15 @@ export async function getAdminOrders({
         _sort: "createdAt",
         _order: "desc",
     };
-    /*
-     * هدف:
-     * اعمال فیلتر وضعیت سفارش روی درخواست Backend.
-     *
-     * محل استفاده:
-     * داخل getAdminOrders قبل از ارسال درخواست GET.
-     *
-     * نحوه کار:
-     * اگر all انتخاب شده باشد هیچ پارامتر status ارسال نمی‌شود.
-     * در غیر این صورت JSON Server فقط سفارش‌های همان وضعیت را برمی‌گرداند.
-     */
+
     if (status !== "all") {
         params.status = status;
     }
 
-    /*
- * هدف:
- * اعمال فیلتر وضعیت پرداخت روی درخواست سفارش‌های Admin.
- *
- * محل استفاده:
- * داخل getAdminOrders قبل از ارسال درخواست GET.
- *
- * نحوه کار:
- * اگر all انتخاب نشده باشد، مقدار paymentStatus
- * به Query Params اضافه می‌شود تا Backend فقط
- * سفارش‌های دارای همان وضعیت پرداخت را برگرداند.
- */
     if (paymentStatus !== "all") {
         params.paymentStatus = paymentStatus;
     }
 
-    /*
- * هدف:
- * اعمال فیلتر تاریخ ثبت سفارش روی درخواست Admin Orders.
- *
- * محل استفاده:
- * داخل getAdminOrders قبل از ارسال درخواست به Backend.
- *
- * نحوه کار:
- * dateFrom و dateTo به‌صورت timestamp دریافت می‌شوند.
- * createdAt_gte حداقل تاریخ و createdAt_lte حداکثر تاریخ را
- * برای JSON Server مشخص می‌کنند.
- */
     if (typeof dateFrom === "number") {
         params.createdAt_gte = dateFrom;
     }
@@ -150,39 +93,10 @@ export async function getAdminOrders({
         params.createdAt_lte = dateTo;
     }
 
-    const accessToken =
-        getAdminAccessToken();
-
-    const response =
-        await apiClient.get<Order[]>(
-            "/orders",
-            {
-                params,
-
-                headers: accessToken
-                    ? {
-                        token:
-                            accessToken,
-                    }
-                    : undefined,
-            },
-        );
-
-    const total = Number(
-        response.headers[
-        "x-total-count"
-        ] ??
-        response.data.length,
-    );
-
-    return {
-        data: response.data,
-        total,
-        page,
-        limit,
-        totalPages:
-            Math.ceil(
-                total / limit,
-            ),
-    };
+    const response = await apiClient.get<Order[]>(endpoints.orders, {
+        params,
+        signal,
+        requiresAuth: true,
+    });
+    return toPaginatedResult(response.data, response.headers["x-total-count"], page, limit);
 }
