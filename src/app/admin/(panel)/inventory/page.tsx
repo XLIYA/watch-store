@@ -32,6 +32,7 @@ import {
 import { getProducts } from "@/services/products.service";
 
 import type { Product } from "@/types/product";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const PAGE_SIZE = 10;
 
@@ -57,6 +58,41 @@ export default function AdminInventoryPage() {
     const [appliedSearch, setAppliedSearch] =
         useState("");
 
+    /*
+ * هدف:
+ * جلوگیری از ارسال Request در هر بار تایپ کاربر.
+ *
+ * محل استفاده:
+ * Search صفحه Admin Inventory.
+ *
+ * نحوه کار:
+ * مقدار search پس از 400 میلی‌ثانیه توقف تایپ
+ * به مقدار Debounce شده تبدیل می‌شود.
+ */
+    const debouncedSearch =
+        useDebouncedValue(
+            search.trim(),
+            400,
+        );
+
+    /*
+     * هدف:
+     * اعمال Search جدید روی لیست موجودی.
+     *
+     * محل استفاده:
+     * بین Search Input و دریافت محصولات Inventory.
+     *
+     * نحوه کار:
+     * پس از پایان Debounce، صفحه به 1 برمی‌گردد
+     * و مقدار جستجوی API به‌روزرسانی می‌شود.
+     */
+    useEffect(() => {
+        setPage(1);
+        setAppliedSearch(
+            debouncedSearch,
+        );
+    }, [debouncedSearch]);
+
     const [isLoading, setIsLoading] =
         useState(true);
 
@@ -65,6 +101,18 @@ export default function AdminInventoryPage() {
 
     useEffect(() => {
         let isCancelled = false;
+
+        /*
+         * هدف:
+         * فعال کردن Loading برای هر درخواست جدید Inventory.
+         *
+         * محل استفاده:
+         * قبل از getProducts.
+         *
+         * نحوه کار:
+         * تغییر Search یا Page باعث نمایش Loading می‌شود.
+         */
+        setIsLoading(true);
 
         getProducts({
             page,
@@ -120,15 +168,6 @@ export default function AdminInventoryPage() {
         appliedSearch,
     ]);
 
-    const handleSearch = () => {
-        setIsLoading(true);
-        setPage(1);
-
-        setAppliedSearch(
-            search.trim(),
-        );
-    };
-
     const handlePageChange = (
         nextPage: number,
     ) => {
@@ -139,8 +178,6 @@ export default function AdminInventoryPage() {
         ) {
             return;
         }
-
-        setIsLoading(true);
         setPage(nextPage);
     };
 
@@ -160,42 +197,31 @@ export default function AdminInventoryPage() {
                 </p>
             </div>
 
+            {/*
+ * هدف:
+ * جستجوی خودکار محصولات Inventory بدون دکمه Search.
+ *
+ * محل استفاده:
+ * بالای جدول قیمت و موجودی.
+ *
+ * نحوه کار:
+ * مقدار Input در search ذخیره می‌شود
+ * و Debounce مسئول زمان اجرای درخواست است.
+ */}
             <div className="border p-4">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <div className="relative flex-1">
-                        <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="relative">
+                    <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-                        <Input
-                            value={search}
-                            onChange={(event) =>
-                                setSearch(
-                                    event.target.value,
-                                )
-                            }
-                            onKeyDown={(event) => {
-                                if (
-                                    event.key ===
-                                    "Enter"
-                                ) {
-                                    handleSearch();
-                                }
-                            }}
-                            placeholder="جستجوی نام یا برند محصول..."
-                            className="pr-10"
-                        />
-                    </div>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={
-                            handleSearch
+                    <Input
+                        value={search}
+                        onChange={(event) =>
+                            setSearch(
+                                event.target.value,
+                            )
                         }
-                    >
-                        <Search className="size-4" />
-
-                        جستجو
-                    </Button>
+                        placeholder="جستجوی نام یا برند محصول..."
+                        className="pr-10"
+                    />
                 </div>
             </div>
 

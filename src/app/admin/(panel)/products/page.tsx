@@ -48,6 +48,7 @@ import {
 } from "@/services/categories.service";
 
 import type { Product } from "@/types/product";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 const PAGE_SIZE = 10;
 
@@ -75,6 +76,41 @@ export default function AdminProductsPage() {
     const [appliedSearch, setAppliedSearch] =
         useState("");
 
+    /*
+ * هدف:
+ * جلوگیری از ارسال درخواست API در هر بار تایپ کاربر.
+ *
+ * محل استفاده:
+ * Search صفحه Admin Products.
+ *
+ * نحوه کار:
+ * مقدار search پس از 400 میلی‌ثانیه توقف تایپ
+ * به مقدار Debounce شده تبدیل می‌شود.
+ */
+    const debouncedSearch =
+        useDebouncedValue(
+            search.trim(),
+            400,
+        );
+
+    /*
+     * هدف:
+     * اعمال مقدار Debounce شده روی جستجوی محصولات.
+     *
+     * محل استفاده:
+     * بین Search Input و Query دریافت محصولات.
+     *
+     * نحوه کار:
+     * بعد از پایان Debounce، Pagination به صفحه اول
+     * برمی‌گردد و appliedSearch به‌روزرسانی می‌شود.
+     */
+    useEffect(() => {
+        setPage(1);
+        setAppliedSearch(
+            debouncedSearch,
+        );
+    }, [debouncedSearch]);
+
     const [category, setCategory] =
         useState("all");
 
@@ -97,6 +133,18 @@ export default function AdminProductsPage() {
 
     useEffect(() => {
         let isCancelled = false;
+
+        /*
+         * هدف:
+         * نمایش Loading هنگام تغییر Pagination، Category یا Search.
+         *
+         * محل استفاده:
+         * قبل از ارسال درخواست دریافت محصولات.
+         *
+         * نحوه کار:
+         * هر Request جدید صفحه را وارد وضعیت Loading می‌کند.
+         */
+        setIsLoading(true);
 
         getProducts({
             page,
@@ -170,18 +218,9 @@ export default function AdminProductsPage() {
             );
         }, [categories]);
 
-    const handleSearch = () => {
-        setIsLoading(true);
-        setPage(1);
-        setAppliedSearch(
-            search.trim(),
-        );
-    };
-
     const handleCategoryChange = (
         value: string,
     ) => {
-        setIsLoading(true);
         setPage(1);
         setCategory(value);
     };
@@ -196,8 +235,6 @@ export default function AdminProductsPage() {
         ) {
             return;
         }
-
-        setIsLoading(true);
         setPage(nextPage);
     };
 
@@ -228,7 +265,18 @@ export default function AdminProductsPage() {
                 </Button>
             </div>
 
-            <div className="grid gap-4 border p-4 md:grid-cols-[1fr_220px_auto]">
+            <div className="grid gap-4 border p-4 md:grid-cols-[1fr_220px]">
+                {/*
+ * هدف:
+ * جستجوی خودکار محصولات بدون نیاز به دکمه Search.
+ *
+ * محل استفاده:
+ * بخش فیلترهای Admin Products.
+ *
+ * نحوه کار:
+ * مقدار Input بلافاصله در search قرار می‌گیرد،
+ * اما API فقط پس از Debounce اجرا می‌شود.
+ */}
                 <div>
                     <p className="mb-2 text-sm font-medium">
                         جستجوی محصول
@@ -244,14 +292,6 @@ export default function AdminProductsPage() {
                                     event.target.value,
                                 )
                             }
-                            onKeyDown={(event) => {
-                                if (
-                                    event.key ===
-                                    "Enter"
-                                ) {
-                                    handleSearch();
-                                }
-                            }}
                             placeholder="نام یا برند محصول..."
                             className="pr-10"
                         />
@@ -296,21 +336,6 @@ export default function AdminProductsPage() {
                             )}
                         </SelectContent>
                     </Select>
-                </div>
-
-                <div className="flex items-end">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={
-                            handleSearch
-                        }
-                        className="w-full md:w-auto"
-                    >
-                        <Search className="size-4" />
-
-                        جستجو
-                    </Button>
                 </div>
             </div>
 
