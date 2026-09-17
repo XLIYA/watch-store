@@ -74,11 +74,23 @@ const addresses = [
     "تهران، نیاوران، خیابان باهنر",
 ];
 
+/*
+ * هدف:
+ * تولید سفارش‌های تست با تمام وضعیت‌های واقعی Order.
+ *
+ * محل استفاده:
+ * هنگام اجرای seed-orders.mjs برای ساخت داده آزمایشی.
+ *
+ * نحوه کار:
+ * وضعیت‌ها به شکل چرخشی بین سفارش‌های Seed توزیع می‌شوند
+ * تا تمام حالت‌های pending، processing، shipped،
+ * delivered و cancelled در داده تست وجود داشته باشند.
+ */
 const statuses = [
-    "pending_payment",
+    "pending",
     "processing",
-    "completed",
-    "completed",
+    "shipped",
+    "delivered",
     "processing",
     "cancelled",
 ];
@@ -95,15 +107,29 @@ function toDateString(date) {
     ].join("-");
 }
 
+/*
+ * هدف:
+ * تعیین Payment Status بر اساس وضعیت Order در داده‌های تست.
+ *
+ * محل استفاده:
+ * هنگام ساخت هر سفارش Demo.
+ *
+ * نحوه کار:
+ * سفارش pending هنوز پرداخت نشده است.
+ * سفارش‌های processing، shipped و delivered پرداخت شده‌اند.
+ * سفارش cancelled در داده تست پرداخت ناموفق دارد.
+ */
 function getPaymentStatus(status) {
     switch (status) {
-        case "completed":
         case "processing":
+        case "shipped":
+        case "delivered":
             return "paid";
 
         case "cancelled":
             return "failed";
 
+        case "pending":
         default:
             return "pending";
     }
@@ -270,6 +296,18 @@ function createOrder(index) {
             (index % 5),
     );
 
+    /*
+     * هدف:
+     * ثبت زمان پرداخت فقط برای سفارش‌های واقعاً پرداخت‌شده.
+     *
+     * محل استفاده:
+     * فیلد paidAt سفارش‌های Seed.
+     *
+     * نحوه کار:
+     * اگر paymentStatus برابر paid باشد،
+     * زمان پرداخت 30 دقیقه بعد از createdAt ثبت می‌شود.
+     * در سایر وضعیت‌ها paidAt برابر null است.
+     */
     const paidAt =
         paymentStatus === "paid"
             ? createdAt +

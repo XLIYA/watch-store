@@ -79,7 +79,7 @@ export async function getAdminOrders({
         "delivered"
     ) {
         params.status =
-            "completed";
+            "delivered";
     }
 
     if (
@@ -87,7 +87,7 @@ export async function getAdminOrders({
         "undelivered"
     ) {
         params.status_ne =
-            "completed";
+            "delivered";
     }
 
     const accessToken =

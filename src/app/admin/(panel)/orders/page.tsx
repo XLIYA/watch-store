@@ -79,29 +79,30 @@ function formatDate(timestamp: number) {
         minute: "2-digit",
     }).format(new Date(timestamp));
 }
-
 /*
  * هدف:
- * تبدیل مقدار فنی status سفارش به Label فارسی.
+ * تبدیل وضعیت فنی سفارش به متن فارسی قابل نمایش.
  *
  * محل استفاده:
  * ستون وضعیت سفارش در جدول Admin Orders.
  *
  * نحوه کار:
- * مقدار status دریافتی از Backend با Type اصلی Order تطبیق داده می‌شود
- * و Label مناسب فارسی برگردانده می‌شود.
+ * هر مقدار OrderStatus به Label فارسی متناظر تبدیل می‌شود.
  */
 function getOrderStatusLabel(
     status: Order["status"],
 ) {
     switch (status) {
-        case "pending_payment":
-            return "در انتظار پرداخت";
+        case "pending":
+            return "در انتظار بررسی";
 
         case "processing":
             return "در حال پردازش";
 
-        case "completed":
+        case "shipped":
+            return "ارسال شده";
+
+        case "delivered":
             return "تحویل شده";
 
         case "cancelled":
@@ -395,7 +396,7 @@ export default function AdminOrdersPage() {
                                         <Badge
                                             variant={
                                                 order.status ===
-                                                    "completed"
+                                                    "delivered"
                                                     ? "default"
                                                     : "secondary"
                                             }

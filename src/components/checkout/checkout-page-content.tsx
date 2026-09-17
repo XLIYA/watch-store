@@ -428,11 +428,20 @@ export function CheckoutPageContent() {
 
                     totalPrice,
 
-                    status:
-                        "pending_payment",
+                    /*
+ * هدف:
+ * ایجاد سفارش جدید در وضعیت اولیه چرخه سفارش.
+ *
+ * محل استفاده:
+ * هنگام ثبت نهایی سفارش در Checkout.
+ *
+ * نحوه کار:
+ * وضعیت سفارش مستقل از وضعیت پرداخت نگهداری می‌شود.
+ * سفارش جدید pending است و پرداخت آن نیز در ابتدا pending خواهد بود.
+ */
+                    status: "pending",
 
-                    paymentStatus:
-                        "pending",
+                    paymentStatus: "pending",
 
                     createdAt:
                         Date.now(),
