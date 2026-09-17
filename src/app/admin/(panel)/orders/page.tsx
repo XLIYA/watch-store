@@ -37,8 +37,8 @@ import {
     useAdminOrdersQuery,
 } from "@/features/admin/orders/queries/use-admin-orders-query";
 
-import type {
-    AdminOrderDeliveryFilter,
+import {
+    type AdminOrderStatusFilter,
 } from "@/services/orders.service";
 
 import type { Order } from "@/types/order";
@@ -161,7 +161,7 @@ export default function AdminOrdersPage() {
      * بر اساس پارامتر جدید اطلاعات را دریافت می‌کند.
      */
     const [filter, setFilter] =
-        useState<AdminOrderDeliveryFilter>(
+        useState<AdminOrderStatusFilter>(
             "all",
         );
 
@@ -183,7 +183,7 @@ export default function AdminOrdersPage() {
     } = useAdminOrdersQuery({
         page,
         limit: PAGE_SIZE,
-        deliveryStatus: filter,
+        status: filter,
     });
 
     /*
@@ -216,20 +216,20 @@ export default function AdminOrdersPage() {
 
     /*
      * هدف:
-     * تغییر فیلتر و شروع نتایج از صفحه اول.
+     * تغییر فیلتر وضعیت سفارش و بازگرداندن Pagination به صفحه اول.
      *
      * محل استفاده:
-     * Select مربوط به وضعیت تحویل.
+     * Select وضعیت سفارش در صفحه Admin Orders.
      *
      * نحوه کار:
-     * ابتدا Pagination به صفحه اول برمی‌گردد
-     * و سپس Filter جدید در State قرار می‌گیرد.
+     * با تغییر Status، مقدار فیلتر در State ذخیره می‌شود
+     * و React Query بر اساس Query Key جدید داده مناسب را دریافت می‌کند.
      */
     const handleFilterChange = (
-        value: AdminOrderDeliveryFilter,
+        value: AdminOrderStatusFilter,
     ) => {
-        setPage(1);
         setFilter(value);
+        setPage(1);
     };
 
     /*
@@ -282,25 +282,37 @@ export default function AdminOrdersPage() {
                         value={filter}
                         onValueChange={(value) =>
                             handleFilterChange(
-                                value as AdminOrderDeliveryFilter,
+                                value as AdminOrderStatusFilter,
                             )
                         }
                     >
-                        <SelectTrigger className="w-full">
-                            <SelectValue />
+                        <SelectTrigger className="w-full sm:w-[220px]">
+                            <SelectValue placeholder="وضعیت سفارش" />
                         </SelectTrigger>
 
-                        <SelectContent>
+                        <SelectContent dir="rtl">
                             <SelectItem value="all">
                                 همه سفارش‌ها
+                            </SelectItem>
+
+                            <SelectItem value="pending">
+                                در انتظار بررسی
+                            </SelectItem>
+
+                            <SelectItem value="processing">
+                                در حال پردازش
+                            </SelectItem>
+
+                            <SelectItem value="shipped">
+                                ارسال شده
                             </SelectItem>
 
                             <SelectItem value="delivered">
                                 تحویل شده
                             </SelectItem>
 
-                            <SelectItem value="undelivered">
-                                تحویل نشده
+                            <SelectItem value="cancelled">
+                                لغو شده
                             </SelectItem>
                         </SelectContent>
                     </Select>

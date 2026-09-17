@@ -1,24 +1,29 @@
 import { apiClient } from "@/services/api/api-client";
 import { getAdminAccessToken } from "@/services/auth.service";
+import { CreateOrderPayload, Order, OrderStatus } from "@/types/order";
+import { PaginatedResult } from "@/types/pagination";
 
-import type {
-    CreateOrderPayload,
-    Order,
-} from "@/types/order";
 
-import type {
-    PaginatedResult,
-} from "@/types/pagination";
-
-export type AdminOrderDeliveryFilter =
+/*
+ * هدف:
+ * تعریف مقادیر قابل استفاده برای فیلتر وضعیت سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار all یعنی هیچ فیلتر Status به Backend ارسال نمی‌شود.
+ * سایر مقادیر مستقیماً از OrderStatus گرفته می‌شوند تا
+ * Type فیلتر همیشه با مدل اصلی سفارش هماهنگ باقی بماند.
+ */
+export type AdminOrderStatusFilter =
     | "all"
-    | "delivered"
-    | "undelivered";
+    | OrderStatus;
 
 export interface GetAdminOrdersParams {
     page?: number;
     limit?: number;
-    deliveryStatus?: AdminOrderDeliveryFilter;
+    status?: AdminOrderStatusFilter;
 }
 
 export async function createOrder(
@@ -60,7 +65,7 @@ export async function updateOrder(
 export async function getAdminOrders({
     page = 1,
     limit = 10,
-    deliveryStatus = "all",
+    status = "all",
 }: GetAdminOrdersParams = {}): Promise<
     PaginatedResult<Order>
 > {
@@ -73,21 +78,19 @@ export async function getAdminOrders({
         _sort: "createdAt",
         _order: "desc",
     };
-
-    if (
-        deliveryStatus ===
-        "delivered"
-    ) {
-        params.status =
-            "delivered";
-    }
-
-    if (
-        deliveryStatus ===
-        "undelivered"
-    ) {
-        params.status_ne =
-            "delivered";
+    /*
+     * هدف:
+     * اعمال فیلتر وضعیت سفارش روی درخواست Backend.
+     *
+     * محل استفاده:
+     * داخل getAdminOrders قبل از ارسال درخواست GET.
+     *
+     * نحوه کار:
+     * اگر all انتخاب شده باشد هیچ پارامتر status ارسال نمی‌شود.
+     * در غیر این صورت JSON Server فقط سفارش‌های همان وضعیت را برمی‌گرداند.
+     */
+    if (status !== "all") {
+        params.status = status;
     }
 
     const accessToken =
