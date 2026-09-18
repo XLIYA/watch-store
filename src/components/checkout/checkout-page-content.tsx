@@ -50,6 +50,7 @@ import { DeliveryLocationPicker } from "@/components/checkout/delivery-location-
 
 import {
     removeItem,
+    updateItemPrice,
     updateItemStock,
 } from "@/features/cart/cart.slice";
 
@@ -188,49 +189,78 @@ export function CheckoutPageContent() {
             }
 
             /*
-             * در صورت تغییر موجودی
-             * اجازه ایجاد Order نداریم.
-             */
+            * هدف:
+            * همگام‌سازی قیمت Cart با آخرین قیمت معتبر Backend.
+            *
+            * محل استفاده:
+            * داخل Checkout بعد از validateCheckoutStock و قبل از تصمیم نهایی برای ساخت Order.
+            *
+            * نحوه کار:
+            * اگر قیمت محصول از زمان Add To Cart تغییر کرده باشد،
+            * قیمت جدید Backend داخل Redux قرار می‌گیرد تا خلاصه سفارش و مبلغ نهایی به‌روز شوند.
+            * همان Submit ادامه پیدا نمی‌کند و کاربر باید قیمت جدید را بررسی و دوباره ثبت سفارش کند.
+            */
+            for (const priceChangedItem of stockResult.priceChangedItems) {
+                dispatch(
+                    updateItemPrice({
+                        lineId: priceChangedItem.lineId,
+                        unitPrice: priceChangedItem.currentPrice,
+                    }),
+                );
+            }
+
+
+            /*
+ * هدف:
+ * جلوگیری از ساخت Order در صورت تغییر قیمت یا موجودی.
+ *
+ * محل استفاده:
+ * داخل Checkout بعد از Sync شدن Cart با آخرین اطلاعات Backend.
+ *
+ * نحوه کار:
+ * اگر Validation نامعتبر باشد، بر اساس نوع مشکل پیام مناسب نمایش داده می‌شود
+ * و فرآیند ساخت Order در همان Submit متوقف می‌شود.
+ */
             if (!stockResult.isValid) {
+                let title = "موجودی سفارش تغییر کرده است.";
+
                 let description =
                     "موجودی یک یا چند محصول تغییر کرده است. لطفاً سبد خرید را بررسی کنید.";
 
-                if (
-                    stockResult.unavailableItems
-                        .length > 0
-                ) {
+                /*
+                 * هدف:
+                 * نمایش پیام اختصاصی در صورت تغییر قیمت.
+                 *
+                 * محل استفاده:
+                 * اولین اولویت پیام Validation ناموفق Checkout.
+                 *
+                 * نحوه کار:
+                 * اگر حداقل یک قیمت تغییر کرده باشد، پیام تغییر قیمت نمایش داده می‌شود.
+                 */
+                if (stockResult.priceChangedItems.length > 0) {
+                    title = "قیمت سفارش تغییر کرده است.";
+
+                    description =
+                        "قیمت یک یا چند محصول تغییر کرده است. مبلغ جدید اعمال شد؛ لطفاً سفارش را بررسی و دوباره ثبت کنید.";
+                } else if (stockResult.unavailableItems.length > 0) {
                     description =
                         "یک یا چند محصول دیگر موجود نیست و از سبد خرید حذف شده است.";
-                } else if (
-                    stockResult.reducedItems
-                        .length > 0
-                ) {
+                } else if (stockResult.reducedItems.length > 0) {
                     description =
                         "موجودی یک یا چند محصول کمتر شده و تعداد قابل سفارش تغییر کرده است.";
-                } else if (
-                    stockResult.productStockIssues
-                        .length > 0
-                ) {
+                } else if (stockResult.productStockIssues.length > 0) {
                     description =
                         "مجموع تعداد انتخاب‌شده از موجودی کل یکی از محصولات بیشتر است.";
                 }
 
-                toast.warning(
-                    "موجودی سفارش تغییر کرده است.",
-                    {
-                        description,
+                toast.warning(title, {
+                    description,
 
-                        action: {
-                            label:
-                                "بررسی سبد",
-
-                            onClick: () =>
-                                router.push(
-                                    "/cart",
-                                ),
-                        },
+                    action: {
+                        label: "بررسی سبد",
+                        onClick: () => router.push("/cart"),
                     },
-                );
+                });
 
                 return;
             }
@@ -243,7 +273,7 @@ export function CheckoutPageContent() {
             * تا به اطلاعات قابل تغییر localStorage
             * اعتماد نکنیم.
             */
-           
+
             const orderItems = items.map(
                 (item) => {
                     const product =

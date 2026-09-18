@@ -21,6 +21,25 @@ export interface UnavailableStockItem {
   productName: string;
 }
 
+/*
+ * هدف:
+ * نگهداری اطلاعات محصولاتی که قیمت آن‌ها از زمان Add To Cart تغییر کرده است.
+ *
+ * محل استفاده:
+ * در validateCheckoutStock و سپس در Checkout برای اطلاع‌رسانی به کاربر
+ * و Sync کردن قیمت Cart با قیمت فعلی Backend.
+ *
+ * نحوه کار:
+ * قیمت ذخیره‌شده داخل Cart با قیمت فعلی Product مقایسه می‌شود
+ * و در صورت اختلاف، اطلاعات قیمت قبلی و جدید داخل این ساختار قرار می‌گیرد.
+ */
+export interface PriceChangedItem {
+  lineId: string;
+  productName: string;
+  previousPrice: number;
+  currentPrice: number;
+}
+
 export interface ProductStockIssue {
   productId: number;
   productName: string;
@@ -40,6 +59,8 @@ export interface CheckoutStockValidationResult {
   unavailableItems: UnavailableStockItem[];
 
   productStockIssues: ProductStockIssue[];
+
+  priceChangedItems: PriceChangedItem[];
 }
 
 export async function validateCheckoutStock(
@@ -93,8 +114,19 @@ export async function validateCheckoutStock(
   const reducedItems: ReducedStockItem[] =
     [];
 
-  const unavailableItems: UnavailableStockItem[] =
-    [];
+  const unavailableItems: UnavailableStockItem[] = [];
+  /*
+ * هدف:
+ * جمع‌آوری محصولاتی که قیمت فعلی Backend آن‌ها با قیمت ذخیره‌شده در Cart متفاوت است.
+ *
+ * محل استفاده:
+ * هنگام Validation نهایی Checkout.
+ *
+ * نحوه کار:
+ * برای هر Cart Item، قیمت ذخیره‌شده با product.price مقایسه می‌شود
+ * و اختلاف‌ها داخل priceChangedItems قرار می‌گیرند.
+ */
+  const priceChangedItems: PriceChangedItem[] = [];
 
   /*
    * ابتدا هر Variant جداگانه
@@ -134,6 +166,26 @@ export async function validateCheckoutStock(
       });
 
       continue;
+    }
+
+    /*
+    * هدف:
+    * تشخیص تغییر قیمت محصول بین زمان Add To Cart و زمان Checkout.
+    *
+    * محل استفاده:
+    * بعد از اطمینان از وجود Product و Variant و قبل از تأیید نهایی سفارش.
+    *
+    * نحوه کار:
+    * unitPrice ذخیره‌شده در Cart با price فعلی Product از Backend مقایسه می‌شود.
+    * اگر متفاوت باشند، Checkout نامعتبر می‌شود تا کاربر ابتدا قیمت جدید را ببیند.
+    */
+    if (item.unitPrice !== product.price) {
+      priceChangedItems.push({
+        lineId: item.lineId,
+        productName: product.name,
+        previousPrice: item.unitPrice,
+        currentPrice: product.price,
+      });
     }
 
     /*
@@ -216,7 +268,7 @@ export async function validateCheckoutStock(
     requestedByProduct.set(
       item.productId,
       current +
-        item.quantity,
+      item.quantity,
     );
   }
 
@@ -256,10 +308,22 @@ export async function validateCheckoutStock(
     }
   }
 
+  /*
+   * هدف:
+   * جلوگیری از ساخت Order در صورت وجود هرگونه مشکل موجودی یا تغییر قیمت.
+   *
+   * محل استفاده:
+   * نتیجه نهایی validateCheckoutStock.
+   *
+   * نحوه کار:
+   * فقط زمانی Validation موفق است که هیچ محصول ناموجود، کاهش موجودی،
+   * مشکل موجودی کل Product یا تغییر قیمت وجود نداشته باشد.
+   */
   const isValid =
     unavailableItems.length === 0 &&
     reducedItems.length === 0 &&
-    productStockIssues.length === 0;
+    productStockIssues.length === 0 &&
+    priceChangedItems.length === 0;
 
   return {
     isValid,
@@ -273,5 +337,7 @@ export async function validateCheckoutStock(
     unavailableItems,
 
     productStockIssues,
+
+    priceChangedItems,
   };
 }
