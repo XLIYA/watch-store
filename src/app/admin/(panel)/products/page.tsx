@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import {
+    useMemo,
+    useState,
+} from "react";
 
 import {
     Edit3,
@@ -12,6 +15,15 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 import {
     Select,
@@ -31,62 +43,77 @@ import {
 } from "@/components/ui/table";
 
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+    useAdminCategoriesQuery,
+} from "@/features/admin/products/queries/use-admin-categories-query";
 
 import {
-    getProducts,
-} from "@/services/products.service";
+    useAdminProductsQuery,
+} from "@/features/admin/products/queries/use-admin-products-query";
 
 import {
-    getCategories,
-} from "@/services/categories.service";
-
-import type { Product } from "@/types/product";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
+    useDebouncedValue,
+} from "@/hooks/use-debounced-value";
 
 const PAGE_SIZE = 10;
 
-type Categories =
-    Awaited<
-        ReturnType<typeof getCategories>
-    >;
-
 export default function AdminProductsPage() {
-    const [products, setProducts] =
-        useState<Product[]>([]);
-
-    const [categories, setCategories] =
-        useState<Categories>([]);
-
-    const [page, setPage] =
-        useState(1);
-
-    const [totalPages, setTotalPages] =
-        useState(1);
-
-    const [search, setSearch] =
-        useState("");
-
-    const [appliedSearch, setAppliedSearch] =
-        useState("");
+    /*
+     * هدف:
+     * نگهداری شماره صفحه فعلی Pagination.
+     *
+     * محل استفاده:
+     * Query محصولات و Pagination پایین جدول.
+     *
+     * نحوه کار:
+     * تغییر page باعث تغییر Query Key و دریافت صفحه متناظر می‌شود.
+     */
+    const [
+        page,
+        setPage,
+    ] = useState(1);
 
     /*
- * هدف:
- * جلوگیری از ارسال درخواست API در هر بار تایپ کاربر.
- *
- * محل استفاده:
- * Search صفحه Admin Products.
- *
- * نحوه کار:
- * مقدار search پس از 400 میلی‌ثانیه توقف تایپ
- * به مقدار Debounce شده تبدیل می‌شود.
- */
+     * هدف:
+     * نگهداری مقدار خام Search Input.
+     *
+     * محل استفاده:
+     * Input جستجوی محصولات.
+     *
+     * نحوه کار:
+     * مقدار بلافاصله با تایپ کاربر تغییر می‌کند،
+     * اما مقدار Debounce شده برای Query استفاده می‌شود.
+     */
+    const [
+        search,
+        setSearch,
+    ] = useState("");
+
+    /*
+     * هدف:
+     * نگهداری گروه محصول انتخاب‌شده.
+     *
+     * محل استفاده:
+     * Select گروه محصول و Query محصولات.
+     *
+     * نحوه کار:
+     * all یعنی همه گروه‌ها و سایر مقادیر شناسه Category هستند.
+     */
+    const [
+        category,
+        setCategory,
+    ] = useState("all");
+
+    /*
+     * هدف:
+     * جلوگیری از ارسال Request در هر بار تایپ کاربر.
+     *
+     * محل استفاده:
+     * Search صفحه Admin Products.
+     *
+     * نحوه کار:
+     * مقدار Search پس از 400 میلی‌ثانیه توقف تایپ
+     * وارد Query محصولات می‌شود.
+     */
     const debouncedSearch =
         useDebouncedValue(
             search.trim(),
@@ -95,136 +122,151 @@ export default function AdminProductsPage() {
 
     /*
      * هدف:
-     * اعمال مقدار Debounce شده روی جستجوی محصولات.
+     * دریافت محصولات Admin با React Query.
      *
      * محل استفاده:
-     * بین Search Input و Query دریافت محصولات.
+     * Table، Pagination، Search و فیلتر Category.
      *
      * نحوه کار:
-     * بعد از پایان Debounce، Pagination به صفحه اول
-     * برمی‌گردد و appliedSearch به‌روزرسانی می‌شود.
+     * Page، Search، Category و Sort داخل Query Key قرار می‌گیرند.
+     * React Query مسئول Request، Cache، Loading و Error است.
      */
-    useEffect(() => {
-        setPage(1);
-        setAppliedSearch(
-            debouncedSearch,
-        );
-    }, [debouncedSearch]);
-
-    const [category, setCategory] =
-        useState("all");
-
-    const [isLoading, setIsLoading] =
-        useState(true);
-
-    const [error, setError] =
-        useState<string | null>(null);
-
-    useEffect(() => {
-        getCategories()
-            .then(setCategories)
-            .catch((requestError) => {
-                console.error(
-                    "Failed to load categories:",
-                    requestError,
-                );
-            });
-    }, []);
-
-    useEffect(() => {
-        let isCancelled = false;
-
-        /*
-         * هدف:
-         * نمایش Loading هنگام تغییر Pagination، Category یا Search.
-         *
-         * محل استفاده:
-         * قبل از ارسال درخواست دریافت محصولات.
-         *
-         * نحوه کار:
-         * هر Request جدید صفحه را وارد وضعیت Loading می‌کند.
-         */
-        setIsLoading(true);
-
-        getProducts({
-            page,
-            limit: PAGE_SIZE,
-
-            category:
-                category === "all"
-                    ? undefined
-                    : Number(category),
-
-            search:
-                appliedSearch ||
-                undefined,
-
-            sort: "newest",
-        })
-            .then((result) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                setProducts(result.data);
-
-                setTotalPages(
-                    Math.max(
-                        result.totalPages,
-                        1,
-                    ),
-                );
-
-                setError(null);
-            })
-            .catch((requestError) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                console.error(
-                    "Failed to load admin products:",
-                    requestError,
-                );
-
-                setError(
-                    "دریافت لیست محصولات با خطا مواجه شد.",
-                );
-            })
-            .finally(() => {
-                if (!isCancelled) {
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [
+    const {
+        data: productsResult,
+        isPending: isProductsPending,
+        isError: isProductsError,
+    } = useAdminProductsQuery({
         page,
-        category,
-        appliedSearch,
-    ]);
+        limit: PAGE_SIZE,
+        category:
+            category === "all"
+                ? undefined
+                : Number(category),
+        search:
+            debouncedSearch ||
+            undefined,
+        sort: "newest",
+    });
 
+    /*
+     * هدف:
+     * دریافت دسته‌بندی‌های محصولات با React Query.
+     *
+     * محل استفاده:
+     * Select گروه محصول و نمایش نام گروه در جدول.
+     *
+     * نحوه کار:
+     * Categories دارای Query Key مستقل هستند
+     * و تغییر Search یا Pagination باعث Request مجدد آن‌ها نمی‌شود.
+     */
+    const {
+        data: categories = [],
+        isPending: isCategoriesPending,
+        isError: isCategoriesError,
+    } = useAdminCategoriesQuery();
+
+    /*
+     * هدف:
+     * استخراج امن لیست محصولات از Response.
+     *
+     * محل استفاده:
+     * Table محصولات.
+     *
+     * نحوه کار:
+     * قبل از دریافت اولین Response آرایه خالی استفاده می‌شود.
+     */
+    const products =
+        productsResult?.data ?? [];
+
+    /*
+     * هدف:
+     * تعیین تعداد صفحات Pagination.
+     *
+     * محل استفاده:
+     * Pagination پایین جدول.
+     *
+     * نحوه کار:
+     * مقدار totalPages از Response گرفته شده
+     * و حداقل یک صفحه در نظر گرفته می‌شود.
+     */
+    const totalPages = Math.max(
+        productsResult?.totalPages ?? 1,
+        1,
+    );
+
+    /*
+     * هدف:
+     * ساخت ارتباط بین شناسه Category و نام آن.
+     *
+     * محل استفاده:
+     * ستون گروه محصول در Table.
+     *
+     * نحوه کار:
+     * Categories به Map تبدیل می‌شوند تا نام گروه
+     * بر اساس شناسه محصول سریع پیدا شود.
+     */
     const categoryMap =
         useMemo(() => {
             return new Map(
                 categories.map(
                     (item) => [
-                        Number(item.id),
+                        Number(
+                            item.id,
+                        ),
                         item.name,
                     ],
                 ),
             );
         }, [categories]);
 
+    /*
+     * هدف:
+     * مدیریت تغییر Search Input.
+     *
+     * محل استفاده:
+     * Input جستجوی محصولات.
+     *
+     * نحوه کار:
+     * مقدار Search ذخیره شده و Pagination به صفحه اول برمی‌گردد.
+     * اجرای Request واقعی همچنان بعد از Debounce انجام می‌شود.
+     */
+    const handleSearchChange = (
+        value: string,
+    ) => {
+        setSearch(value);
+
+        if (page !== 1) {
+            setPage(1);
+        }
+    };
+
+    /*
+     * هدف:
+     * تغییر فیلتر Category.
+     *
+     * محل استفاده:
+     * Select گروه محصول.
+     *
+     * نحوه کار:
+     * Category جدید ذخیره شده و Pagination به صفحه اول برمی‌گردد.
+     */
     const handleCategoryChange = (
         value: string,
     ) => {
-        setPage(1);
         setCategory(value);
+        setPage(1);
     };
 
+    /*
+     * هدف:
+     * کنترل تغییر Pagination.
+     *
+     * محل استفاده:
+     * Previous، Next و شماره صفحات.
+     *
+     * نحوه کار:
+     * فقط شماره صفحه معتبر و متفاوت از صفحه فعلی ذخیره می‌شود.
+     */
     const handlePageChange = (
         nextPage: number,
     ) => {
@@ -235,7 +277,10 @@ export default function AdminProductsPage() {
         ) {
             return;
         }
-        setPage(nextPage);
+
+        setPage(
+            nextPage,
+        );
     };
 
     return (
@@ -265,18 +310,18 @@ export default function AdminProductsPage() {
                 </Button>
             </div>
 
+            {/*
+             * هدف:
+             * نمایش ابزارهای جستجو و فیلتر محصولات.
+             *
+             * محل استفاده:
+             * بالای Table محصولات.
+             *
+             * نحوه کار:
+             * Search با Debounce کار می‌کند و Category
+             * مستقیماً Query Key محصولات را تغییر می‌دهد.
+             */}
             <div className="grid gap-4 border p-4 md:grid-cols-[1fr_220px]">
-                {/*
- * هدف:
- * جستجوی خودکار محصولات بدون نیاز به دکمه Search.
- *
- * محل استفاده:
- * بخش فیلترهای Admin Products.
- *
- * نحوه کار:
- * مقدار Input بلافاصله در search قرار می‌گیرد،
- * اما API فقط پس از Debounce اجرا می‌شود.
- */}
                 <div>
                     <p className="mb-2 text-sm font-medium">
                         جستجوی محصول
@@ -288,7 +333,7 @@ export default function AdminProductsPage() {
                         <Input
                             value={search}
                             onChange={(event) =>
-                                setSearch(
+                                handleSearchChange(
                                     event.target.value,
                                 )
                             }
@@ -308,12 +353,16 @@ export default function AdminProductsPage() {
                         onValueChange={
                             handleCategoryChange
                         }
+                        disabled={
+                            isCategoriesPending ||
+                            isCategoriesError
+                        }
                     >
                         <SelectTrigger className="w-full">
-                            <SelectValue />
+                            <SelectValue placeholder="انتخاب گروه" />
                         </SelectTrigger>
 
-                        <SelectContent>
+                        <SelectContent dir="rtl">
                             <SelectItem value="all">
                                 همه گروه‌ها
                             </SelectItem>
@@ -321,21 +370,23 @@ export default function AdminProductsPage() {
                             {categories.map(
                                 (item) => (
                                     <SelectItem
-                                        key={
-                                            item.id
-                                        }
+                                        key={item.id}
                                         value={String(
                                             item.id,
                                         )}
                                     >
-                                        {
-                                            item.name
-                                        }
+                                        {item.name}
                                     </SelectItem>
                                 ),
                             )}
                         </SelectContent>
                     </Select>
+
+                    {isCategoriesError && (
+                        <p className="mt-2 text-xs text-destructive">
+                            دریافت گروه‌های محصولات با خطا مواجه شد.
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -374,31 +425,22 @@ export default function AdminProductsPage() {
                     </TableHeader>
 
                     <TableBody>
-                        {isLoading ? (
+                        {isProductsPending ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={7}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                                     در حال دریافت محصولات...
                                 </TableCell>
                             </TableRow>
-                        ) : error ? (
+                        ) : isProductsError ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={7}
-                                    className="h-32 text-center text-destructive"
-                                >
-                                    {error}
+                                <TableCell colSpan={7} className="h-32 text-center text-destructive">
+                                    دریافت لیست محصولات با خطا مواجه شد.
                                 </TableCell>
                             </TableRow>
                         ) : products.length ===
                             0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={7}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                                     محصولی یافت نشد.
                                 </TableCell>
                             </TableRow>
@@ -452,8 +494,7 @@ export default function AdminProductsPage() {
                                                 "fa-IR",
                                             ).format(
                                                 product.price,
-                                            )}
-                                            {" "}
+                                            )}{" "}
                                             تومان
                                         </TableCell>
 
@@ -494,8 +535,8 @@ export default function AdminProductsPage() {
                 </Table>
             </div>
 
-            {!isLoading &&
-                !error &&
+            {!isProductsPending &&
+                !isProductsError &&
                 totalPages > 1 && (
                     <Pagination>
                         <PaginationContent>
@@ -511,11 +552,7 @@ export default function AdminProductsPage() {
                                             page - 1,
                                         );
                                     }}
-                                    className={
-                                        page === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === 1 ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
 
@@ -572,12 +609,7 @@ export default function AdminProductsPage() {
                                             page + 1,
                                         );
                                     }}
-                                    className={
-                                        page ===
-                                            totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === totalPages ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
                         </PaginationContent>
