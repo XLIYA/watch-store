@@ -9,7 +9,7 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import { AdminSidebar } from "@/features/admin/components/admin-sidebar";
+import { AdminSidebar } from "@/app/admin/(panel)/_components/admin-sidebar";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { hasAdminSession } from "@/services/auth.service";
 
