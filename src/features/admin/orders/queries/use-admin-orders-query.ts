@@ -35,10 +35,7 @@ export function useAdminOrdersQuery(
                 params,
             ),
 
-        queryFn: () =>
-            getAdminOrders(
-                params,
-            ),
+        queryFn: ({ signal }) => getAdminOrders(params, signal),
 
         placeholderData:
             keepPreviousData,

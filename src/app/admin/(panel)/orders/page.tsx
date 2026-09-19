@@ -1,5 +1,7 @@
 "use client";
 
+import { uiConfig } from "@/config/ui";
+
 import { useState } from "react";
 
 import { endOfDay, startOfDay } from "date-fns";
@@ -10,14 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+import { AdminPagination } from "@/components/common/admin-pagination";
+import { QueryFeedback } from "@/components/common/query-feedback";
 
 import {
     Popover,
@@ -53,97 +49,10 @@ import {
 
 import type { Order } from "@/types/order";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = uiConfig.adminPageSize;
 
-/*
- * هدف:
- * نمایش مبلغ سفارش با فرمت عددی فارسی.
- *
- * محل استفاده:
- * ستون مبلغ کل در جدول سفارش‌های Admin.
- *
- * نحوه کار:
- * Intl.NumberFormat مقدار عددی را با Locale فارسی فرمت می‌کند.
- */
-function formatPrice(value: number) {
-    return new Intl.NumberFormat("fa-IR").format(value);
-}
+import { formatPrice, formatDate, formatPhoneNumber, formatFilterDate } from "@/lib/format";
 
-/*
- * هدف:
- * نمایش تاریخ ثبت سفارش با فرمت فارسی.
- *
- * محل استفاده:
- * ستون تاریخ ثبت در جدول سفارش‌های Admin.
- *
- * نحوه کار:
- * timestamp ذخیره‌شده در Order به Date تبدیل شده
- * و سپس با Intl.DateTimeFormat به فرمت فارسی نمایش داده می‌شود.
- */
-function formatDate(timestamp: number) {
-    return new Intl.DateTimeFormat("fa-IR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-    }).format(new Date(timestamp));
-}
-
-/*
- * هدف:
- * تبدیل ارقام شماره تلفن انگلیسی به فارسی برای نمایش در رابط فارسی.
- *
- * محل استفاده:
- * ستون تلفن در جدول سفارش‌های Admin.
- *
- * نحوه کار:
- * فقط نحوه نمایش شماره تغییر می‌کند و مقدار اصلی دریافت‌شده
- * از Backend بدون تغییر باقی می‌ماند.
- */
-function formatPhoneNumber(
-    value: string,
-) {
-    const persianDigits =
-        "۰۱۲۳۴۵۶۷۸۹";
-
-    return value.replace(
-        /\d/g,
-        (digit) =>
-            persianDigits[
-            Number(digit)
-            ],
-    );
-}
-
-/*
- * هدف:
- * نمایش تاریخ انتخاب‌شده در فیلتر تاریخ با فرمت فارسی.
- *
- * محل استفاده:
- * متن دکمه Date Range Picker.
- *
- * نحوه کار:
- * Date دریافتی بدون ساعت و با فرمت تاریخ فارسی نمایش داده می‌شود.
- */
-function formatFilterDate(date: Date) {
-    return new Intl.DateTimeFormat("fa-IR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-    }).format(date);
-}
-
-/*
- * هدف:
- * تبدیل وضعیت فنی سفارش به متن فارسی قابل نمایش.
- *
- * محل استفاده:
- * ستون وضعیت سفارش در جدول Admin Orders.
- *
- * نحوه کار:
- * هر مقدار OrderStatus به Label فارسی متناظر تبدیل می‌شود.
- */
 function getOrderStatusLabel(
     status: Order["status"],
 ) {
@@ -298,6 +207,10 @@ export default function AdminOrdersPage() {
         data,
         isPending,
         isError,
+        isFetching,
+        isPlaceholderData,
+        error,
+        refetch,
     } = useAdminOrdersQuery({
         page,
         limit: PAGE_SIZE,
@@ -396,22 +309,11 @@ export default function AdminOrdersPage() {
      * نحوه کار:
      * فقط شماره صفحه معتبر در State ذخیره می‌شود.
      */
-    const handlePageChange = (
-        nextPage: number,
-    ) => {
-        if (
-            nextPage < 1 ||
-            nextPage > totalPages ||
-            nextPage === page
-        ) {
-            return;
-        }
 
-        setPage(nextPage);
-    };
 
     return (
         <section className="space-y-6">
+            <QueryFeedback fetching={isFetching && !isPending} error={error} retry={() => void refetch()} />
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                     <h1 className="text-3xl font-medium">
@@ -621,7 +523,7 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="overflow-hidden rounded-md border">
-                <Table>
+                <Table aria-busy={isFetching}>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="text-right">
@@ -749,76 +651,7 @@ export default function AdminOrdersPage() {
                 </Table>
             </div>
 
-            {!isPending &&
-                !isError &&
-                totalPages > 1 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page - 1,
-                                        );
-                                    }}
-                                    className={page === 1 ? "pointer-events-none opacity-50" : undefined}
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length: totalPages,
-                                },
-                                (_, index) => {
-                                    const pageNumber =
-                                        index + 1;
-
-                                    return (
-                                        <PaginationItem
-                                            key={pageNumber}
-                                        >
-                                            <PaginationLink
-                                                href="#"
-                                                isActive={
-                                                    pageNumber ===
-                                                    page
-                                                }
-                                                onClick={(
-                                                    event,
-                                                ) => {
-                                                    event.preventDefault();
-
-                                                    handlePageChange(
-                                                        pageNumber,
-                                                    );
-                                                }}
-                                            >
-                                                {pageNumber}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    );
-                                },
-                            )}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page + 1,
-                                        );
-                                    }}
-                                    className={page === totalPages ? "pointer-events-none opacity-50" : undefined}
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                )}
+            {!isPending && !isError && <AdminPagination page={page} totalPages={totalPages} busy={isFetching || isPlaceholderData} onPageChange={setPage} />}
         </section>
     );
 }

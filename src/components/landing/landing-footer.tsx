@@ -1,3 +1,4 @@
+import { CategoryLinks } from "@/components/layout/category-links";
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -59,29 +60,8 @@ export function LandingFooter() {
                         </p>
 
                         <nav aria-label="مجموعه‌های ساعت" className="flex flex-col items-start gap-3 text-sm">
-                            <Link href="/collections/classic" className="luxury-transition text-white/65 hover:text-white">
-                                کلاسیک
-                            </Link>
+                            <CategoryLinks className="luxury-transition text-white/65 hover:text-white" />
 
-                            <Link href="/collections/dress" className="luxury-transition text-white/65 hover:text-white">
-                                رسمی
-                            </Link>
-
-                            <Link href="/collections/sport" className="luxury-transition text-white/65 hover:text-white">
-                                اسپرت
-                            </Link>
-
-                            <Link href="/collections/diver" className="luxury-transition text-white/65 hover:text-white">
-                                غواصی
-                            </Link>
-
-                            <Link href="/collections/chronograph" className="luxury-transition text-white/65 hover:text-white">
-                                کرنوگراف
-                            </Link>
-
-                            <Link href="/collections/limited-edition" className="luxury-transition text-white/65 hover:text-white">
-                                نسخه محدود
-                            </Link>
                         </nav>
                     </div>
 

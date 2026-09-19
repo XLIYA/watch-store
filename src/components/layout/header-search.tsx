@@ -1,8 +1,11 @@
 "use client";
 
+import { uiConfig } from "@/config/ui";
+import { formatNumber } from "@/lib/format";
+
+
 import {
     useEffect,
-    useRef,
     useState,
 } from "react";
 
@@ -17,7 +20,10 @@ import {
 
 import { getProducts } from "@/services/products.service";
 
-import type { Product } from "@/types/product";
+import { useQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { getApiErrorMessage } from "@/services/api/api-error";
+import { Button } from "@/components/ui/button";
 
 interface HeaderSearchProps {
     onClose: () => void;
@@ -27,18 +33,19 @@ export function HeaderSearch({
     onClose,
 }: HeaderSearchProps) {
     const [query, setQuery] = useState("");
-    const [products, setProducts] = useState<
-        Product[]
-    >([]);
-    const [total, setTotal] = useState(0);
-    const [isLoading, setIsLoading] =
-        useState(false);
-    const [hasError, setHasError] =
-        useState(false);
-
-    const requestIdRef = useRef(0);
-
+    const [page, setPage] = useState(1);
     const normalizedQuery = query.trim();
+    const debouncedQuery = useDebouncedValue(normalizedQuery, uiConfig.searchDebounceMs);
+    const shouldSearch = normalizedQuery.length >= 2;
+    const { data, isFetching, isError: hasError, error, refetch } = useQuery({
+        queryKey: ["products", "search", debouncedQuery, page],
+        queryFn: ({ signal }) => getProducts({ search: debouncedQuery, page, limit: 6, sort: "newest" }, signal),
+        enabled: debouncedQuery.length >= 2 && shouldSearch,
+    });
+    // در فاصلهٔ debounce، نتیجهٔ عبارت قبلی به اسم عبارت تازه نمایش داده نمی‌شود.
+    const isLoading = normalizedQuery !== debouncedQuery || isFetching;
+    const products = isLoading ? [] : (data?.data ?? []);
+    const total = data?.total ?? 0;
 
     useEffect(() => {
         function handleKeyDown(
@@ -62,68 +69,6 @@ export function HeaderSearch({
         };
     }, [onClose]);
 
-    useEffect(() => {
-        const requestId =
-            ++requestIdRef.current;
-
-        if (normalizedQuery.length < 2) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(
-            async () => {
-                setIsLoading(true);
-                setHasError(false);
-
-                try {
-                    const result =
-                        await getProducts({
-                            search: normalizedQuery,
-                            page: 1,
-                            limit: 6,
-                            sort: "newest",
-                        });
-
-                    if (
-                        requestId !==
-                        requestIdRef.current
-                    ) {
-                        return;
-                    }
-
-                    setProducts(result.data);
-                    setTotal(result.total);
-                } catch {
-                    if (
-                        requestId !==
-                        requestIdRef.current
-                    ) {
-                        return;
-                    }
-
-                    setHasError(true);
-                    setProducts([]);
-                    setTotal(0);
-                } finally {
-                    if (
-                        requestId ===
-                        requestIdRef.current
-                    ) {
-                        setIsLoading(false);
-                    }
-                }
-            },
-            1400,
-        );
-
-        return () => {
-            window.clearTimeout(timeoutId);
-        };
-    }, [normalizedQuery]);
-
-    const shouldSearch =
-        normalizedQuery.length >= 2;
-
     return (
         <div
             className="fixed inset-0 z-[70] bg-background"
@@ -145,9 +90,7 @@ export function HeaderSearch({
                             type="search"
                             value={query}
                             onChange={(event) =>
-                                setQuery(
-                                    event.target.value,
-                                )
+                                { setQuery(event.target.value); setPage(1); }
                             }
                             placeholder="نام ساعت، برند یا محصول را جستجو کنید..."
                             className="
@@ -208,9 +151,9 @@ export function HeaderSearch({
                     hasError ? (
                     <div className="py-20 text-center">
                         <p className="text-sm text-muted-foreground">
-                            در دریافت نتایج جستجو مشکلی
-                            ایجاد شد.
+                            {getApiErrorMessage(error)}
                         </p>
+                        <Button className="mt-4" onClick={() => void refetch()}>تلاش دوباره</Button>
                     </div>
                 ) : null}
 
@@ -242,24 +185,16 @@ export function HeaderSearch({
                                 </p>
 
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    {total.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(total)}{" "}
                                     نتیجه
                                 </p>
                             </div>
 
-                            {total > products.length ? (
-                                <Link
-                                    href={`/shop?search=${encodeURIComponent(
-                                        normalizedQuery,
-                                    )}`}
-                                    onClick={onClose}
-                                    className="luxury-transition border-b border-foreground/30 pb-2 text-sm hover:border-foreground"
-                                >
-                                    مشاهده همه
-                                </Link>
-                            ) : null}
+                            {total > 6 && <div className="flex gap-2">
+                                <Button variant="outline" disabled={page <= 1 || isLoading} onClick={() => setPage(page - 1)}>قبلی</Button>
+                                <span className="self-center text-sm">{formatNumber(page)}</span>
+                                <Button variant="outline" disabled={page >= (data?.totalPages ?? 1) || isLoading} onClick={() => setPage(page + 1)}>بعدی</Button>
+                            </div>}
                         </div>
 
                         <div className="grid gap-x-10 gap-y-2 md:grid-cols-2">
@@ -306,9 +241,7 @@ export function HeaderSearch({
                                                 </h3>
 
                                                 <p className="mt-3 text-sm">
-                                                    {product.price.toLocaleString(
-                                                        "fa-IR",
-                                                    )}{" "}
+                                                    {formatNumber(product.price)}{" "}
                                                     تومان
                                                 </p>
                                             </div>
