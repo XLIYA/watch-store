@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { Eye } from "lucide-react";
+import { endOfDay, startOfDay } from "date-fns";
+import { CalendarDays, Eye, X } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
     Select,
@@ -25,27 +43,43 @@ import {
 } from "@/components/ui/table";
 
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+    useAdminOrdersQuery,
+} from "@/features/admin/orders/queries/use-admin-orders-query";
 
 import {
-    getAdminOrders,
-    type AdminOrderDeliveryFilter,
+    type AdminOrderStatusFilter,
+    type AdminPaymentStatusFilter,
 } from "@/services/orders.service";
 
 import type { Order } from "@/types/order";
 
 const PAGE_SIZE = 10;
 
+/*
+ * هدف:
+ * نمایش مبلغ سفارش با فرمت عددی فارسی.
+ *
+ * محل استفاده:
+ * ستون مبلغ کل در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * Intl.NumberFormat مقدار عددی را با Locale فارسی فرمت می‌کند.
+ */
 function formatPrice(value: number) {
     return new Intl.NumberFormat("fa-IR").format(value);
 }
 
+/*
+ * هدف:
+ * نمایش تاریخ ثبت سفارش با فرمت فارسی.
+ *
+ * محل استفاده:
+ * ستون تاریخ ثبت در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * timestamp ذخیره‌شده در Order به Date تبدیل شده
+ * و سپس با Intl.DateTimeFormat به فرمت فارسی نمایش داده می‌شود.
+ */
 function formatDate(timestamp: number) {
     return new Intl.DateTimeFormat("fa-IR", {
         year: "numeric",
@@ -56,15 +90,74 @@ function formatDate(timestamp: number) {
     }).format(new Date(timestamp));
 }
 
-function getOrderStatusLabel(status: Order["status"]) {
+/*
+ * هدف:
+ * تبدیل ارقام شماره تلفن انگلیسی به فارسی برای نمایش در رابط فارسی.
+ *
+ * محل استفاده:
+ * ستون تلفن در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * فقط نحوه نمایش شماره تغییر می‌کند و مقدار اصلی دریافت‌شده
+ * از Backend بدون تغییر باقی می‌ماند.
+ */
+function formatPhoneNumber(
+    value: string,
+) {
+    const persianDigits =
+        "۰۱۲۳۴۵۶۷۸۹";
+
+    return value.replace(
+        /\d/g,
+        (digit) =>
+            persianDigits[
+            Number(digit)
+            ],
+    );
+}
+
+/*
+ * هدف:
+ * نمایش تاریخ انتخاب‌شده در فیلتر تاریخ با فرمت فارسی.
+ *
+ * محل استفاده:
+ * متن دکمه Date Range Picker.
+ *
+ * نحوه کار:
+ * Date دریافتی بدون ساعت و با فرمت تاریخ فارسی نمایش داده می‌شود.
+ */
+function formatFilterDate(date: Date) {
+    return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(date);
+}
+
+/*
+ * هدف:
+ * تبدیل وضعیت فنی سفارش به متن فارسی قابل نمایش.
+ *
+ * محل استفاده:
+ * ستون وضعیت سفارش در جدول Admin Orders.
+ *
+ * نحوه کار:
+ * هر مقدار OrderStatus به Label فارسی متناظر تبدیل می‌شود.
+ */
+function getOrderStatusLabel(
+    status: Order["status"],
+) {
     switch (status) {
-        case "pending_payment":
-            return "در انتظار پرداخت";
+        case "pending":
+            return "در انتظار بررسی";
 
         case "processing":
             return "در حال پردازش";
 
-        case "completed":
+        case "shipped":
+            return "ارسال شده";
+
+        case "delivered":
             return "تحویل شده";
 
         case "cancelled":
@@ -72,6 +165,16 @@ function getOrderStatusLabel(status: Order["status"]) {
     }
 }
 
+/*
+ * هدف:
+ * تبدیل وضعیت فنی پرداخت به متن فارسی.
+ *
+ * محل استفاده:
+ * ستون وضعیت پرداخت در جدول Admin Orders.
+ *
+ * نحوه کار:
+ * paymentStatus دریافتی از Backend به متن فارسی مناسب تبدیل می‌شود.
+ */
 function getPaymentStatusLabel(
     status: Order["paymentStatus"],
 ) {
@@ -88,73 +191,211 @@ function getPaymentStatusLabel(
 }
 
 export default function AdminOrdersPage() {
-    const [orders, setOrders] = useState<Order[]>([]);
-
+    /*
+     * هدف:
+     * نگهداری شماره صفحه فعلی Pagination.
+     *
+     * محل استفاده:
+     * در Query سفارش‌ها و کنترل Pagination صفحه.
+     *
+     * نحوه کار:
+     * با تغییر page، Query Key تغییر می‌کند و React Query
+     * اطلاعات همان صفحه را از Cache یا Backend دریافت می‌کند.
+     */
     const [page, setPage] = useState(1);
 
-    const [totalPages, setTotalPages] = useState(1);
-
+    /*
+     * هدف:
+     * نگهداری فیلتر وضعیت سفارش.
+     *
+     * محل استفاده:
+     * Select وضعیت سفارش و Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * مقدار all یعنی تمام وضعیت‌ها و سایر مقادیر
+     * مستقیماً به Backend ارسال می‌شوند.
+     */
     const [filter, setFilter] =
-        useState<AdminOrderDeliveryFilter>("all");
+        useState<AdminOrderStatusFilter>(
+            "all",
+        );
 
-    const [isLoading, setIsLoading] =
-        useState(true);
+    /*
+     * هدف:
+     * نگهداری فیلتر وضعیت پرداخت.
+     *
+     * محل استفاده:
+     * Select وضعیت پرداخت و Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * مقدار all یعنی فیلتر پرداخت اعمال نمی‌شود.
+     */
+    const [paymentFilter, setPaymentFilter] =
+        useState<AdminPaymentStatusFilter>(
+            "all",
+        );
 
-    const [error, setError] =
-        useState<string | null>(null);
+    /*
+     * هدف:
+     * نگهداری تاریخ یا بازه تاریخ انتخاب‌شده.
+     *
+     * محل استفاده:
+     * Date Range Picker صفحه Admin Orders.
+     *
+     * نحوه کار:
+     * اگر فقط from وجود داشته باشد همان روز فیلتر می‌شود.
+     * اگر from و to وجود داشته باشند کل بازه فیلتر می‌شود.
+     */
+    const [dateRange, setDateRange] =
+        useState<DateRange | undefined>();
 
-    useEffect(() => {
-        let isCancelled = false;
+    /*
+     * هدف:
+     * تبدیل تاریخ شروع انتخاب‌شده به timestamp ابتدای روز.
+     *
+     * محل استفاده:
+     * پارامتر dateFrom در Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * ساعت تاریخ شروع روی ابتدای روز قرار می‌گیرد.
+     */
+    const dateFrom = dateRange?.from
+        ? startOfDay(
+            dateRange.from,
+        ).getTime()
+        : undefined;
 
-        getAdminOrders({
-            page,
-            limit: PAGE_SIZE,
-            deliveryStatus: filter,
-        })
-            .then((result) => {
-                if (isCancelled) {
-                    return;
-                }
+    /*
+     * هدف:
+     * تبدیل تاریخ پایان انتخاب‌شده به timestamp انتهای روز.
+     *
+     * محل استفاده:
+     * پارامتر dateTo در Query سفارش‌ها.
+     *
+     * نحوه کار:
+     * اگر تاریخ پایان انتخاب نشده باشد،
+     * همان تاریخ شروع به‌عنوان انتهای روز استفاده می‌شود.
+     */
+    const dateTo = dateRange?.from
+        ? endOfDay(
+            dateRange.to ??
+            dateRange.from,
+        ).getTime()
+        : undefined;
 
-                setOrders(result.data);
-                setTotalPages(
-                    Math.max(result.totalPages, 1),
-                );
-                setError(null);
-            })
-            .catch((requestError) => {
-                if (isCancelled) {
-                    return;
-                }
+    /*
+     * هدف:
+     * دریافت Server State سفارش‌ها با React Query.
+     *
+     * محل استفاده:
+     * منبع اطلاعات Table و Pagination.
+     *
+     * نحوه کار:
+     * Pagination، وضعیت سفارش، وضعیت پرداخت و تاریخ
+     * همگی داخل Query Params و Query Key قرار می‌گیرند.
+     */
+    const {
+        data,
+        isPending,
+        isError,
+    } = useAdminOrdersQuery({
+        page,
+        limit: PAGE_SIZE,
+        status: filter,
+        paymentStatus: paymentFilter,
+        dateFrom,
+        dateTo,
+    });
 
-                console.error(
-                    "Failed to load admin orders:",
-                    requestError,
-                );
+    /*
+     * هدف:
+     * استخراج امن آرایه سفارش‌ها از Response.
+     *
+     * محل استفاده:
+     * Table سفارش‌ها.
+     *
+     * نحوه کار:
+     * پیش از دریافت Response آرایه خالی استفاده می‌شود.
+     */
+    const orders =
+        data?.data ?? [];
 
-                setError(
-                    "دریافت لیست سفارش‌ها با خطا مواجه شد.",
-                );
-            })
-            .finally(() => {
-                if (!isCancelled) {
-                    setIsLoading(false);
-                }
-            });
+    /*
+     * هدف:
+     * تعیین تعداد صفحات Pagination.
+     *
+     * محل استفاده:
+     * Pagination پایین صفحه.
+     *
+     * نحوه کار:
+     * حداقل یک صفحه در نظر گرفته می‌شود.
+     */
+    const totalPages = Math.max(
+        data?.totalPages ?? 1,
+        1,
+    );
 
-        return () => {
-            isCancelled = true;
-        };
-    }, [page, filter]);
-
+    /*
+     * هدف:
+     * تغییر فیلتر وضعیت سفارش.
+     *
+     * محل استفاده:
+     * Select وضعیت سفارش.
+     *
+     * نحوه کار:
+     * فیلتر تغییر می‌کند و Pagination به صفحه اول برمی‌گردد.
+     */
     const handleFilterChange = (
-        value: AdminOrderDeliveryFilter,
+        value: AdminOrderStatusFilter,
     ) => {
-        setIsLoading(true);
-        setPage(1);
         setFilter(value);
+        setPage(1);
     };
 
+    /*
+     * هدف:
+     * تغییر فیلتر وضعیت پرداخت.
+     *
+     * محل استفاده:
+     * Select وضعیت پرداخت.
+     *
+     * نحوه کار:
+     * فیلتر تغییر می‌کند و Pagination به صفحه اول برمی‌گردد.
+     */
+    const handlePaymentFilterChange = (
+        value: AdminPaymentStatusFilter,
+    ) => {
+        setPaymentFilter(value);
+        setPage(1);
+    };
+
+    /*
+     * هدف:
+     * تغییر تاریخ یا بازه تاریخ انتخاب‌شده.
+     *
+     * محل استفاده:
+     * Calendar فیلتر تاریخ سفارش‌ها.
+     *
+     * نحوه کار:
+     * مقدار Calendar در State ذخیره شده و Pagination ریست می‌شود.
+     */
+    const handleDateRangeChange = (
+        range: DateRange | undefined,
+    ) => {
+        setDateRange(range);
+        setPage(1);
+    };
+
+    /*
+     * هدف:
+     * کنترل تغییر صفحات بدون خروج از محدوده Pagination.
+     *
+     * محل استفاده:
+     * Previous، Next و شماره صفحات.
+     *
+     * نحوه کار:
+     * فقط شماره صفحه معتبر در State ذخیره می‌شود.
+     */
     const handlePageChange = (
         nextPage: number,
     ) => {
@@ -166,19 +407,14 @@ export default function AdminOrdersPage() {
             return;
         }
 
-        setIsLoading(true);
         setPage(nextPage);
     };
 
     return (
         <section className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <p className="section-eyebrow">
-                        ORDERS
-                    </p>
-
-                    <h1 className="mt-2 text-3xl font-medium">
+                    <h1 className="text-3xl font-medium">
                         سفارش‌ها
                     </h1>
 
@@ -187,37 +423,200 @@ export default function AdminOrdersPage() {
                     </p>
                 </div>
 
-                <div className="w-full sm:w-56">
-                    <p className="mb-2 text-sm font-medium">
-                        وضعیت تحویل
-                    </p>
+                {/*
+                 * هدف:
+                 * نمایش همه فیلترهای Admin Orders در یک بخش منظم.
+                 *
+                 * محل استفاده:
+                 * بالای جدول سفارش‌ها.
+                 *
+                 * نحوه کار:
+                 * در موبایل تک‌ستونه، در Tablet دو ستونه
+                 * و در صفحات بزرگ سه ستونه نمایش داده می‌شود.
+                 */}
+                <div className="grid w-full gap-4 sm:grid-cols-2 xl:w-auto xl:grid-cols-3">
+                    {/*
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس وضعیت چرخه سفارش.
+                     *
+                     * محل استفاده:
+                     * اولین فیلتر صفحه.
+                     *
+                     * نحوه کار:
+                     * مقدار انتخاب‌شده به status Query تبدیل می‌شود.
+                     */}
+                    <div className="w-full sm:min-w-[220px]">
+                        <p className="mb-2 text-sm font-medium">
+                            وضعیت سفارش
+                        </p>
 
-                    <Select
-                        value={filter}
-                        onValueChange={(value) =>
-                            handleFilterChange(
-                                value as AdminOrderDeliveryFilter,
-                            )
-                        }
-                    >
-                        <SelectTrigger className="w-full">
-                            <SelectValue />
-                        </SelectTrigger>
+                        <Select
+                            dir="rtl"
+                            value={filter}
+                            onValueChange={(value) =>
+                                handleFilterChange(
+                                    value as AdminOrderStatusFilter,
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full text-right [&>span]:text-right">
+                                <SelectValue placeholder="وضعیت سفارش" />
+                            </SelectTrigger>
 
-                        <SelectContent>
-                            <SelectItem value="all">
-                                همه سفارش‌ها
-                            </SelectItem>
+                            <SelectContent dir="rtl">
+                                <SelectItem value="all">
+                                    همه سفارش‌ها
+                                </SelectItem>
 
-                            <SelectItem value="delivered">
-                                تحویل شده
-                            </SelectItem>
+                                <SelectItem value="pending">
+                                    در انتظار بررسی
+                                </SelectItem>
 
-                            <SelectItem value="undelivered">
-                                تحویل نشده
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
+                                <SelectItem value="processing">
+                                    در حال پردازش
+                                </SelectItem>
+
+                                <SelectItem value="shipped">
+                                    ارسال شده
+                                </SelectItem>
+
+                                <SelectItem value="delivered">
+                                    تحویل شده
+                                </SelectItem>
+
+                                <SelectItem value="cancelled">
+                                    لغو شده
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/*
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس وضعیت پرداخت.
+                     *
+                     * محل استفاده:
+                     * دومین فیلتر صفحه.
+                     *
+                     * نحوه کار:
+                     * مقدار انتخاب‌شده به paymentStatus Query تبدیل می‌شود.
+                     */}
+                    <div className="w-full sm:min-w-[220px]">
+                        <p className="mb-2 text-sm font-medium">
+                            وضعیت پرداخت
+                        </p>
+
+                        <Select
+                            dir="rtl"
+                            value={paymentFilter}
+                            onValueChange={(value) =>
+                                handlePaymentFilterChange(
+                                    value as AdminPaymentStatusFilter,
+                                )
+                            }
+                        >
+                            <SelectTrigger className="w-full text-right [&>span]:text-right">
+                                <SelectValue placeholder="وضعیت پرداخت" />
+                            </SelectTrigger>
+
+                            <SelectContent dir="rtl">
+                                <SelectItem value="all">
+                                    همه وضعیت‌های پرداخت
+                                </SelectItem>
+
+                                <SelectItem value="pending">
+                                    در انتظار پرداخت
+                                </SelectItem>
+
+                                <SelectItem value="paid">
+                                    پرداخت موفق
+                                </SelectItem>
+
+                                <SelectItem value="failed">
+                                    پرداخت ناموفق
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/*
+                     * هدف:
+                     * فیلتر سفارش‌ها بر اساس یک روز یا بازه تاریخ.
+                     *
+                     * محل استفاده:
+                     * سومین فیلتر صفحه Admin Orders.
+                     *
+                     * نحوه کار:
+                     * Calendar در حالت range اجرا می‌شود.
+                     * یک روز انتخاب شود همان روز فیلتر می‌شود.
+                     * دو روز انتخاب شوند بازه کامل فیلتر می‌شود.
+                     */}
+                    <div className="w-full sm:min-w-[280px]">
+                        <p className="mb-2 text-sm font-medium">
+                            تاریخ ثبت
+                        </p>
+
+                        <div className="flex gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button type="button" variant="outline" className="min-w-0 flex-1 justify-start gap-2 font-normal">
+                                        <CalendarDays className="size-4 shrink-0" />
+
+                                        {dateRange?.from ? (
+                                            dateRange.to &&
+                                                dateRange.to.getTime() !==
+                                                dateRange.from.getTime() ? (
+                                                <span className="truncate">
+                                                    {formatFilterDate(
+                                                        dateRange.from,
+                                                    )}
+                                                    {" تا "}
+                                                    {formatFilterDate(
+                                                        dateRange.to,
+                                                    )}
+                                                </span>
+                                            ) : (
+                                                <span className="truncate">
+                                                    {formatFilterDate(
+                                                        dateRange.from,
+                                                    )}
+                                                </span>
+                                            )
+                                        ) : (
+                                            <span className="truncate text-muted-foreground">
+                                                انتخاب تاریخ
+                                            </span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+
+                                <PopoverContent dir="rtl" align="end" className="w-auto p-0">
+                                    <Calendar
+                                        mode="range"
+                                        selected={dateRange}
+                                        onSelect={handleDateRangeChange}
+                                        numberOfMonths={1}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+
+                            {dateRange?.from && (
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    title="پاک کردن فیلتر تاریخ"
+                                    onClick={() =>
+                                        handleDateRangeChange(
+                                            undefined,
+                                        )
+                                    }
+                                >
+                                    <X className="size-4" />
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -260,30 +659,21 @@ export default function AdminOrdersPage() {
                     </TableHeader>
 
                     <TableBody>
-                        {isLoading ? (
+                        {isPending ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                     در حال دریافت سفارش‌ها...
                                 </TableCell>
                             </TableRow>
-                        ) : error ? (
+                        ) : isError ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-destructive"
-                                >
-                                    {error}
+                                <TableCell colSpan={8} className="h-32 text-center text-destructive">
+                                    دریافت لیست سفارش‌ها با خطا مواجه شد.
                                 </TableCell>
                             </TableRow>
                         ) : orders.length === 0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                     سفارشی یافت نشد.
                                 </TableCell>
                             </TableRow>
@@ -298,8 +688,12 @@ export default function AdminOrdersPage() {
                                         {order.customer.fullName}
                                     </TableCell>
 
-                                    <TableCell dir="ltr">
-                                        {order.customer.mobile}
+                                    <TableCell className="text-right">
+                                        <span dir="ltr" className="inline-block tabular-nums">
+                                            {formatPhoneNumber(
+                                                order.customer.mobile,
+                                            )}
+                                        </span>
                                     </TableCell>
 
                                     <TableCell>
@@ -311,8 +705,7 @@ export default function AdminOrdersPage() {
                                     <TableCell>
                                         {formatPrice(
                                             order.totalPrice,
-                                        )}
-                                        {" "}
+                                        )}{" "}
                                         تومان
                                     </TableCell>
 
@@ -320,7 +713,7 @@ export default function AdminOrdersPage() {
                                         <Badge
                                             variant={
                                                 order.status ===
-                                                    "completed"
+                                                    "delivered"
                                                     ? "default"
                                                     : "secondary"
                                             }
@@ -332,9 +725,7 @@ export default function AdminOrdersPage() {
                                     </TableCell>
 
                                     <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                        >
+                                        <Badge variant="outline">
                                             {getPaymentStatusLabel(
                                                 order.paymentStatus,
                                             )}
@@ -358,8 +749,8 @@ export default function AdminOrdersPage() {
                 </Table>
             </div>
 
-            {!isLoading &&
-                !error &&
+            {!isPending &&
+                !isError &&
                 totalPages > 1 && (
                     <Pagination>
                         <PaginationContent>
@@ -373,11 +764,7 @@ export default function AdminOrdersPage() {
                                             page - 1,
                                         );
                                     }}
-                                    className={
-                                        page === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === 1 ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
 
@@ -391,9 +778,7 @@ export default function AdminOrdersPage() {
 
                                     return (
                                         <PaginationItem
-                                            key={
-                                                pageNumber
-                                            }
+                                            key={pageNumber}
                                         >
                                             <PaginationLink
                                                 href="#"
@@ -411,9 +796,7 @@ export default function AdminOrdersPage() {
                                                     );
                                                 }}
                                             >
-                                                {
-                                                    pageNumber
-                                                }
+                                                {pageNumber}
                                             </PaginationLink>
                                         </PaginationItem>
                                     );
@@ -430,12 +813,7 @@ export default function AdminOrdersPage() {
                                             page + 1,
                                         );
                                     }}
-                                    className={
-                                        page ===
-                                            totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
+                                    className={page === totalPages ? "pointer-events-none opacity-50" : undefined}
                                 />
                             </PaginationItem>
                         </PaginationContent>

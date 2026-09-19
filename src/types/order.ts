@@ -1,8 +1,21 @@
+/*
+ * هدف:
+ * تعریف وضعیت‌های واقعی چرخه عمر سفارش به‌صورت مستقل از پرداخت.
+ *
+ * محل استفاده:
+ * تمام بخش‌هایی که با وضعیت سفارش کار می‌کنند؛
+ * مثل Checkout، Admin Orders، فیلترها و جزئیات سفارش.
+ *
+ * نحوه کار:
+ * وضعیت سفارش فقط مرحله پردازش و تحویل را مشخص می‌کند.
+ * وضعیت پرداخت به‌صورت جداگانه توسط PaymentStatus مدیریت می‌شود.
+ */
 export type OrderStatus =
-    | "pending_payment"
-    | "processing"
-    | "completed"
-    | "cancelled";
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export type PaymentStatus =
     | "pending"

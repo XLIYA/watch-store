@@ -1,24 +1,47 @@
 import { apiClient } from "@/services/api/api-client";
 import { getAdminAccessToken } from "@/services/auth.service";
+import { CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
+import { PaginatedResult } from "@/types/pagination";
 
-import type {
-    CreateOrderPayload,
-    Order,
-} from "@/types/order";
 
-import type {
-    PaginatedResult,
-} from "@/types/pagination";
-
-export type AdminOrderDeliveryFilter =
+/*
+ * هدف:
+ * تعریف مقادیر قابل استفاده برای فیلتر وضعیت سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار all یعنی هیچ فیلتر Status به Backend ارسال نمی‌شود.
+ * سایر مقادیر مستقیماً از OrderStatus گرفته می‌شوند تا
+ * Type فیلتر همیشه با مدل اصلی سفارش هماهنگ باقی بماند.
+ */
+export type AdminOrderStatusFilter =
     | "all"
-    | "delivered"
-    | "undelivered";
+    | OrderStatus;
 
+
+/*
+ * هدف:
+ * تعریف مقادیر قابل استفاده برای فیلتر وضعیت پرداخت سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * سرویس دریافت سفارش‌ها و صفحه Admin Orders.
+ *
+ * نحوه کار:
+ * مقدار all یعنی فیلتر پرداخت اعمال نمی‌شود.
+ * سایر مقادیر مستقیماً از PaymentStatus گرفته می‌شوند.
+ */
+export type AdminPaymentStatusFilter =
+    | "all"
+    | PaymentStatus;
 export interface GetAdminOrdersParams {
     page?: number;
     limit?: number;
-    deliveryStatus?: AdminOrderDeliveryFilter;
+    status?: AdminOrderStatusFilter;
+    paymentStatus?: AdminPaymentStatusFilter;
+    dateFrom?: number;
+    dateTo?: number;
 }
 
 export async function createOrder(
@@ -60,7 +83,10 @@ export async function updateOrder(
 export async function getAdminOrders({
     page = 1,
     limit = 10,
-    deliveryStatus = "all",
+    status = "all",
+    paymentStatus = "all",
+    dateFrom,
+    dateTo,
 }: GetAdminOrdersParams = {}): Promise<
     PaginatedResult<Order>
 > {
@@ -73,21 +99,55 @@ export async function getAdminOrders({
         _sort: "createdAt",
         _order: "desc",
     };
-
-    if (
-        deliveryStatus ===
-        "delivered"
-    ) {
-        params.status =
-            "completed";
+    /*
+     * هدف:
+     * اعمال فیلتر وضعیت سفارش روی درخواست Backend.
+     *
+     * محل استفاده:
+     * داخل getAdminOrders قبل از ارسال درخواست GET.
+     *
+     * نحوه کار:
+     * اگر all انتخاب شده باشد هیچ پارامتر status ارسال نمی‌شود.
+     * در غیر این صورت JSON Server فقط سفارش‌های همان وضعیت را برمی‌گرداند.
+     */
+    if (status !== "all") {
+        params.status = status;
     }
 
-    if (
-        deliveryStatus ===
-        "undelivered"
-    ) {
-        params.status_ne =
-            "completed";
+    /*
+ * هدف:
+ * اعمال فیلتر وضعیت پرداخت روی درخواست سفارش‌های Admin.
+ *
+ * محل استفاده:
+ * داخل getAdminOrders قبل از ارسال درخواست GET.
+ *
+ * نحوه کار:
+ * اگر all انتخاب نشده باشد، مقدار paymentStatus
+ * به Query Params اضافه می‌شود تا Backend فقط
+ * سفارش‌های دارای همان وضعیت پرداخت را برگرداند.
+ */
+    if (paymentStatus !== "all") {
+        params.paymentStatus = paymentStatus;
+    }
+
+    /*
+ * هدف:
+ * اعمال فیلتر تاریخ ثبت سفارش روی درخواست Admin Orders.
+ *
+ * محل استفاده:
+ * داخل getAdminOrders قبل از ارسال درخواست به Backend.
+ *
+ * نحوه کار:
+ * dateFrom و dateTo به‌صورت timestamp دریافت می‌شوند.
+ * createdAt_gte حداقل تاریخ و createdAt_lte حداکثر تاریخ را
+ * برای JSON Server مشخص می‌کنند.
+ */
+    if (typeof dateFrom === "number") {
+        params.createdAt_gte = dateFrom;
+    }
+
+    if (typeof dateTo === "number") {
+        params.createdAt_lte = dateTo;
     }
 
     const accessToken =

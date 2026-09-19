@@ -5,9 +5,10 @@ import {
   Geist_Mono,
 } from "next/font/google";
 
-import { StoreProvider } from "@/store/store-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/providers/query-provider";
+import { StoreProvider } from "@/store/store-provider";
 
 import "@fontsource-variable/estedad/wght.css";
 import "./globals.css";
@@ -37,13 +38,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body
-        className={`${cormorant.variable} ${geistMono.variable}`}
-      >
+      <body className={`${cormorant.variable} ${geistMono.variable}`}>
+        {/*
+         * هدف:
+         * فراهم‌کردن Providerهای اصلی پروژه برای تمام صفحات.
+         *
+         * محل استفاده:
+         * RootLayout کل Application.
+         *
+         * نحوه کار:
+         * StoreProvider مسئول Redux و Client State مثل Cart است.
+         * QueryProvider مسئول Server State، Cache و درخواست‌های API است.
+         * TooltipProvider نیز Context مربوط به Tooltipهای shadcn را فراهم می‌کند.
+         */}
         <StoreProvider>
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
+          <QueryProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </QueryProvider>
         </StoreProvider>
 
         <Toaster
