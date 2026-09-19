@@ -213,11 +213,7 @@ export default function AdminInventoryPage() {
     return (
         <section className="space-y-6">
             <div>
-                <p className="section-eyebrow">
-                    INVENTORY
-                </p>
-
-                <h1 className="mt-2 text-3xl font-medium">
+                <h1 className="text-3xl font-medium">
                     قیمت و موجودی
                 </h1>
 

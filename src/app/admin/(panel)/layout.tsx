@@ -45,7 +45,7 @@ export default function AdminPanelLayout({
     }
 
     return (
-        <SidebarProvider>
+        <SidebarProvider dir="rtl">
             <AdminSidebar />
 
             <SidebarInset>

@@ -92,6 +92,32 @@ function formatDate(timestamp: number) {
 
 /*
  * هدف:
+ * تبدیل ارقام شماره تلفن انگلیسی به فارسی برای نمایش در رابط فارسی.
+ *
+ * محل استفاده:
+ * ستون تلفن در جدول سفارش‌های Admin.
+ *
+ * نحوه کار:
+ * فقط نحوه نمایش شماره تغییر می‌کند و مقدار اصلی دریافت‌شده
+ * از Backend بدون تغییر باقی می‌ماند.
+ */
+function formatPhoneNumber(
+    value: string,
+) {
+    const persianDigits =
+        "۰۱۲۳۴۵۶۷۸۹";
+
+    return value.replace(
+        /\d/g,
+        (digit) =>
+            persianDigits[
+            Number(digit)
+            ],
+    );
+}
+
+/*
+ * هدف:
  * نمایش تاریخ انتخاب‌شده در فیلتر تاریخ با فرمت فارسی.
  *
  * محل استفاده:
@@ -388,11 +414,7 @@ export default function AdminOrdersPage() {
         <section className="space-y-6">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <p className="section-eyebrow">
-                        ORDERS
-                    </p>
-
-                    <h1 className="mt-2 text-3xl font-medium">
+                    <h1 className="text-3xl font-medium">
                         سفارش‌ها
                     </h1>
 
@@ -429,6 +451,7 @@ export default function AdminOrdersPage() {
                         </p>
 
                         <Select
+                            dir="rtl"
                             value={filter}
                             onValueChange={(value) =>
                                 handleFilterChange(
@@ -436,7 +459,7 @@ export default function AdminOrdersPage() {
                                 )
                             }
                         >
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full text-right [&>span]:text-right">
                                 <SelectValue placeholder="وضعیت سفارش" />
                             </SelectTrigger>
 
@@ -484,6 +507,7 @@ export default function AdminOrdersPage() {
                         </p>
 
                         <Select
+                            dir="rtl"
                             value={paymentFilter}
                             onValueChange={(value) =>
                                 handlePaymentFilterChange(
@@ -491,7 +515,7 @@ export default function AdminOrdersPage() {
                                 )
                             }
                         >
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full text-right [&>span]:text-right">
                                 <SelectValue placeholder="وضعیت پرداخت" />
                             </SelectTrigger>
 
@@ -664,8 +688,12 @@ export default function AdminOrdersPage() {
                                         {order.customer.fullName}
                                     </TableCell>
 
-                                    <TableCell dir="ltr">
-                                        {order.customer.mobile}
+                                    <TableCell className="text-right">
+                                        <span dir="ltr" className="inline-block tabular-nums">
+                                            {formatPhoneNumber(
+                                                order.customer.mobile,
+                                            )}
+                                        </span>
                                     </TableCell>
 
                                     <TableCell>

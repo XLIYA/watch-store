@@ -287,11 +287,7 @@ export default function AdminProductsPage() {
         <section className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <p className="section-eyebrow">
-                        PRODUCTS
-                    </p>
-
-                    <h1 className="mt-2 text-3xl font-medium">
+                    <h1 className="text-3xl font-medium">
                         محصولات
                     </h1>
 
@@ -349,6 +345,7 @@ export default function AdminProductsPage() {
                     </p>
 
                     <Select
+                        dir="rtl"
                         value={category}
                         onValueChange={
                             handleCategoryChange
@@ -358,7 +355,7 @@ export default function AdminProductsPage() {
                             isCategoriesError
                         }
                     >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full text-right [&>span]:text-right">
                             <SelectValue placeholder="انتخاب گروه" />
                         </SelectTrigger>
 
