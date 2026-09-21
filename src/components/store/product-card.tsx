@@ -1,3 +1,5 @@
+
+import { formatNumber } from "@/lib/format";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -71,7 +73,7 @@ export function ProductCard({
 
                     <div className="mt-3 flex items-center justify-between gap-4">
                         <p className="text-sm text-foreground">
-                            {product.price.toLocaleString("fa-IR")} تومان
+                            {formatNumber(product.price)} تومان
                         </p>
 
                         {!isOutOfStock ? (

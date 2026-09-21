@@ -1,4 +1,6 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
 
 import { useState } from "react";
 
@@ -248,9 +250,7 @@ export function ProductPurchasePanel({
             toast.warning(
                 "تعداد انتخاب‌شده بیشتر از موجودی قابل افزودن است.",
                 {
-                    description: `حداکثر ${availableToAdd.toLocaleString(
-                        "fa-IR",
-                    )} عدد دیگر قابل افزودن است.`,
+                    description: `حداکثر ${formatNumber(availableToAdd)} عدد دیگر قابل افزودن است.`,
                 },
             );
 
@@ -333,9 +333,7 @@ export function ProductPurchasePanel({
                 quantityAlreadyInCart > 0 ? (
                 <div className="text-xs leading-6 text-muted-foreground">
                     در حال حاضر{" "}
-                    {quantityAlreadyInCart.toLocaleString(
-                        "fa-IR",
-                    )}{" "}
+                    {formatNumber(quantityAlreadyInCart)}{" "}
                     عدد از این رنگ در سبد خرید
                     شما قرار دارد.
                 </div>
@@ -355,12 +353,10 @@ export function ProductPurchasePanel({
                     </span>
 
                     <span className="font-medium">
-                        {(
+                        {formatNumber((
                             product.price *
                             quantity
-                        ).toLocaleString(
-                            "fa-IR",
-                        )}{" "}
+                        ))}{" "}
                         تومان
                     </span>
                 </div>

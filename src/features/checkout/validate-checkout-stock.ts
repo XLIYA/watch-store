@@ -1,3 +1,4 @@
+import { getErrorStatus } from "@/services/api/api-error";
 import type { CartItem } from "@/features/cart/cart.types";
 
 import { getProductById } from "@/services/products.service";
@@ -88,8 +89,10 @@ export async function validateCheckoutStock(
             return await getProductById(
               productId,
             );
-          } catch {
-            return null;
+          } catch (error) {
+            // فقط 404 به معنی حذف کالا است؛ خطای شبکه باید کل بررسی را متوقف کند.
+            if (getErrorStatus(error) === 404) return null;
+            throw error;
           }
         },
       ),

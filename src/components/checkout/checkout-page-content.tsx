@@ -1,4 +1,7 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
+import { selectCartTotals } from "@/features/cart/cart.selectors";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +24,7 @@ import {
 import {
     Controller,
     useForm,
+    useWatch,
 } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,11 +52,7 @@ import {
 
 import { DeliveryLocationPicker } from "@/components/checkout/delivery-location-picker";
 
-import {
-    removeItem,
-    updateItemPrice,
-    updateItemStock,
-} from "@/features/cart/cart.slice";
+import { syncCartStock, getStockChangeMessage } from "@/features/checkout/sync-cart-stock";
 
 import { createOrder } from "@/services/orders.service";
 
@@ -75,7 +75,6 @@ export function CheckoutPageContent() {
         control,
         handleSubmit,
         setValue,
-        watch,
 
         formState: {
             errors,
@@ -94,22 +93,7 @@ export function CheckoutPageContent() {
             mode: "onBlur",
         });
 
-    const totalQuantity =
-        items.reduce(
-            (total, item) =>
-                total +
-                item.quantity,
-            0,
-        );
-
-    const totalPrice =
-        items.reduce(
-            (total, item) =>
-                total +
-                item.unitPrice *
-                item.quantity,
-            0,
-        );
+    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
 
     const onSubmit = async (
         data: CheckoutFormValues,
@@ -154,125 +138,14 @@ export function CheckoutPageContent() {
                     items,
                 );
 
-            /*
-             * maxQuantityهای قدیمی Cart
-             * با موجودی فعلی Backend Sync شوند.
-             */
-            for (
-                const syncItem of
-                stockResult.syncItems
-            ) {
-                dispatch(
-                    updateItemStock({
-                        lineId:
-                            syncItem.lineId,
-
-                        maxQuantity:
-                            syncItem.maxQuantity,
-                    }),
-                );
-            }
-
-            /*
-             * محصول یا Variant کاملاً
-             * ناموجود از Cart حذف می‌شود.
-             */
-            for (
-                const unavailableItem of
-                stockResult.unavailableItems
-            ) {
-                dispatch(
-                    removeItem(
-                        unavailableItem.lineId,
-                    ),
-                );
-            }
-
-            /*
-            * هدف:
-            * همگام‌سازی قیمت Cart با آخرین قیمت معتبر Backend.
-            *
-            * محل استفاده:
-            * داخل Checkout بعد از validateCheckoutStock و قبل از تصمیم نهایی برای ساخت Order.
-            *
-            * نحوه کار:
-            * اگر قیمت محصول از زمان Add To Cart تغییر کرده باشد،
-            * قیمت جدید Backend داخل Redux قرار می‌گیرد تا خلاصه سفارش و مبلغ نهایی به‌روز شوند.
-            * همان Submit ادامه پیدا نمی‌کند و کاربر باید قیمت جدید را بررسی و دوباره ثبت سفارش کند.
-            */
-            for (const priceChangedItem of stockResult.priceChangedItems) {
-                dispatch(
-                    updateItemPrice({
-                        lineId: priceChangedItem.lineId,
-                        unitPrice: priceChangedItem.currentPrice,
-                    }),
-                );
-            }
-
-
-            /*
- * هدف:
- * جلوگیری از ساخت Order در صورت تغییر قیمت یا موجودی.
- *
- * محل استفاده:
- * داخل Checkout بعد از Sync شدن Cart با آخرین اطلاعات Backend.
- *
- * نحوه کار:
- * اگر Validation نامعتبر باشد، بر اساس نوع مشکل پیام مناسب نمایش داده می‌شود
- * و فرآیند ساخت Order در همان Submit متوقف می‌شود.
- */
+            // همان نتیجه و تغییرات سبد در هر دو صفحه اعمال می‌شود.
+            syncCartStock(stockResult, dispatch);
             if (!stockResult.isValid) {
-                let title = "موجودی سفارش تغییر کرده است.";
-
-                let description =
-                    "موجودی یک یا چند محصول تغییر کرده است. لطفاً سبد خرید را بررسی کنید.";
-
-                /*
-                 * هدف:
-                 * نمایش پیام اختصاصی در صورت تغییر قیمت.
-                 *
-                 * محل استفاده:
-                 * اولین اولویت پیام Validation ناموفق Checkout.
-                 *
-                 * نحوه کار:
-                 * اگر حداقل یک قیمت تغییر کرده باشد، پیام تغییر قیمت نمایش داده می‌شود.
-                 */
-                if (stockResult.priceChangedItems.length > 0) {
-                    title = "قیمت سفارش تغییر کرده است.";
-
-                    description =
-                        "قیمت یک یا چند محصول تغییر کرده است. مبلغ جدید اعمال شد؛ لطفاً سفارش را بررسی و دوباره ثبت کنید.";
-                } else if (stockResult.unavailableItems.length > 0) {
-                    description =
-                        "یک یا چند محصول دیگر موجود نیست و از سبد خرید حذف شده است.";
-                } else if (stockResult.reducedItems.length > 0) {
-                    description =
-                        "موجودی یک یا چند محصول کمتر شده و تعداد قابل سفارش تغییر کرده است.";
-                } else if (stockResult.productStockIssues.length > 0) {
-                    description =
-                        "مجموع تعداد انتخاب‌شده از موجودی کل یکی از محصولات بیشتر است.";
-                }
-
-                toast.warning(title, {
-                    description,
-
-                    action: {
-                        label: "بررسی سبد",
-                        onClick: () => router.push("/cart"),
-                    },
+                toast.warning(getStockChangeMessage(stockResult), {
+                    action: { label: "بررسی سبد", onClick: () => router.push("/cart") },
                 });
-
                 return;
             }
-
-            /*
-            * Snapshot اقلام سفارش.
-            *
-            * مشخصات محصول، Variant و قیمت
-            * از داده معتبر Backend گرفته می‌شوند
-            * تا به اطلاعات قابل تغییر localStorage
-            * اعتماد نکنیم.
-            */
 
             const orderItems = items.map(
                 (item) => {
@@ -443,9 +316,6 @@ export function CheckoutPageContent() {
 
                     paymentStatus: "pending",
 
-                    createdAt:
-                        Date.now(),
-
                     paidAt:
                         null,
                 });
@@ -478,11 +348,9 @@ export function CheckoutPageContent() {
         }
     };
 
-    const latitude =
-        watch("latitude");
+    const latitude = useWatch({ control, name: "latitude" });
 
-    const longitude =
-        watch("longitude");
+    const longitude = useWatch({ control, name: "longitude" });
 
     /*
      * Hydration Guard
@@ -1204,19 +1072,15 @@ export function CheckoutPageContent() {
                                                     </span>
 
                                                     <span>
-                                                        {item.quantity.toLocaleString(
-                                                            "fa-IR",
-                                                        )}
+                                                        {formatNumber(item.quantity)}
                                                     </span>
                                                 </div>
 
                                                 <p className="mt-3 text-xs font-medium">
-                                                    {(
+                                                    {formatNumber((
                                                         item.unitPrice *
                                                         item.quantity
-                                                    ).toLocaleString(
-                                                        "fa-IR",
-                                                    )}{" "}
+                                                    ))}{" "}
                                                     تومان
                                                 </p>
                                             </div>
@@ -1233,9 +1097,7 @@ export function CheckoutPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalQuantity.toLocaleString(
-                                            "fa-IR",
-                                        )}
+                                        {formatNumber(totalQuantity)}
                                     </span>
                                 </div>
 
@@ -1245,9 +1107,7 @@ export function CheckoutPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalPrice.toLocaleString(
-                                            "fa-IR",
-                                        )}{" "}
+                                        {formatNumber(totalPrice)}{" "}
                                         تومان
                                     </span>
                                 </div>
@@ -1270,9 +1130,7 @@ export function CheckoutPageContent() {
                                 </span>
 
                                 <span className="text-lg font-medium">
-                                    {totalPrice.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(totalPrice)}{" "}
                                     تومان
                                 </span>
                             </div>

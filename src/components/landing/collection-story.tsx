@@ -1,3 +1,5 @@
+
+import { formatNumber } from "@/lib/format";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -76,9 +78,7 @@ export function CollectionStory({
                                         </h3>
 
                                         <p className="mt-3 text-sm text-white/60">
-                                            {featuredProduct.price.toLocaleString(
-                                                "fa-IR",
-                                            )}{" "}
+                                            {formatNumber(featuredProduct.price)}{" "}
                                             تومان
                                         </p>
                                     </div>
@@ -173,9 +173,7 @@ export function CollectionStory({
                                             </div>
 
                                             <span className="shrink-0 text-xs text-muted-foreground">
-                                                {product.price.toLocaleString(
-                                                    "fa-IR",
-                                                )}{" "}
+                                                {formatNumber(product.price)}{" "}
                                                 تومان
                                             </span>
                                         </Link>
