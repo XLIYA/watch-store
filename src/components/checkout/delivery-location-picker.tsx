@@ -1,4 +1,5 @@
 "use client";
+import { mapConfig } from "@/config/maps";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -300,7 +301,7 @@ export function DeliveryLocationPicker({
                     scrollWheelZoom
                 >
                     <MapTileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        url={mapConfig.tilesUrl}
                         attribution="© OpenStreetMap contributors"
                     />
 
