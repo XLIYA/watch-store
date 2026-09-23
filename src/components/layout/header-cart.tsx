@@ -1,4 +1,7 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
+import { selectCartTotals } from "@/features/cart/cart.selectors";
 
 import { useEffect } from "react";
 
@@ -23,18 +26,7 @@ export function HeaderCart({
         (state) => state.cart.items,
     );
 
-    const totalQuantity = items.reduce(
-        (total, item) =>
-            total + item.quantity,
-        0,
-    );
-
-    const totalPrice = items.reduce(
-        (total, item) =>
-            total +
-            item.unitPrice * item.quantity,
-        0,
-    );
+    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
 
     useEffect(() => {
         function handleKeyDown(
@@ -102,9 +94,7 @@ export function HeaderCart({
                             </p>
 
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                {totalQuantity.toLocaleString(
-                                    "fa-IR",
-                                )}{" "}
+                                {formatNumber(totalQuantity)}{" "}
                                 کالا
                             </p>
                         </div>
@@ -198,18 +188,14 @@ export function HeaderCart({
                                         <div className="mt-auto flex items-end justify-between gap-4 pt-4">
                                             <span className="text-xs text-muted-foreground">
                                                 تعداد{" "}
-                                                {item.quantity.toLocaleString(
-                                                    "fa-IR",
-                                                )}
+                                                {formatNumber(item.quantity)}
                                             </span>
 
                                             <span className="text-sm">
-                                                {(
+                                                {formatNumber((
                                                     item.unitPrice *
                                                     item.quantity
-                                                ).toLocaleString(
-                                                    "fa-IR",
-                                                )}{" "}
+                                                ))}{" "}
                                                 تومان
                                             </span>
                                         </div>
@@ -226,9 +212,7 @@ export function HeaderCart({
                                 </span>
 
                                 <span className="font-medium">
-                                    {totalPrice.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(totalPrice)}{" "}
                                     تومان
                                 </span>
                             </div>

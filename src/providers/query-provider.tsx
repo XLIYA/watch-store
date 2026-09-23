@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SessionEvents } from "@/providers/session-events";
 
 import {
     QueryClientProvider,
@@ -34,6 +35,7 @@ export function QueryProvider({
 
     return (
         <QueryClientProvider client={queryClient}>
+            <SessionEvents />
             {children}
         </QueryClientProvider>
     );

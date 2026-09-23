@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { shouldRetryQuery } from "@/services/api/api-error";
 
 /*
  * هدف:
@@ -24,7 +25,7 @@ export function createQueryClient() {
                 /*
                  * اگر Query با خطا مواجه شود فقط یک بار مجدداً تلاش می‌کند.
                  */
-                retry: 1,
+                retry: shouldRetryQuery,
 
                 /*
                  * با برگشت کاربر به Tab مرورگر درخواست خودکار ارسال نمی‌شود.

@@ -97,26 +97,5 @@ export interface Order {
     paidAt: number | null;
 }
 
-export interface CreateOrderPayload {
-    customer: OrderCustomer;
-
-    delivery: OrderDelivery;
-
-    items: OrderItem[];
-
-    itemsCount: number;
-
-    subtotal: number;
-
-    shippingCost: number;
-
-    totalPrice: number;
-
-    status: OrderStatus;
-
-    paymentStatus: PaymentStatus;
-
-    createdAt: number;
-
-    paidAt: number | null;
-}
+// زمان ثبت و شناسه متعلق به سرورند؛ سایر فیلدها با مدل Order مشترک هستند.
+export type CreateOrderPayload = Omit<Order, "id" | "createdAt">;

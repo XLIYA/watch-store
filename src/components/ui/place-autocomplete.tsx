@@ -1,4 +1,7 @@
 "use client"
+import { useQuery } from "@tanstack/react-query"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { mapConfig } from "@/config/maps"
 
 import { cn } from "@/lib/utils"
 import {
@@ -123,7 +126,7 @@ function buildSearchUrl({
     lon,
     zoom,
 }: PlaceSearchOptions) {
-    const url = new URL("https://photon.komoot.io/api")
+    const url = new URL(mapConfig.geocodingUrl)
     url.searchParams.set("q", query)
 
     if (lang) {
@@ -154,92 +157,33 @@ function buildSearchUrl({
     return String(url)
 }
 
-function useDebounce<T>(value: T, delay: number = 300) {
-    const [debouncedValue, setDebouncedValue] = React.useState<T>(value)
-
-    React.useEffect(() => {
-        const timer = setTimeout(() => setDebouncedValue(value), delay)
-        return () => clearTimeout(timer)
-    }, [value, delay])
-
-    return debouncedValue
-}
-
-function usePlaceSearch({
-    debounceMs,
-    query,
-    ...props
-}: {
-    debounceMs: number
-} & PlaceSearchOptions) {
-    const [results, setResults] = React.useState<PlaceFeature[]>([])
-    const [isLoading, setIsLoading] = React.useState(false)
-    const [error, setError] = React.useState<Error | null>(null)
-    const [hasSearched, setHasSearched] = React.useState(false)
-
-    const debouncedQuery = useDebounce(query, debounceMs)
-
-    React.useEffect(() => {
-        if (!debouncedQuery.trim()) {
-            setResults([])
-            setIsLoading(false)
-            setHasSearched(false)
-            return
-        }
-
-        const abortController = new AbortController()
-
-        async function fetchResults() {
-            setIsLoading(true)
-            setError(null)
-            setHasSearched(true)
-
-            try {
-                const url = buildSearchUrl({ query: debouncedQuery, ...props })
-                const response = await fetch(url, {
-                    signal: abortController.signal,
-                })
-
-                if (!response.ok) {
-                    throw new Error(
-                        `Photon API error: ${response.status} ${response.statusText}`
-                    )
-                }
-
-                const data: PlaceFeatureCollection = await response.json()
-                const addressOsmIds = new Set()
-                const dedupedFeatures = data.features.filter((feature) => {
-                    const id = feature.properties.osm_id
-                    if (addressOsmIds.has(id)) return false
-                    addressOsmIds.add(id)
-                    return true
-                })
-                setResults(dedupedFeatures)
-            } catch (err) {
-                if (err instanceof Error && err.name !== "AbortError") {
-                    setError(err)
-                    setResults([])
-                }
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchResults()
-
-        return () => abortController.abort()
-    }, [
-        debouncedQuery,
-        props.lang,
-        props.limit,
-        props.bbox,
-        props.lat,
-        props.lon,
-        props.zoom,
-        props.locationBiasScale,
-    ])
-
-    return { results, isLoading, error, hasSearched }
+const EMPTY_PLACES: PlaceFeature[] = []
+function usePlaceSearch({ debounceMs, query, ...options }: { debounceMs: number } & PlaceSearchOptions) {
+    const debouncedQuery = useDebouncedValue(query.trim(), debounceMs)
+    const url = buildSearchUrl({ query: debouncedQuery, ...options })
+    const enabled = !!debouncedQuery && !!query.trim()
+    const result = useQuery({
+        queryKey: ["places", url],
+        enabled,
+        queryFn: async ({ signal }) => {
+            const response = await fetch(url, { signal, credentials: "omit" })
+            if (!response.ok) throw new Error("دریافت آدرس با خطا مواجه شد.")
+            const data: PlaceFeatureCollection = await response.json()
+            const ids = new Set<string>()
+            return data.features.filter(feature => {
+                const id = `${feature.properties.osm_type}:${feature.properties.osm_id}`
+                if (ids.has(id)) return false
+                ids.add(id)
+                return true
+            })
+        },
+    })
+    return {
+        results: enabled ? (result.data ?? EMPTY_PLACES) : EMPTY_PLACES,
+        isLoading: !!query.trim() && (query.trim() !== debouncedQuery || result.isFetching),
+        error: enabled ? result.error : null,
+        hasSearched: enabled && !result.isPending,
+    }
 }
 
 function PlaceAutocomplete({
@@ -333,7 +277,7 @@ function PlaceAutocomplete({
                         )}
                         {hasNoResults && (
                             <CommandEmpty>
-                                Can't find {displayValue}.
+                                نتیجه‌ای برای {displayValue} پیدا نشد.
                             </CommandEmpty>
                         )}
                         {results.length > 0 && (

@@ -1,4 +1,7 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
+import { selectCartTotals } from "@/features/cart/cart.selectors";
 
 import { useState } from "react";
 
@@ -31,19 +34,20 @@ import {
     clearCart,
     removeItem,
     setItemQuantity,
-    updateItemStock,
 } from "@/features/cart/cart.slice";
 
 import { useHydrated } from "@/hooks/use-hydrated";
 
-import { getProductById } from "@/services/products.service";
+import { validateCheckoutStock } from "@/features/checkout/validate-checkout-stock";
+import { syncCartStock, getStockChangeMessage } from "@/features/checkout/sync-cart-stock";
+import { getApiErrorMessage } from "@/services/api/api-error";
 
 import {
     useAppDispatch,
     useAppSelector,
 } from "@/store/hooks";
 
-import type { Product } from "@/types/product";
+
 
 type PendingCartAction =
     | {
@@ -81,19 +85,7 @@ export function CartPageContent() {
         null,
     );
 
-    const totalQuantity = items.reduce(
-        (total, item) =>
-            total + item.quantity,
-        0,
-    );
-
-    const totalPrice = items.reduce(
-        (total, item) =>
-            total +
-            item.unitPrice *
-            item.quantity,
-        0,
-    );
+    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
 
     const handleDecrease = (
         lineId: string,
@@ -217,283 +209,28 @@ export function CartPageContent() {
             );
         };
 
-    const handleCheckout =
-        async () => {
-            if (
-                items.length === 0 ||
-                isValidating
-            ) {
+    const handleCheckout = async () => {
+        if (!items.length || isValidating) return;
+        setIsValidating(true);
+        setValidationMessage(null);
+        try {
+            const result = await validateCheckoutStock(items);
+            syncCartStock(result, dispatch);
+            if (!result.isValid) {
+                const message = getStockChangeMessage(result);
+                setValidationMessage(message);
+                toast.warning(message);
                 return;
             }
-
-            setIsValidating(true);
-            setValidationMessage(
-                null,
-            );
-
-            try {
-                /*
-                 * اگر از یک محصول چند Variant
-                 * داخل Cart باشد، اطلاعات محصول
-                 * فقط یک بار از Backend گرفته می‌شود.
-                 */
-                const productIds = [
-                    ...new Set(
-                        items.map(
-                            (item) =>
-                                item.productId,
-                        ),
-                    ),
-                ];
-
-                const productResults =
-                    await Promise.all(
-                        productIds.map(
-                            async (
-                                productId,
-                            ): Promise<Product | null> => {
-                                try {
-                                    return await getProductById(
-                                        productId,
-                                    );
-                                } catch {
-                                    return null;
-                                }
-                            },
-                        ),
-                    );
-
-                const productMap =
-                    new Map<
-                        number,
-                        Product
-                    >();
-
-                for (const product of productResults) {
-                    if (
-                        !product
-                    ) {
-                        continue;
-                    }
-
-                    productMap.set(
-                        product.id,
-                        product,
-                    );
-                }
-
-                let cartWasChanged =
-                    false;
-
-                let unavailableCount =
-                    0;
-
-                let reducedCount = 0;
-
-                for (const item of items) {
-                    const product =
-                        productMap.get(
-                            item.productId,
-                        );
-
-                    /*
-                     * محصول از Backend حذف شده.
-                     */
-                    if (!product) {
-                        dispatch(
-                            removeItem(
-                                item.lineId,
-                            ),
-                        );
-
-                        unavailableCount +=
-                            1;
-
-                        cartWasChanged =
-                            true;
-
-                        continue;
-                    }
-
-                    const variant =
-                        product.variants.find(
-                            (
-                                currentVariant,
-                            ) =>
-                                currentVariant.id ===
-                                item.variantId,
-                        );
-
-                    /*
-                     * Variant حذف شده
-                     * یا موجودی ندارد.
-                     */
-                    if (
-                        !variant ||
-                        variant.quantity <=
-                        0 ||
-                        product.quantity <=
-                        0
-                    ) {
-                        dispatch(
-                            removeItem(
-                                item.lineId,
-                            ),
-                        );
-
-                        unavailableCount +=
-                            1;
-
-                        cartWasChanged =
-                            true;
-
-                        continue;
-                    }
-
-                    /*
-                     * موجودی قابل فروش را
-                     * از کمترین مقدار Product
-                     * و Variant می‌گیریم.
-                     */
-                    const availableQuantity =
-                        Math.min(
-                            product.quantity,
-                            variant.quantity,
-                        );
-
-                    if (
-                        availableQuantity <=
-                        0
-                    ) {
-                        dispatch(
-                            removeItem(
-                                item.lineId,
-                            ),
-                        );
-
-                        unavailableCount +=
-                            1;
-
-                        cartWasChanged =
-                            true;
-
-                        continue;
-                    }
-
-                    /*
-                     * موجودی ذخیره شده در Cart
-                     * با Backend Sync می‌شود.
-                     */
-                    if (
-                        item.maxQuantity !==
-                        availableQuantity
-                    ) {
-                        dispatch(
-                            updateItemStock({
-                                lineId:
-                                    item.lineId,
-
-                                maxQuantity:
-                                    availableQuantity,
-                            }),
-                        );
-                    }
-
-                    /*
-                     * اگر تعداد Cart بیشتر
-                     * از موجودی فعلی باشد،
-                     * Reducer مقدار را کم می‌کند.
-                     */
-                    if (
-                        item.quantity >
-                        availableQuantity
-                    ) {
-                        reducedCount +=
-                            1;
-
-                        cartWasChanged =
-                            true;
-                    }
-                }
-
-                /*
-                 * اگر Cart تغییر کرده،
-                 * وارد Checkout نمی‌شویم.
-                 */
-                if (
-                    cartWasChanged
-                ) {
-                    const messages: string[] =
-                        [];
-
-                    if (
-                        unavailableCount >
-                        0
-                    ) {
-                        messages.push(
-                            `${unavailableCount.toLocaleString(
-                                "fa-IR",
-                            )} مورد به دلیل اتمام موجودی از سبد خرید حذف شد`,
-                        );
-                    }
-
-                    if (
-                        reducedCount > 0
-                    ) {
-                        messages.push(
-                            `تعداد ${reducedCount.toLocaleString(
-                                "fa-IR",
-                            )} مورد با موجودی فعلی انبار اصلاح شد`,
-                        );
-                    }
-
-                    const message =
-                        `${messages.join(
-                            " و ",
-                        )}. لطفاً سبد خرید را دوباره بررسی کنید.`;
-
-                    setValidationMessage(
-                        message,
-                    );
-
-                    toast.warning(
-                        "موجودی سبد خرید تغییر کرده است.",
-                        {
-                            description:
-                                message,
-                        },
-                    );
-
-                    return;
-                }
-
-                /*
-                 * همه اقلام معتبرند.
-                 */
-                router.push(
-                    "/checkout",
-                );
-            } catch {
-                const message =
-                    "امکان بررسی موجودی محصولات وجود ندارد. لطفاً اتصال خود را بررسی کرده و دوباره تلاش کنید.";
-
-                setValidationMessage(
-                    message,
-                );
-
-                toast.error(
-                    "خطا در بررسی موجودی",
-                    {
-                        description:
-                            message,
-                    },
-                );
-            } finally {
-                setIsValidating(
-                    false,
-                );
-            }
-        };
+            router.push("/checkout");
+        } catch (error) {
+            const message = getApiErrorMessage(error);
+            setValidationMessage(message);
+            toast.error(message);
+        } finally {
+            setIsValidating(false);
+        }
+    };
 
     /*
      * Hydration Guard
@@ -582,9 +319,7 @@ export function CartPageContent() {
                             </h1>
 
                             <p className="mt-3 text-sm text-muted-foreground">
-                                {totalQuantity.toLocaleString(
-                                    "fa-IR",
-                                )}{" "}
+                                {formatNumber(totalQuantity)}{" "}
                                 کالا
                             </p>
                         </div>
@@ -710,9 +445,7 @@ export function CartPageContent() {
                                                             className="min-w-12 text-center text-sm"
                                                             aria-live="polite"
                                                         >
-                                                            {item.quantity.toLocaleString(
-                                                                "fa-IR",
-                                                            )}
+                                                            {formatNumber(item.quantity)}
                                                         </span>
 
                                                         <button
@@ -743,20 +476,16 @@ export function CartPageContent() {
                                                     {/* Price */}
                                                     <div className="text-left">
                                                         <p className="text-sm font-medium">
-                                                            {(
+                                                            {formatNumber((
                                                                 item.unitPrice *
                                                                 item.quantity
-                                                            ).toLocaleString(
-                                                                "fa-IR",
-                                                            )}{" "}
+                                                            ))}{" "}
                                                             تومان
                                                         </p>
 
                                                         <p className="mt-1 text-xs text-muted-foreground">
                                                             قیمت واحد:{" "}
-                                                            {item.unitPrice.toLocaleString(
-                                                                "fa-IR",
-                                                            )}{" "}
+                                                            {formatNumber(item.unitPrice)}{" "}
                                                             تومان
                                                         </p>
                                                     </div>
@@ -765,9 +494,7 @@ export function CartPageContent() {
                                                 <p className="mt-4 text-xs text-muted-foreground">
                                                     حداکثر موجودی
                                                     قابل سفارش:{" "}
-                                                    {item.maxQuantity.toLocaleString(
-                                                        "fa-IR",
-                                                    )}{" "}
+                                                    {formatNumber(item.maxQuantity)}{" "}
                                                     عدد
                                                 </p>
                                             </div>
@@ -797,9 +524,7 @@ export function CartPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalQuantity.toLocaleString(
-                                            "fa-IR",
-                                        )}
+                                        {formatNumber(totalQuantity)}
                                     </span>
                                 </div>
 
@@ -809,9 +534,7 @@ export function CartPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalPrice.toLocaleString(
-                                            "fa-IR",
-                                        )}{" "}
+                                        {formatNumber(totalPrice)}{" "}
                                         تومان
                                     </span>
                                 </div>
@@ -834,9 +557,7 @@ export function CartPageContent() {
                                 </span>
 
                                 <span className="text-lg font-medium">
-                                    {totalPrice.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(totalPrice)}{" "}
                                     تومان
                                 </span>
                             </div>

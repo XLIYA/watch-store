@@ -1,219 +1,129 @@
 const jsonServer = require("json-server");
 const cors = require("cors");
-const server = jsonServer.create();
-const router = jsonServer.router("db.json");
-const middlewares = jsonServer.defaults({ noCors: true });
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
-const jwt = require("jsonwebtoken");
-const AUTH_JWT_SECRET = "TOP-SECRET";
-const AUTH_JWT_REFRESH_TOKEN_SECRET = "REFRESH_TOKEN_TOP-SECRET";
-const AUTH_JWT_OPTIONS = { expiresIn: 60 * 60 };
-const refreshTokenExpire = "1d";
-const accessTokenExpire = "1h";
+const { createAuth } = require("./auth");
 
-// TODO: vaghti token nis, 200 mide
-// TODO: vaghti token nist, invalid nade (login api)
-// TODO: besorat pishfarz token baraye har api niaz nabashe vali baraye ye seri api niaz bash be sorat dasti set she
-// TODO: Handle 404 error message
-// TODO: Refactor refresh token mechanism
+// مسیرها از محل فایل ساخته می‌شوند تا اجرای سرور از ریشهٔ پروژه هم درست باشد.
+function createServer(options = {}) {
+  const server = jsonServer.create();
+  const router = jsonServer.router(
+    options.dbPath || path.join(__dirname, "db.json"),
+  );
+  const origins =
+    options.origins ||
+    (process.env.WEB_ORIGINS || "http://localhost:3000")
+      .split(",")
+      .map((value) => value.trim());
+  const uploadDir = options.uploadDir || path.join(__dirname, "uploads");
+  const auth = createAuth(router.db, options.auth);
 
-// Load DB file for Authentication middleware and endpoints
-const DB = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "./db.json"), "utf-8")
-);
+  server.use(
+    cors({
+      origin: (origin, callback) =>
+        callback(null, !origin || origins.includes(origin)),
+      credentials: true,
+      exposedHeaders: ["X-Total-Count", "Link"],
+    }),
+  );
+  server.use(jsonServer.defaults({ noCors: true, logger: !options.quiet }));
+  server.use(jsonServer.bodyParser);
 
-server.use(cors());
-
-// Authorization Middleware
-server.use((req, res, next) => {
-  const protections = DB.protection || {};
-  const entity = req.url.split("/")[1];
-  const entityProtection = protections[entity];
-  const methodSpecificProtection =
-    protections[entity + "." + req.method.toLowerCase()];
-  const protectionRule =
-    methodSpecificProtection === false
-      ? false
-      : methodSpecificProtection || entityProtection;
-
-  const token = req.headers.token || req.headers.Token;
-  if (protectionRule && !token) return res.status(401).send();
-  if (!token) return next();
-
-  jwt.verify(token, AUTH_JWT_SECRET, (err, decoded) => {
-    if (err) {
-      console.log("res: ", JSON.stringify(err));
-
-      return res
-        .status(401)
-        .send(
-          err.name === "TokenExpiredError" ? "Token Expired!" : "Invalid Token"
-        );
+  // کوکی خودکار ارسال می‌شود؛ Origin و هدر غیرساده جلوی درخواست تغییردهندهٔ سایت دیگر را می‌گیرند.
+  server.use((req, res, next) => {
+    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+    const origin = req.get("origin");
+    if (
+      (origin && !origins.includes(origin)) ||
+      req.get("X-Requested-With") !== "watch-store"
+    ) {
+      return res.status(403).json({ code: "INVALID_ORIGIN" });
     }
-    req.user = decoded;
-    if (!protectionRule) return next(); // no authorization is needed
-    const authorized =
-      protectionRule === true || protectionRule === decoded.role;
-    if (!authorized) return res.status(401).send();
-    next(); // authorized
-  });
-});
-
-// Set default middlewares (logger, static, cors and no-cache)
-server.use(middlewares);
-
-// general upload API (for test)
-server.post("/upload", upload.single("image"), function (req, res, next) {
-  // req.file is the `image` file
-  // req.body will hold the text fields, if there were any
-  res.json(req.file);
-});
-
-// list all files API (for test)
-server.get("/files", (req, res, next) => {
-  fs.readdir("./uploads/", (err, files) => {
-    if (err) return next(err);
-    res.json(files);
-  });
-});
-
-// download (preview) a file API
-server.get("/files/:file_id", (req, res, next) => {
-  const { file_id } = req.params;
-  res.set("Content-Type", "image/jpeg");
-  res.sendFile(path.join(__dirname, "uploads/" + file_id));
-});
-
-// To handle POST, PUT and PATCH you need to use a body-parser
-// You can use the one used by JSON Server
-server.use(jsonServer.bodyParser);
-
-// For all non-json POST and PATCH requests (create and edit endpoints using an image file)
-// 1- Upload the file inside the `image` field
-// 2- (do it in next middleware)
-const imageFieldUploadMiddleware = upload.single("image");
-
-server.use((req, res, next) => {
-  if (
-    (req.method === "POST" || req.method === "PATCH") &&
-    req.headers["content-type"] != "application/json"
-  ) {
-    imageFieldUploadMiddleware(req, res, next);
-  } else {
     next();
-  }
-});
+  });
 
-// If previous middle-ware worked, continue to next step
-// 1- (previous middle-ware already did first step)
-// 2- Validate uploaded file, and replace the `image` field value with the file path
-server.use((req, res, next) => {
-  // if there was a file uploaded and previous middleware worked:
-  //   req.file is the `image` file
-  //   req.body will hold the text fields, if there were any
-  if (req.file) {
-    const { mimetype, size, filename } = req.file;
+  server.post("/auth/login", auth.login);
+  server.post("/auth/refresh-token", auth.refresh);
+  server.post("/auth/logout", auth.logout);
+  server.get("/auth/session", auth.requireAdmin, auth.session);
 
-    // validate uploaded image
-    if (mimetype != "image/jpeg")
-      throw new Error("image should be in image/jpeg type");
-    if (size > 2 * 1024 * 1024)
-      throw new Error("image size should be less than 2MB");
+  server.use((req, res, next) => {
+    const entity = req.path.split("/")[1];
+    const readOnly = ["GET", "HEAD"].includes(req.method);
+    // دادهٔ عمومی فروشگاه مستقل از session است؛ کوکی منقضی نباید مشاهدهٔ محصول را خراب کند.
+    if (
+      readOnly &&
+      ["products", "category", "subcategory", "reviews"].includes(entity)
+    )
+      return next();
+    if (readOnly && entity === "files" && req.path.split("/").length === 3)
+      return next();
+    if (entity === "orders" && req.method === "POST") return next();
+    // قوانین حساس در کد هستند تا PATCH کردن جدول protection راه دورزدن مجوز نباشد.
+    return auth.requireAdmin(req, res, next);
+  });
 
-    // Replace image field value with the file's path
-    req.body.image = "/files/" + filename;
-  }
-  // continue to normal json-server router for actual creation
-  next();
-});
-
-// Add createdAt field with timestamp value when posting to any route
-server.use((req, res, next) => {
-  if (req.method === "POST") {
-    req.body.createdAt = Date.now();
-  }
-  // Continue to JSON Server router
-  next();
-});
-
-let refreshTokens = [];
-// Authentication Routes
-server.post("/auth/login", async function (req, res, next) {
-  const { username, password } = req.body;
-  req.user = (DB.users || {}).find(
-    (u) => u.username == username && u.password == password
-  );
-  if (!req.user) return res.status(401).send("No user with those credentials!");
-  const { username: dbUsername, role, name } = req.user;
-  const accessToken = await jwt.sign(
-    { dbUsername, role, name },
-    AUTH_JWT_SECRET,
-    {
-      expiresIn: accessTokenExpire,
-    }
-  );
-  const refreshToken = await jwt.sign(
-    { dbUsername, role, name },
-    AUTH_JWT_REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: refreshTokenExpire,
-    }
-  );
-  refreshTokens.push(refreshToken);
-  res.json({ accessToken, refreshToken });
-});
-
-server.post("/auth/refresh-token", async function (req, res, next) {
-  const refreshToken = req.header("refreshToken");
-  console.log(refreshToken);
-
-  if (!refreshToken) {
-    return res.status(403).json({
-      errors: [
-        {
-          msg: "Token not found",
-        },
-      ],
-    });
-  }
-
-  // If token does not exist, send error message
-  if (!refreshTokens.includes(refreshToken)) {
-    return res.status(403).json({
-      errors: [
-        {
-          msg: "Invalid refresh token",
-        },
-      ],
-    });
-  }
-
-  try {
-    const user = await jwt.verify(refreshToken, AUTH_JWT_REFRESH_TOKEN_SECRET);
-    const { username, name, role } = user;
-    const accessToken = await jwt.sign(
-      { username, name, role },
-      AUTH_JWT_SECRET,
-      { expiresIn: accessTokenExpire }
+  const upload = multer({
+    dest: uploadDir,
+    limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+    fileFilter: (_req, file, callback) => {
+      if (file.mimetype !== "image/jpeg")
+        return callback(new Error("INVALID_IMAGE_TYPE"));
+      callback(null, true);
+    },
+  });
+  server.post("/upload", upload.single("image"), (req, res) => {
+    if (!req.file) return res.status(400).json({ code: "IMAGE_REQUIRED" });
+    res.json({ ...req.file, image: `/files/${req.file.filename}` });
+  });
+  server.get("/files", (_req, res, next) => {
+    fs.readdir(uploadDir, (error, files) =>
+      error ? next(error) : res.json(files),
     );
-    res.json({ accessToken });
-  } catch (error) {
-    res.status(403).json({
-      errors: [
-        {
-          msg: "Invalid token",
-        },
-      ],
-    });
-  }
-});
+  });
+  server.get("/files/:fileId", (req, res) => {
+    // نام تولیدشدهٔ multer فقط شناسه است، نه مسیر دلخواه روی فایل‌سیستم.
+    if (!/^[a-f0-9]{32}$/.test(req.params.fileId)) return res.sendStatus(404);
+    res.type("jpeg").sendFile(req.params.fileId, { root: uploadDir });
+  });
+  server.use((req, res, next) => {
+    if (
+      ["POST", "PATCH", "PUT"].includes(req.method) &&
+      req.is("multipart/form-data")
+    ) {
+      return upload.single("image")(req, res, next);
+    }
+    next();
+  });
+  server.use((req, _res, next) => {
+    if (req.file) req.body.image = `/files/${req.file.filename}`;
+    if (req.method === "POST") req.body.createdAt = Date.now();
+    next();
+  });
+  server.use(router);
+  server.use((error, _req, res, _next) => {
+    const code = error.code || error.message;
+    const invalidUpload = [
+      "LIMIT_FILE_SIZE",
+      "LIMIT_FILE_COUNT",
+      "LIMIT_UNEXPECTED_FILE",
+      "INVALID_IMAGE_TYPE",
+    ].includes(code);
+    res
+      .status(invalidUpload ? 400 : 500)
+      .json({ code: invalidUpload ? code : "SERVER_ERROR" });
+  });
+  return server;
+}
 
-// Use default router (CRUDs of db.json)
-server.use(router);
+if (require.main === module) {
+  const envPath = path.join(__dirname, ".env");
+  if (fs.existsSync(envPath)) process.loadEnvFile(envPath);
+  const port = Number(process.env.PORT || 3002);
+  createServer().listen(port, () =>
+    console.log(`JSON Server listening on port ${port}`),
+  );
+}
 
-server.listen(3002, () => {
-  console.log("Customized JSON-Server is running at http://localhost:3002/");
-});
+module.exports = { createServer };

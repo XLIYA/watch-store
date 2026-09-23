@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Autoplay from "embla-carousel-autoplay";
 
@@ -50,7 +50,7 @@ export function LandingHero({
      * Drag یا کلیک کاربر Autoplay را برای همیشه متوقف نمی‌کند
      * و قرار گرفتن Mouse روی Hero آن را موقتاً Pause می‌کند.
      */
-    const autoplayPlugin = useRef(
+    const [autoplayPlugin] = useState(() =>
         Autoplay({
             delay: 6500,
             stopOnInteraction: false,
@@ -125,7 +125,7 @@ export function LandingHero({
                     loop: products.length > 1,
                     direction: "ltr",
                 }}
-                plugins={[autoplayPlugin.current]}
+                plugins={[autoplayPlugin]}
                 className="h-full w-full [&_[data-slot=carousel-content]]:h-full"
             >
                 {/*

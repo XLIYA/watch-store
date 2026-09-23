@@ -1,3 +1,4 @@
+import { CategoryLinks } from "@/components/layout/category-links";
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -21,17 +22,7 @@ export function SiteFooter() {
                     <BrandLogo href="/shop" />
 
                     <nav aria-label="لینک‌های پایین سایت" className="flex flex-wrap items-center justify-start gap-x-6 gap-y-3 text-right text-sm text-muted-foreground">
-                        <Link href="/collections/classic" className="luxury-transition hover:text-foreground">
-                            کلاسیک
-                        </Link>
-
-                        <Link href="/collections/dress" className="luxury-transition hover:text-foreground">
-                            رسمی
-                        </Link>
-
-                        <Link href="/collections/sport" className="luxury-transition hover:text-foreground">
-                            اسپرت
-                        </Link>
+                        <CategoryLinks className="luxury-transition hover:text-foreground" />
 
                         <Link href="/cart" className="luxury-transition hover:text-foreground">
                             سبد خرید

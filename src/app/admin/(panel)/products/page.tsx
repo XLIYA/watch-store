@@ -1,5 +1,7 @@
 "use client";
 
+import { uiConfig } from "@/config/ui";
+
 import Image from "next/image";
 import {
     useMemo,
@@ -16,14 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+import { AdminPagination } from "@/components/common/admin-pagination";
+import { QueryFeedback } from "@/components/common/query-feedback";
 
 import {
     Select,
@@ -54,7 +50,9 @@ import {
     useDebouncedValue,
 } from "@/hooks/use-debounced-value";
 
-const PAGE_SIZE = 10;
+import { formatNumber } from "@/lib/format";
+
+const PAGE_SIZE = uiConfig.adminPageSize;
 
 export default function AdminProductsPage() {
     /*
@@ -117,7 +115,7 @@ export default function AdminProductsPage() {
     const debouncedSearch =
         useDebouncedValue(
             search.trim(),
-            400,
+            uiConfig.searchDebounceMs,
         );
 
     /*
@@ -135,6 +133,10 @@ export default function AdminProductsPage() {
         data: productsResult,
         isPending: isProductsPending,
         isError: isProductsError,
+        isFetching,
+        isPlaceholderData,
+        error,
+        refetch,
     } = useAdminProductsQuery({
         page,
         limit: PAGE_SIZE,
@@ -267,24 +269,11 @@ export default function AdminProductsPage() {
      * نحوه کار:
      * فقط شماره صفحه معتبر و متفاوت از صفحه فعلی ذخیره می‌شود.
      */
-    const handlePageChange = (
-        nextPage: number,
-    ) => {
-        if (
-            nextPage < 1 ||
-            nextPage > totalPages ||
-            nextPage === page
-        ) {
-            return;
-        }
 
-        setPage(
-            nextPage,
-        );
-    };
 
     return (
         <section className="space-y-6">
+            <QueryFeedback fetching={isFetching && !isProductsPending} error={error} retry={() => void refetch()} />
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <h1 className="text-3xl font-medium">
@@ -388,7 +377,7 @@ export default function AdminProductsPage() {
             </div>
 
             <div className="overflow-hidden rounded-md border">
-                <Table>
+                <Table aria-busy={isFetching}>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="text-right">
@@ -487,18 +476,14 @@ export default function AdminProductsPage() {
                                         </TableCell>
 
                                         <TableCell>
-                                            {new Intl.NumberFormat(
-                                                "fa-IR",
-                                            ).format(
+                                            {formatNumber(
                                                 product.price,
                                             )}{" "}
                                             تومان
                                         </TableCell>
 
                                         <TableCell>
-                                            {new Intl.NumberFormat(
-                                                "fa-IR",
-                                            ).format(
+                                            {formatNumber(
                                                 product.quantity,
                                             )}
                                         </TableCell>
@@ -532,86 +517,7 @@ export default function AdminProductsPage() {
                 </Table>
             </div>
 
-            {!isProductsPending &&
-                !isProductsError &&
-                totalPages > 1 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(
-                                        event,
-                                    ) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page - 1,
-                                        );
-                                    }}
-                                    className={page === 1 ? "pointer-events-none opacity-50" : undefined}
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length:
-                                        totalPages,
-                                },
-                                (_, index) => {
-                                    const pageNumber =
-                                        index +
-                                        1;
-
-                                    return (
-                                        <PaginationItem
-                                            key={
-                                                pageNumber
-                                            }
-                                        >
-                                            <PaginationLink
-                                                href="#"
-                                                isActive={
-                                                    pageNumber ===
-                                                    page
-                                                }
-                                                onClick={(
-                                                    event,
-                                                ) => {
-                                                    event.preventDefault();
-
-                                                    handlePageChange(
-                                                        pageNumber,
-                                                    );
-                                                }}
-                                            >
-                                                {
-                                                    pageNumber
-                                                }
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    );
-                                },
-                            )}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(
-                                        event,
-                                    ) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page + 1,
-                                        );
-                                    }}
-                                    className={page === totalPages ? "pointer-events-none opacity-50" : undefined}
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                )}
+            {!isProductsPending && !isProductsError && <AdminPagination page={page} totalPages={totalPages} busy={isFetching || isPlaceholderData} onPageChange={setPage} />}
         </section>
     );
 }

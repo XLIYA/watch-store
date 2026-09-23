@@ -40,10 +40,7 @@ export function useAdminProductsQuery(
                 params,
             ),
 
-        queryFn: () =>
-            getProducts(
-                params,
-            ),
+        queryFn: ({ signal }) => getProducts(params, signal),
 
         placeholderData:
             keepPreviousData,

@@ -1,3 +1,6 @@
+
+import { formatNumber } from "@/lib/format";
+import { getErrorStatus } from "@/services/api/api-error";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -47,8 +50,9 @@ export default async function ProductPage({
             await getProductById(
                 numericProductId,
             );
-    } catch {
-        notFound();
+    } catch (error) {
+        if (getErrorStatus(error) === 404) notFound();
+        throw error;
     }
 
     if (!product) {
@@ -218,9 +222,7 @@ export default async function ProductPage({
 
                                 {/* Price */}
                                 <p className="mt-7 text-xl font-medium">
-                                    {product.price.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(product.price)}{" "}
                                     تومان
                                 </p>
 
@@ -234,9 +236,7 @@ export default async function ProductPage({
 
                                     <span>
                                         {product.quantity > 0
-                                            ? `${product.quantity.toLocaleString(
-                                                "fa-IR",
-                                            )} عدد موجود`
+                                            ? `${formatNumber(product.quantity)} عدد موجود`
                                             : "ناموجود"}
                                     </span>
                                 </div>

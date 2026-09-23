@@ -1,5 +1,7 @@
 "use client";
 
+import { useCategories, categoryHref } from "@/features/catalog/use-categories";
+
 import { useState } from "react";
 
 import Link from "next/link";
@@ -17,36 +19,14 @@ import { HeaderCart } from "@/components/layout/header-cart";
 import { HeaderSearch } from "@/components/layout/header-search";
 
 import { useHydrated } from "@/hooks/use-hydrated";
+import { selectCartTotals } from "@/features/cart/cart.selectors";
 import { useAppSelector } from "@/store/hooks";
 
-const navigation = [
-    {
-        label: "کلاسیک",
-        href: "/collections/classic",
-    },
-    {
-        label: "رسمی",
-        href: "/collections/dress",
-    },
-    {
-        label: "اسپرت",
-        href: "/collections/sport",
-    },
-    {
-        label: "غواصی",
-        href: "/collections/diver",
-    },
-    {
-        label: "کرنوگراف",
-        href: "/collections/chronograph",
-    },
-    {
-        label: "نسخه محدود",
-        href: "/collections/limited-edition",
-    },
-];
+
 
 export function SiteHeader() {
+    const { data: categories = [] } = useCategories();
+    const navigation = categories.map(category => ({ label: category.name, href: categoryHref(category.slug) }));
     const [isMenuOpen, setIsMenuOpen] =
         useState(false);
 
@@ -63,14 +43,7 @@ export function SiteHeader() {
      */
     const isHydrated = useHydrated();
 
-    const cartQuantity = useAppSelector(
-        (state) =>
-            state.cart.items.reduce(
-                (total, item) =>
-                    total + item.quantity,
-                0,
-            ),
-    );
+    const { totalQuantity: cartQuantity } = useAppSelector(selectCartTotals);
 
     /*
      * Server و اولین Client Render
