@@ -1,0 +1,30 @@
+const {test}=require("node:test");
+const assert=require("node:assert/strict");
+const {createServer}=require("../server/server");
+
+test("admin CRUD validates grouping and numbers, sanitizes HTML and persists inventory",async t=>{
+  const source=structuredClone(require("../server/db.json"));
+  source.users=[{id:1,username:"catalog-test",password:"test-password",role:"admin",name:"Test"}];
+  const server=createServer({dbPath:source,quiet:true}).listen(0,"127.0.0.1");
+  await new Promise(resolve=>server.once("listening",resolve));
+  t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  let cookie="";
+  const request=(route,method="GET",body)=>fetch(base+route,{method,headers:{"X-Requested-With":"watch-store","Content-Type":"application/json",Cookie:cookie},...(body?{body:JSON.stringify(body)}:{})});
+  const login=await request("/auth/login","POST",{username:"catalog-test",password:"test-password"});
+  cookie=login.headers.getSetCookie().map(value=>value.split(";")[0]).join("; ");
+  const payload = {...source.products[0]};
+  delete payload.id; delete payload.createdAt; delete payload.soldCount;
+  payload.slug="regression-watch";payload.description='<p>Safe</p><script>alert(1)</script>';
+  const invalid=await request("/products","POST",{...payload,quantity:-1});assert.equal(invalid.status,422);
+  const mismatch=source.subcategory.find(group=>group.category!==payload.category);
+  assert.equal((await request("/products","POST",{...payload,subcategory:mismatch.id})).status,422);
+  const create=await request("/products","POST",payload);assert.equal(create.status,201);
+  const saved=await create.json();assert.ok(saved.id);assert.ok(saved.createdAt);assert.equal(saved.description,"<p>Safe</p>");
+  assert.equal((await request("/products","POST",payload)).status,422);
+  const patch=await request(`/products/${saved.id}`,"PATCH",{price:12345,quantity:payload.quantity+2});assert.equal(patch.status,200);
+  const updated=await (await request(`/products/${saved.id}`)).json();assert.equal(updated.price,12345);assert.equal(updated.quantity,payload.quantity+2);
+  assert.equal(updated.soldCount,0);
+  assert.equal((await request(`/products/${saved.id}`,"DELETE")).status,200);
+  assert.equal((await request(`/products/${saved.id}`)).status,404);
+});
