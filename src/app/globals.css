@@ -76,11 +76,11 @@
    * Brand palette
    */
 
-  --ivory: #f6f7f9;
-  --ink: #142638;
+  --ivory: #f6f3ed;
+  --ink: #191b19;
   --stone: #d8d3c8;
 
-  --gold: #b59a67;
+  --gold: #a88b52;
   --gold-light: #d5c39c;
 
   --forest: #17362d;
@@ -90,40 +90,40 @@
    * shadcn semantic colors
    */
 
-  --background: #f6f7f9;
-  --foreground: #142638;
+  --background: #f6f3ed;
+  --foreground: #191b19;
 
   --card: #ffffff;
-  --card-foreground: #142638;
+  --card-foreground: #191b19;
 
   --popover: #ffffff;
-  --popover-foreground: #142638;
+  --popover-foreground: #191b19;
 
-  --primary: #142638;
-  --primary-foreground: #f6f7f9;
+  --primary: #191b19;
+  --primary-foreground: #f6f3ed;
 
-  --secondary: #edf0f3;
-  --secondary-foreground: #142638;
+  --secondary: #eeeae2;
+  --secondary-foreground: #191b19;
 
-  --muted: #edf0f3;
-  --muted-foreground: #657381;
+  --muted: #eeeae2;
+  --muted-foreground: #706d64;
 
   --accent: #17362d;
   --accent-foreground: #ffffff;
 
   --destructive: #b42318;
 
-  --border: #dde3e9;
-  --input: #dde3e9;
-  --ring: #b59a67;
+  --border: #ded9cd;
+  --input: #ded9cd;
+  --ring: #a88b52;
 
   /*
    * Charts
    */
 
   --chart-1: #17362d;
-  --chart-2: #b59a67;
-  --chart-3: #657381;
+  --chart-2: #a88b52;
+  --chart-3: #706d64;
   --chart-4: #2f5147;
   --chart-5: #d5c39c;
 
@@ -141,16 +141,16 @@
    */
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #142638;
+  --sidebar-foreground: #191b19;
 
-  --sidebar-primary: #142638;
+  --sidebar-primary: #191b19;
   --sidebar-primary-foreground: #ffffff;
 
   --sidebar-accent: #f2f0ea;
-  --sidebar-accent-foreground: #142638;
+  --sidebar-accent-foreground: #191b19;
 
-  --sidebar-border: #dde3e9;
-  --sidebar-ring: #b59a67;
+  --sidebar-border: #ded9cd;
+  --sidebar-ring: #a88b52;
 
   /*
    * Motion
@@ -192,49 +192,49 @@
 
 .dark {
   --background: #0e0f0e;
-  --foreground: #f6f7f9;
+  --foreground: #f6f3ed;
 
   --card: #151715;
-  --card-foreground: #f6f7f9;
+  --card-foreground: #f6f3ed;
 
   --popover: #151715;
-  --popover-foreground: #f6f7f9;
+  --popover-foreground: #f6f3ed;
 
-  --primary: #f6f7f9;
-  --primary-foreground: #142638;
+  --primary: #f6f3ed;
+  --primary-foreground: #191b19;
 
   --secondary: #1c1e1c;
-  --secondary-foreground: #f6f7f9;
+  --secondary-foreground: #f6f3ed;
 
   --muted: #1c1e1c;
   --muted-foreground: #aaa59b;
 
-  --accent: #b59a67;
-  --accent-foreground: #142638;
+  --accent: #a88b52;
+  --accent-foreground: #191b19;
 
   --destructive: #e85d4a;
 
   --border: #2b2d2b;
   --input: #2b2d2b;
-  --ring: #b59a67;
+  --ring: #a88b52;
 
-  --chart-1: #b59a67;
+  --chart-1: #a88b52;
   --chart-2: #54776b;
   --chart-3: #aaa59b;
   --chart-4: #d5c39c;
   --chart-5: #6e8d82;
 
   --sidebar: #111211;
-  --sidebar-foreground: #f6f7f9;
+  --sidebar-foreground: #f6f3ed;
 
-  --sidebar-primary: #b59a67;
-  --sidebar-primary-foreground: #142638;
+  --sidebar-primary: #a88b52;
+  --sidebar-primary-foreground: #191b19;
 
   --sidebar-accent: #1c1e1c;
-  --sidebar-accent-foreground: #f6f7f9;
+  --sidebar-accent-foreground: #f6f3ed;
 
   --sidebar-border: #2b2d2b;
-  --sidebar-ring: #b59a67;
+  --sidebar-ring: #a88b52;
 }
 
 @layer base {
@@ -447,11 +447,11 @@
  * این قواعد در layout مدیریت فعال می‌شوند تا استایل هر صفحه دوباره نوشته نشود. */
 @layer components {
   .admin-shell {
-    --sidebar: #142638;
-    --sidebar-foreground: #eef3f8;
-    --sidebar-accent: #263c50;
+    --sidebar: #191b19;
+    --sidebar-foreground: #f4efe4;
+    --sidebar-accent: #2c302a;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #34495d;
+    --sidebar-border: #414439;
   }
   .admin-shell [data-sidebar="sidebar"] {
     background: var(--sidebar);
@@ -486,3 +486,24 @@
     transition: background-color var(--motion-fast);
   }
 }
+
+/* مقیاس مشترک فرم و کارت در فروشگاه و مدیریت؛ اختلاف گوشه‌ها فقط با اندازهٔ جزء تعیین می‌شود. */
+@layer components {
+ .surface { border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--card); }
+ .form-field { display: grid; gap: .6rem; font-size: .8rem; }
+ .form-field input, .form-field select, .form-field textarea { width: 100%; min-height: 2.75rem; padding: .7rem .9rem; border: 1px solid var(--input); border-radius: var(--radius-md); background: var(--background); outline-offset: 3px; }
+ .form-field textarea { min-height: 9rem; resize: vertical; }
+ .form-field input[type=checkbox] { width: 1rem; min-height: 1rem; }
+ .form-field [role=alert] { color: var(--destructive); font-size: .75rem; }
+ .editorial-title { font-size: clamp(2.4rem, 5vw, 5.5rem); font-weight: 400; line-height: 1.45; letter-spacing: -.04em; }
+ .section-kicker { display: flex; align-items: center; gap: .75rem; color: var(--muted-foreground); font-size: .7rem; }
+ .section-kicker::before { content: ''; width: 2rem; height: 1px; background: var(--gold); }
+ .watch-stage { perspective: 1000px; background: radial-gradient(ellipse at center, #454438 0%, #21251f 48%, #191b19 75%); }
+ .watch-stage img { transition: transform .8s var(--ease-luxury); }
+ .watch-stage:hover img { transform: rotateY(-8deg) rotateZ(-4deg) translateY(-10px); }
+ .product-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; transition: transform .35s, box-shadow .35s; }
+ .product-card:hover { transform: translateY(-5px); box-shadow: 0 18px 42px -24px #191b1950; }
+ .admin-shell { --sidebar: #f1eee7; --sidebar-foreground: #191b19; --sidebar-accent: #e5dfd1; --sidebar-accent-foreground: #191b19; --sidebar-border: #ded9cd; }
+ .admin-shell [data-sidebar=group-label] { color: var(--muted-foreground); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
