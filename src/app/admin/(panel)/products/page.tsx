@@ -1,4 +1,7 @@
 "use client";
+import { ProductEditor } from "@/features/admin/products/product-editor";
+import { DeleteProductDialog } from "@/features/admin/products/delete-product-dialog";
+import type { Product } from "@/types/product";
 
 import { uiConfig } from "@/config/ui";
 
@@ -55,6 +58,9 @@ import { formatNumber } from "@/lib/format";
 const PAGE_SIZE = uiConfig.adminPageSize;
 
 export default function AdminProductsPage() {
+    // null فرم بسته و undefined فرم ایجاد است؛ محصول انتخاب‌شده فرم مشترک ویرایش را پر می‌کند.
+    const [editing, setEditing] = useState<Product | null | undefined>(null);
+    const [deleting, setDeleting] = useState<Product | null>(null);
     /*
      * هدف:
      * نگهداری شماره صفحه فعلی Pagination.
@@ -287,7 +293,7 @@ export default function AdminProductsPage() {
 
                 <Button
                     type="button"
-                    disabled
+                    onClick={() => setEditing(undefined)}
                 >
                     <Plus className="size-4" />
 
@@ -495,6 +501,7 @@ export default function AdminProductsPage() {
                                                     size="icon"
                                                     variant="outline"
                                                     title="ویرایش محصول"
+                                                    onClick={() => setEditing(product)}
                                                 >
                                                     <Edit3 className="size-4" />
                                                 </Button>
@@ -504,6 +511,7 @@ export default function AdminProductsPage() {
                                                     size="icon"
                                                     variant="outline"
                                                     title="حذف محصول"
+                                                    onClick={() => setDeleting(product)}
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>
@@ -518,6 +526,8 @@ export default function AdminProductsPage() {
             </div>
 
             {!isProductsPending && !isProductsError && <AdminPagination page={page} totalPages={totalPages} busy={isFetching || isPlaceholderData} onPageChange={setPage} />}
+        {editing !== null && <ProductEditor product={editing} onClose={() => setEditing(null)} />}
+            {deleting && <DeleteProductDialog product={deleting} onClose={() => setDeleting(null)} onDeleted={() => { if (products.length === 1 && page > 1) setPage(page - 1); }} />}
         </section>
     );
 }
