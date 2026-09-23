@@ -4,6 +4,37 @@ import { apiClient } from "@/services/api/api-client";
 
 import type { Product } from "@/types/product";
 import type { PaginatedResult } from "@/types/pagination";
+import { apiConfig } from "@/config/api";
+import rules from "../../shared/product-rules.json";
+
+export type ProductPayload = Omit<Product, "id" | "createdAt" | "soldCount">;
+
+/** مودال محصول فقط با این سرویس ذخیره می‌کند؛ ایجاد POST و ویرایش PATCH است تا فیلدهای آماری بازنویسی نشوند. */
+export async function saveProduct(payload: ProductPayload, id?: number): Promise<Product> {
+  const response = id === undefined
+    ? await apiClient.post<Product>(endpoints.products, payload, { requiresAuth: true })
+    : await apiClient.patch<Product>(endpoints.product(id), payload, { requiresAuth: true });
+  return response.data;
+}
+
+/** حذف بعد از تأیید در مودال انجام می‌شود؛ خطا به mutation برمی‌گردد تا لیست زودتر از سرور تغییر نکند. */
+export async function deleteProduct(id: number) {
+  await apiClient.delete(endpoints.product(id), { requiresAuth: true });
+}
+
+/** جدول موجودی فقط فیلدهای تغییرکرده را ارسال می‌کند تا ویرایش هم‌زمان مشخصات محصول از بین نرود. */
+export async function updateProductInventory(id: number, patch: Partial<Pick<Product, "price" | "quantity">>) {
+  return (await apiClient.patch<Product>(endpoints.product(id), patch, { requiresAuth: true })).data;
+}
+
+/** تبدیل قرارداد upload به آدرس قابل‌استفاده در thumbnail/images اینجا متمرکز است؛ فرم با نام داخلی فایل سرور کاری ندارد. */
+export async function uploadProductImage(file: File): Promise<string> {
+  if (file.type !== rules.imageMime || file.size > rules.maxImageBytes) throw new Error("تصویر باید JPEG و حداکثر ۲ مگابایت باشد.");
+  const body = new FormData();
+  body.append("image", file);
+  const { data } = await apiClient.post<{ image: string }>(endpoints.upload, body, { requiresAuth: true });
+  return new URL(data.image, apiConfig.baseURL).href;
+}
 
 export type ProductSort =
   | "newest"
