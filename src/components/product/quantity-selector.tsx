@@ -1,4 +1,6 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
 
 import {
     Minus,
@@ -35,9 +37,7 @@ export function QuantitySelector({
                     {max > 0 ? (
                         <p className="mt-1 text-xs text-muted-foreground">
                             حداکثر{" "}
-                            {max.toLocaleString(
-                                "fa-IR",
-                            )}{" "}
+                            {formatNumber(max)}{" "}
                             عدد
                         </p>
                     ) : null}
@@ -63,9 +63,7 @@ export function QuantitySelector({
                         className="min-w-12 text-center text-sm"
                         aria-live="polite"
                     >
-                        {value.toLocaleString(
-                            "fa-IR",
-                        )}
+                        {formatNumber(value)}
                     </span>
 
                     <button

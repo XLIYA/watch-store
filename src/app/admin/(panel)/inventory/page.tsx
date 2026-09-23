@@ -1,7 +1,11 @@
 "use client";
 
+import { uiConfig } from "@/config/ui";
+
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import {
+    useState,
+} from "react";
 
 import {
     Edit3,
@@ -10,6 +14,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import { AdminPagination } from "@/components/common/admin-pagination";
+import { QueryFeedback } from "@/components/common/query-feedback";
 
 import {
     Table,
@@ -21,137 +28,175 @@ import {
 } from "@/components/ui/table";
 
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+    useAdminProductsQuery,
+} from "@/features/admin/products/queries/use-admin-products-query";
 
-import { getProducts } from "@/services/products.service";
+import {
+    useDebouncedValue,
+} from "@/hooks/use-debounced-value";
 
-import type { Product } from "@/types/product";
+import { formatNumber } from "@/lib/format";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = uiConfig.adminPageSize;
 
-function formatNumber(value: number) {
-    return new Intl.NumberFormat(
-        "fa-IR",
-    ).format(value);
-}
+/*
+ * هدف:
+ * نمایش اعداد قیمت و موجودی با فرمت فارسی.
+ *
+ * محل استفاده:
+ * ستون قیمت و موجودی جدول Inventory.
+ *
+ * نحوه کار:
+ * مقدار عددی با Locale فارسی فرمت می‌شود.
+ */
+
 
 export default function AdminInventoryPage() {
-    const [products, setProducts] =
-        useState<Product[]>([]);
-
-    const [page, setPage] =
-        useState(1);
-
-    const [totalPages, setTotalPages] =
-        useState(1);
-
-    const [search, setSearch] =
-        useState("");
-
-    const [appliedSearch, setAppliedSearch] =
-        useState("");
-
-    const [isLoading, setIsLoading] =
-        useState(true);
-
-    const [error, setError] =
-        useState<string | null>(null);
-
-    useEffect(() => {
-        let isCancelled = false;
-
-        getProducts({
-            page,
-            limit: PAGE_SIZE,
-            search:
-                appliedSearch ||
-                undefined,
-            sort: "newest",
-        })
-            .then((result) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                setProducts(
-                    result.data,
-                );
-
-                setTotalPages(
-                    Math.max(
-                        result.totalPages,
-                        1,
-                    ),
-                );
-
-                setError(null);
-            })
-            .catch((requestError) => {
-                if (isCancelled) {
-                    return;
-                }
-
-                console.error(
-                    "Failed to load inventory:",
-                    requestError,
-                );
-
-                setError(
-                    "دریافت اطلاعات قیمت و موجودی با خطا مواجه شد.",
-                );
-            })
-            .finally(() => {
-                if (!isCancelled) {
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [
+    /*
+     * هدف:
+     * نگهداری شماره صفحه فعلی Pagination.
+     *
+     * محل استفاده:
+     * Query محصولات و Pagination پایین جدول.
+     *
+     * نحوه کار:
+     * تغییر page باعث تغییر Query Key و دریافت صفحه متناظر می‌شود.
+     */
+    const [
         page,
-        appliedSearch,
-    ]);
+        setPage,
+    ] = useState(1);
 
-    const handleSearch = () => {
-        setIsLoading(true);
-        setPage(1);
+    /*
+     * هدف:
+     * نگهداری مقدار Search Input.
+     *
+     * محل استفاده:
+     * جستجوی محصولات در صفحه Inventory.
+     *
+     * نحوه کار:
+     * مقدار بلافاصله با تایپ کاربر تغییر می‌کند
+     * ولی Request با مقدار Debounce شده اجرا می‌شود.
+     */
+    const [
+        search,
+        setSearch,
+    ] = useState("");
 
-        setAppliedSearch(
+    /*
+     * هدف:
+     * جلوگیری از ارسال Request در هر بار تایپ.
+     *
+     * محل استفاده:
+     * Search صفحه Admin Inventory.
+     *
+     * نحوه کار:
+     * پس از 400 میلی‌ثانیه توقف تایپ،
+     * مقدار Search وارد Query محصولات می‌شود.
+     */
+    const debouncedSearch =
+        useDebouncedValue(
             search.trim(),
+            uiConfig.searchDebounceMs,
         );
-    };
 
-    const handlePageChange = (
-        nextPage: number,
+    /*
+     * هدف:
+     * دریافت اطلاعات قیمت و موجودی محصولات با React Query.
+     *
+     * محل استفاده:
+     * Table، Search و Pagination صفحه Inventory.
+     *
+     * نحوه کار:
+     * Inventory همان Product Data را مصرف می‌کند،
+     * بنابراین از Query مشترک محصولات استفاده می‌شود.
+     * Page و Search داخل Query Key قرار می‌گیرند و
+     * React Query مسئول Request، Cache، Loading و Error است.
+     */
+    const {
+        data: productsResult,
+        isPending,
+        isError,
+        isFetching,
+        isPlaceholderData,
+        error,
+        refetch,
+    } = useAdminProductsQuery({
+        page,
+        limit: PAGE_SIZE,
+        search:
+            debouncedSearch ||
+            undefined,
+        sort: "newest",
+    });
+
+    /*
+     * هدف:
+     * استخراج امن لیست محصولات از Response.
+     *
+     * محل استفاده:
+     * Table صفحه Inventory.
+     *
+     * نحوه کار:
+     * قبل از دریافت اولین Response آرایه خالی استفاده می‌شود.
+     */
+    const products =
+        productsResult?.data ?? [];
+
+    /*
+     * هدف:
+     * تعیین تعداد صفحات Pagination.
+     *
+     * محل استفاده:
+     * Pagination پایین جدول Inventory.
+     *
+     * نحوه کار:
+     * totalPages از Response دریافت شده و
+     * حداقل یک صفحه در نظر گرفته می‌شود.
+     */
+    const totalPages = Math.max(
+        productsResult?.totalPages ?? 1,
+        1,
+    );
+
+    /*
+     * هدف:
+     * مدیریت تغییر Search.
+     *
+     * محل استفاده:
+     * Input جستجوی Inventory.
+     *
+     * نحوه کار:
+     * مقدار Search ذخیره شده و Pagination
+     * هنگام شروع جستجوی جدید به صفحه اول برمی‌گردد.
+     */
+    const handleSearchChange = (
+        value: string,
     ) => {
-        if (
-            nextPage < 1 ||
-            nextPage > totalPages ||
-            nextPage === page
-        ) {
-            return;
-        }
+        setSearch(value);
 
-        setIsLoading(true);
-        setPage(nextPage);
+        if (page !== 1) {
+            setPage(1);
+        }
     };
+
+    /*
+     * هدف:
+     * کنترل تغییر صفحات Pagination.
+     *
+     * محل استفاده:
+     * Previous، Next و شماره صفحات.
+     *
+     * نحوه کار:
+     * فقط شماره صفحه معتبر و متفاوت از صفحه فعلی ذخیره می‌شود.
+     */
+
 
     return (
         <section className="space-y-6">
+            <QueryFeedback fetching={isFetching && !isPending} error={error} retry={() => void refetch()} />
             <div>
-                <p className="section-eyebrow">
-                    INVENTORY
-                </p>
-
-                <h1 className="mt-2 text-3xl font-medium">
+                <h1 className="text-3xl font-medium">
                     قیمت و موجودی
                 </h1>
 
@@ -160,47 +205,36 @@ export default function AdminInventoryPage() {
                 </p>
             </div>
 
+            {/*
+             * هدف:
+             * جستجوی خودکار محصولات Inventory.
+             *
+             * محل استفاده:
+             * بالای جدول قیمت و موجودی.
+             *
+             * نحوه کار:
+             * Input بلافاصله تغییر می‌کند ولی Query
+             * فقط بعد از پایان Debounce اجرا می‌شود.
+             */}
             <div className="border p-4">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <div className="relative flex-1">
-                        <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="relative">
+                    <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-                        <Input
-                            value={search}
-                            onChange={(event) =>
-                                setSearch(
-                                    event.target.value,
-                                )
-                            }
-                            onKeyDown={(event) => {
-                                if (
-                                    event.key ===
-                                    "Enter"
-                                ) {
-                                    handleSearch();
-                                }
-                            }}
-                            placeholder="جستجوی نام یا برند محصول..."
-                            className="pr-10"
-                        />
-                    </div>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={
-                            handleSearch
+                    <Input
+                        value={search}
+                        onChange={(event) =>
+                            handleSearchChange(
+                                event.target.value,
+                            )
                         }
-                    >
-                        <Search className="size-4" />
-
-                        جستجو
-                    </Button>
+                        placeholder="جستجوی نام یا برند محصول..."
+                        className="pr-10"
+                    />
                 </div>
             </div>
 
             <div className="overflow-hidden rounded-md border">
-                <Table>
+                <Table aria-busy={isFetching}>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="text-right">
@@ -230,31 +264,22 @@ export default function AdminInventoryPage() {
                     </TableHeader>
 
                     <TableBody>
-                        {isLoading ? (
+                        {isPending ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={6}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                                     در حال دریافت اطلاعات...
                                 </TableCell>
                             </TableRow>
-                        ) : error ? (
+                        ) : isError ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={6}
-                                    className="h-32 text-center text-destructive"
-                                >
-                                    {error}
+                                <TableCell colSpan={6} className="h-32 text-center text-destructive">
+                                    دریافت اطلاعات قیمت و موجودی با خطا مواجه شد.
                                 </TableCell>
                             </TableRow>
                         ) : products.length ===
                             0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={6}
-                                    className="h-32 text-center text-muted-foreground"
-                                >
+                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                                     محصولی یافت نشد.
                                 </TableCell>
                             </TableRow>
@@ -297,8 +322,7 @@ export default function AdminInventoryPage() {
                                         <TableCell>
                                             {formatNumber(
                                                 product.price,
-                                            )}
-                                            {" "}
+                                            )}{" "}
                                             تومان
                                         </TableCell>
 
@@ -327,95 +351,7 @@ export default function AdminInventoryPage() {
                 </Table>
             </div>
 
-            {!isLoading &&
-                !error &&
-                totalPages > 1 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page - 1,
-                                        );
-                                    }}
-                                    className={
-                                        page === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
-                                >
-                                    قبلی
-                                </PaginationPrevious>
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length:
-                                        totalPages,
-                                },
-                                (_, index) => {
-                                    const pageNumber =
-                                        index +
-                                        1;
-
-                                    return (
-                                        <PaginationItem
-                                            key={
-                                                pageNumber
-                                            }
-                                        >
-                                            <PaginationLink
-                                                href="#"
-                                                isActive={
-                                                    pageNumber ===
-                                                    page
-                                                }
-                                                onClick={(
-                                                    event,
-                                                ) => {
-                                                    event.preventDefault();
-
-                                                    handlePageChange(
-                                                        pageNumber,
-                                                    );
-                                                }}
-                                            >
-                                                {
-                                                    pageNumber
-                                                }
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    );
-                                },
-                            )}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-
-                                        handlePageChange(
-                                            page + 1,
-                                        );
-                                    }}
-                                    className={
-                                        page ===
-                                            totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : undefined
-                                    }
-                                >
-                                    بعدی
-                                </PaginationNext>
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                )}
+            {!isPending && !isError && <AdminPagination page={page} totalPages={totalPages} busy={isFetching || isPlaceholderData} onPageChange={setPage} />}
         </section>
     );
 }

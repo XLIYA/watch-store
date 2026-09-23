@@ -12,7 +12,7 @@
         "/images/products/watch-placeholder-1.webp"
       ],
       "description": "<p>ساعتی کلاسیک با طراحی مینیمال، موتور اتوماتیک و پرداخت ظریف بدنه برای استفاده روزمره و رسمی.</p>",
-      "price": 128000000,
+      "price": 130000000,
       "quantity": 7,
       "variants": [
         {
@@ -1464,7 +1464,7 @@
       "subtotal": 415000000,
       "shippingCost": 0,
       "totalPrice": 415000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1789217682016,
       "paidAt": null,
@@ -1516,7 +1516,7 @@
       "subtotal": 402000000,
       "shippingCost": 0,
       "totalPrice": 402000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1789191000000,
       "paidAt": null
@@ -1594,7 +1594,7 @@
       "subtotal": 146000000,
       "shippingCost": 0,
       "totalPrice": 146000000,
-      "status": "completed",
+      "status": "shipped",
       "paymentStatus": "paid",
       "createdAt": 1789026240000,
       "paidAt": 1789028040000
@@ -1645,7 +1645,7 @@
       "subtotal": 563000000,
       "shippingCost": 0,
       "totalPrice": 563000000,
-      "status": "completed",
+      "status": "delivered",
       "paymentStatus": "paid",
       "createdAt": 1788943860000,
       "paidAt": 1788945660000
@@ -1774,7 +1774,7 @@
       "subtotal": 528000000,
       "shippingCost": 0,
       "totalPrice": 528000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1788696720000,
       "paidAt": null
@@ -1851,7 +1851,7 @@
       "subtotal": 152000000,
       "shippingCost": 0,
       "totalPrice": 152000000,
-      "status": "completed",
+      "status": "shipped",
       "paymentStatus": "paid",
       "createdAt": 1788531960000,
       "paidAt": 1788533760000
@@ -1902,7 +1902,7 @@
       "subtotal": 460000000,
       "shippingCost": 0,
       "totalPrice": 460000000,
-      "status": "completed",
+      "status": "delivered",
       "paymentStatus": "paid",
       "createdAt": 1788413580000,
       "paidAt": 1788415380000
@@ -2031,7 +2031,7 @@
       "subtotal": 556000000,
       "shippingCost": 0,
       "totalPrice": 556000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1788166440000,
       "paidAt": null
@@ -2109,7 +2109,7 @@
       "subtotal": 168000000,
       "shippingCost": 0,
       "totalPrice": 168000000,
-      "status": "completed",
+      "status": "shipped",
       "paymentStatus": "paid",
       "createdAt": 1788001680000,
       "paidAt": 1788003480000
@@ -2160,7 +2160,7 @@
       "subtotal": 702000000,
       "shippingCost": 0,
       "totalPrice": 702000000,
-      "status": "completed",
+      "status": "delivered",
       "paymentStatus": "paid",
       "createdAt": 1787919300000,
       "paidAt": 1787921100000
@@ -2289,7 +2289,7 @@
       "subtotal": 471000000,
       "shippingCost": 0,
       "totalPrice": 471000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1787636160000,
       "paidAt": null
@@ -2366,7 +2366,7 @@
       "subtotal": 176000000,
       "shippingCost": 0,
       "totalPrice": 176000000,
-      "status": "completed",
+      "status": "shipped",
       "paymentStatus": "paid",
       "createdAt": 1787471400000,
       "paidAt": 1787473200000
@@ -2417,7 +2417,7 @@
       "subtotal": 673000000,
       "shippingCost": 0,
       "totalPrice": 673000000,
-      "status": "completed",
+      "status": "delivered",
       "paymentStatus": "paid",
       "createdAt": 1787389020000,
       "paidAt": 1787390820000
@@ -2546,7 +2546,7 @@
       "subtotal": 1066000000,
       "shippingCost": 0,
       "totalPrice": 1066000000,
-      "status": "pending_payment",
+      "status": "pending",
       "paymentStatus": "pending",
       "createdAt": 1787141880000,
       "paidAt": null
@@ -2624,7 +2624,7 @@
       "subtotal": 196000000,
       "shippingCost": 0,
       "totalPrice": 196000000,
-      "status": "completed",
+      "status": "shipped",
       "paymentStatus": "paid",
       "createdAt": 1786973520000,
       "paidAt": 1786975320000
@@ -2675,7 +2675,7 @@
       "subtotal": 883000000,
       "shippingCost": 0,
       "totalPrice": 883000000,
-      "status": "completed",
+      "status": "delivered",
       "paymentStatus": "paid",
       "createdAt": 1786858740000,
       "paidAt": 1786860540000
@@ -2776,10 +2776,10 @@
   "protection": {
     "products.get": false,
     "orders.post": false,
-    "products.post": false,
-    "orders.get": false,
-    "orders.patch": false,
-    "upload.post": false,
+    "products.post": "admin",
+    "orders.get": "admin",
+    "orders.patch": "admin",
+    "upload.post": "admin",
     "upload": true,
     "orders": "admin",
     "products": "admin",

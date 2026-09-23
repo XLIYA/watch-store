@@ -1,24 +1,23 @@
 import { apiClient } from "@/services/api/api-client";
-import { getAdminAccessToken } from "@/services/auth.service";
+import { endpoints } from "@/config/api";
+import { toPaginatedResult } from "@/services/api/pagination";
+import { CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
+import { PaginatedResult } from "@/types/pagination";
 
-import type {
-    CreateOrderPayload,
-    Order,
-} from "@/types/order";
-
-import type {
-    PaginatedResult,
-} from "@/types/pagination";
-
-export type AdminOrderDeliveryFilter =
+export type AdminOrderStatusFilter =
     | "all"
-    | "delivered"
-    | "undelivered";
+    | OrderStatus;
 
+export type AdminPaymentStatusFilter =
+    | "all"
+    | PaymentStatus;
 export interface GetAdminOrdersParams {
     page?: number;
     limit?: number;
-    deliveryStatus?: AdminOrderDeliveryFilter;
+    status?: AdminOrderStatusFilter;
+    paymentStatus?: AdminPaymentStatusFilter;
+    dateFrom?: number;
+    dateTo?: number;
 }
 
 export async function createOrder(
@@ -26,7 +25,7 @@ export async function createOrder(
 ): Promise<Order> {
     const response =
         await apiClient.post<Order>(
-            "/orders",
+            endpoints.orders,
             payload,
         );
 
@@ -38,7 +37,7 @@ export async function getOrderById(
 ): Promise<Order> {
     const response =
         await apiClient.get<Order>(
-            `/orders/${orderId}`,
+            endpoints.order(orderId), { requiresAuth: true },
         );
 
     return response.data;
@@ -50,8 +49,9 @@ export async function updateOrder(
 ): Promise<Order> {
     const response =
         await apiClient.patch<Order>(
-            `/orders/${orderId}`,
+            endpoints.order(orderId),
             payload,
+            { requiresAuth: true },
         );
 
     return response.data;
@@ -60,8 +60,11 @@ export async function updateOrder(
 export async function getAdminOrders({
     page = 1,
     limit = 10,
-    deliveryStatus = "all",
-}: GetAdminOrdersParams = {}): Promise<
+    status = "all",
+    paymentStatus = "all",
+    dateFrom,
+    dateTo,
+}: GetAdminOrdersParams = {}, signal?: AbortSignal): Promise<
     PaginatedResult<Order>
 > {
     const params: Record<
@@ -74,55 +77,26 @@ export async function getAdminOrders({
         _order: "desc",
     };
 
-    if (
-        deliveryStatus ===
-        "delivered"
-    ) {
-        params.status =
-            "completed";
+    if (status !== "all") {
+        params.status = status;
     }
 
-    if (
-        deliveryStatus ===
-        "undelivered"
-    ) {
-        params.status_ne =
-            "completed";
+    if (paymentStatus !== "all") {
+        params.paymentStatus = paymentStatus;
     }
 
-    const accessToken =
-        getAdminAccessToken();
+    if (typeof dateFrom === "number") {
+        params.createdAt_gte = dateFrom;
+    }
 
-    const response =
-        await apiClient.get<Order[]>(
-            "/orders",
-            {
-                params,
+    if (typeof dateTo === "number") {
+        params.createdAt_lte = dateTo;
+    }
 
-                headers: accessToken
-                    ? {
-                        token:
-                            accessToken,
-                    }
-                    : undefined,
-            },
-        );
-
-    const total = Number(
-        response.headers[
-        "x-total-count"
-        ] ??
-        response.data.length,
-    );
-
-    return {
-        data: response.data,
-        total,
-        page,
-        limit,
-        totalPages:
-            Math.ceil(
-                total / limit,
-            ),
-    };
+    const response = await apiClient.get<Order[]>(endpoints.orders, {
+        params,
+        signal,
+        requiresAuth: true,
+    });
+    return toPaginatedResult(response.data, response.headers["x-total-count"], page, limit);
 }

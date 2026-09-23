@@ -24,7 +24,10 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { clearAdminTokens } from "@/services/auth.service";
+import { logoutAdmin } from "@/services/auth.service";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/services/api/api-error";
 
 const adminMenuItems = [
     {
@@ -48,19 +51,20 @@ export function AdminSidebar() {
     const pathname = usePathname();
     const router = useRouter();
 
-    const handleLogout = () => {
-        clearAdminTokens();
-
-        router.replace("/admin/login");
-    };
+    const logout = useMutation({
+        mutationFn: logoutAdmin,
+        onSuccess: () => router.replace("/admin/login"),
+        onError: error => toast.error(getApiErrorMessage(error)),
+    });
+    const handleLogout = () => { if (!logout.isPending) logout.mutate(); };
 
     return (
         <Sidebar
             side="right"
             collapsible="icon"
-            className="border-l border-border"
+            className="border-l border-sidebar-border"
         >
-            <SidebarHeader className="border-b border-border">
+            <SidebarHeader className="border-b border-sidebar-border">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
@@ -69,7 +73,7 @@ export function AdminSidebar() {
                             tooltip="Watch Store"
                         >
                             <Link href="/admin">
-                                <div className="flex size-8 items-center justify-center border border-border">
+                                <div className="flex size-10 items-center justify-center rounded-xl bg-gold text-ink">
                                     <PackageSearch className="size-4" />
                                 </div>
 
@@ -78,7 +82,7 @@ export function AdminSidebar() {
                                         Watch Store
                                     </span>
 
-                                    <span className="truncate text-xs text-muted-foreground">
+                                    <span className="truncate text-xs text-sidebar-foreground/60">
                                         پنل مدیریت
                                     </span>
                                 </div>
@@ -89,7 +93,7 @@ export function AdminSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <SidebarGroup>
+                <SidebarGroup className="gap-3 py-6">
                     <SidebarGroupLabel>
                         مدیریت فروشگاه
                     </SidebarGroupLabel>
@@ -122,15 +126,16 @@ export function AdminSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-border">
+            <SidebarFooter className="border-t border-sidebar-border">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             tooltip="خروج از حساب"
                             onClick={handleLogout}
+                            disabled={logout.isPending}
                         >
                             <LogOut />
-                            <span>خروج از حساب</span>
+                            <span>{logout.isPending ? "در حال خروج..." : "خروج از حساب"}</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

@@ -1,3 +1,5 @@
+import { endpoints } from "@/config/api";
+import { getErrorStatus } from "@/services/api/api-error";
 import { apiClient } from "@/services/api/api-client";
 
 import type {
@@ -5,10 +7,11 @@ import type {
   Subcategory,
 } from "@/types/category";
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
   const response = await apiClient.get<Category[]>(
-    "/category",
+    endpoints.categories,
     {
+      signal,
       params: {
         _sort: "homeOrder",
         _order: "asc",
@@ -23,7 +26,7 @@ export async function getCategoryBySlug(
   slug: string,
 ): Promise<Category | null> {
   const response = await apiClient.get<Category[]>(
-    "/category",
+    endpoints.categories,
     {
       params: {
         slug,
@@ -44,7 +47,7 @@ export async function getSubcategories(
   }
 
   const response = await apiClient.get<Subcategory[]>(
-    "/subcategory",
+    endpoints.subcategories,
     {
       params,
     },
@@ -57,7 +60,7 @@ export async function getSubcategoryBySlug(
   slug: string,
 ): Promise<Subcategory | null> {
   const response = await apiClient.get<Subcategory[]>(
-    "/subcategory",
+    endpoints.subcategories,
     {
       params: {
         slug,
@@ -74,12 +77,13 @@ export async function getCategoryById(
   try {
     const response =
       await apiClient.get<Category>(
-        `/category/${categoryId}`,
+        endpoints.category(categoryId),
       );
 
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    if (getErrorStatus(error) === 404) return null;
+    throw error;
   }
 }
 
@@ -89,11 +93,12 @@ export async function getSubcategoryById(
   try {
     const response =
       await apiClient.get<Subcategory>(
-        `/subcategory/${subcategoryId}`,
+        endpoints.subcategory(subcategoryId),
       );
 
     return response.data;
-  } catch {
-    return null;
+  } catch (error) {
+    if (getErrorStatus(error) === 404) return null;
+    throw error;
   }
 }

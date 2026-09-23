@@ -1,4 +1,7 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
+import { selectCartTotals } from "@/features/cart/cart.selectors";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +24,7 @@ import {
 import {
     Controller,
     useForm,
+    useWatch,
 } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,10 +52,7 @@ import {
 
 import { DeliveryLocationPicker } from "@/components/checkout/delivery-location-picker";
 
-import {
-    removeItem,
-    updateItemStock,
-} from "@/features/cart/cart.slice";
+import { syncCartStock, getStockChangeMessage } from "@/features/checkout/sync-cart-stock";
 
 import { createOrder } from "@/services/orders.service";
 
@@ -74,7 +75,6 @@ export function CheckoutPageContent() {
         control,
         handleSubmit,
         setValue,
-        watch,
 
         formState: {
             errors,
@@ -93,22 +93,7 @@ export function CheckoutPageContent() {
             mode: "onBlur",
         });
 
-    const totalQuantity =
-        items.reduce(
-            (total, item) =>
-                total +
-                item.quantity,
-            0,
-        );
-
-    const totalPrice =
-        items.reduce(
-            (total, item) =>
-                total +
-                item.unitPrice *
-                item.quantity,
-            0,
-        );
+    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
 
     const onSubmit = async (
         data: CheckoutFormValues,
@@ -153,97 +138,15 @@ export function CheckoutPageContent() {
                     items,
                 );
 
-            /*
-             * maxQuantityهای قدیمی Cart
-             * با موجودی فعلی Backend Sync شوند.
-             */
-            for (
-                const syncItem of
-                stockResult.syncItems
-            ) {
-                dispatch(
-                    updateItemStock({
-                        lineId:
-                            syncItem.lineId,
-
-                        maxQuantity:
-                            syncItem.maxQuantity,
-                    }),
-                );
-            }
-
-            /*
-             * محصول یا Variant کاملاً
-             * ناموجود از Cart حذف می‌شود.
-             */
-            for (
-                const unavailableItem of
-                stockResult.unavailableItems
-            ) {
-                dispatch(
-                    removeItem(
-                        unavailableItem.lineId,
-                    ),
-                );
-            }
-
-            /*
-             * در صورت تغییر موجودی
-             * اجازه ایجاد Order نداریم.
-             */
+            // همان نتیجه و تغییرات سبد در هر دو صفحه اعمال می‌شود.
+            syncCartStock(stockResult, dispatch);
             if (!stockResult.isValid) {
-                let description =
-                    "موجودی یک یا چند محصول تغییر کرده است. لطفاً سبد خرید را بررسی کنید.";
-
-                if (
-                    stockResult.unavailableItems
-                        .length > 0
-                ) {
-                    description =
-                        "یک یا چند محصول دیگر موجود نیست و از سبد خرید حذف شده است.";
-                } else if (
-                    stockResult.reducedItems
-                        .length > 0
-                ) {
-                    description =
-                        "موجودی یک یا چند محصول کمتر شده و تعداد قابل سفارش تغییر کرده است.";
-                } else if (
-                    stockResult.productStockIssues
-                        .length > 0
-                ) {
-                    description =
-                        "مجموع تعداد انتخاب‌شده از موجودی کل یکی از محصولات بیشتر است.";
-                }
-
-                toast.warning(
-                    "موجودی سفارش تغییر کرده است.",
-                    {
-                        description,
-
-                        action: {
-                            label:
-                                "بررسی سبد",
-
-                            onClick: () =>
-                                router.push(
-                                    "/cart",
-                                ),
-                        },
-                    },
-                );
-
+                toast.warning(getStockChangeMessage(stockResult), {
+                    action: { label: "بررسی سبد", onClick: () => router.push("/cart") },
+                });
                 return;
             }
 
-            /*
-            * Snapshot اقلام سفارش.
-            *
-            * مشخصات محصول، Variant و قیمت
-            * از داده معتبر Backend گرفته می‌شوند
-            * تا به اطلاعات قابل تغییر localStorage
-            * اعتماد نکنیم.
-            */
-           
             const orderItems = items.map(
                 (item) => {
                     const product =
@@ -398,14 +301,20 @@ export function CheckoutPageContent() {
 
                     totalPrice,
 
-                    status:
-                        "pending_payment",
+                    /*
+ * هدف:
+ * ایجاد سفارش جدید در وضعیت اولیه چرخه سفارش.
+ *
+ * محل استفاده:
+ * هنگام ثبت نهایی سفارش در Checkout.
+ *
+ * نحوه کار:
+ * وضعیت سفارش مستقل از وضعیت پرداخت نگهداری می‌شود.
+ * سفارش جدید pending است و پرداخت آن نیز در ابتدا pending خواهد بود.
+ */
+                    status: "pending",
 
-                    paymentStatus:
-                        "pending",
-
-                    createdAt:
-                        Date.now(),
+                    paymentStatus: "pending",
 
                     paidAt:
                         null,
@@ -439,11 +348,9 @@ export function CheckoutPageContent() {
         }
     };
 
-    const latitude =
-        watch("latitude");
+    const latitude = useWatch({ control, name: "latitude" });
 
-    const longitude =
-        watch("longitude");
+    const longitude = useWatch({ control, name: "longitude" });
 
     /*
      * Hydration Guard
@@ -1165,19 +1072,15 @@ export function CheckoutPageContent() {
                                                     </span>
 
                                                     <span>
-                                                        {item.quantity.toLocaleString(
-                                                            "fa-IR",
-                                                        )}
+                                                        {formatNumber(item.quantity)}
                                                     </span>
                                                 </div>
 
                                                 <p className="mt-3 text-xs font-medium">
-                                                    {(
+                                                    {formatNumber((
                                                         item.unitPrice *
                                                         item.quantity
-                                                    ).toLocaleString(
-                                                        "fa-IR",
-                                                    )}{" "}
+                                                    ))}{" "}
                                                     تومان
                                                 </p>
                                             </div>
@@ -1194,9 +1097,7 @@ export function CheckoutPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalQuantity.toLocaleString(
-                                            "fa-IR",
-                                        )}
+                                        {formatNumber(totalQuantity)}
                                     </span>
                                 </div>
 
@@ -1206,9 +1107,7 @@ export function CheckoutPageContent() {
                                     </span>
 
                                     <span>
-                                        {totalPrice.toLocaleString(
-                                            "fa-IR",
-                                        )}{" "}
+                                        {formatNumber(totalPrice)}{" "}
                                         تومان
                                     </span>
                                 </div>
@@ -1231,9 +1130,7 @@ export function CheckoutPageContent() {
                                 </span>
 
                                 <span className="text-lg font-medium">
-                                    {totalPrice.toLocaleString(
-                                        "fa-IR",
-                                    )}{" "}
+                                    {formatNumber(totalPrice)}{" "}
                                     تومان
                                 </span>
                             </div>

@@ -3,24 +3,12 @@
 import Image from "next/image";
 
 import {
-    Autoplay,
-    Navigation,
-    Pagination,
-} from "swiper/modules";
-
-import {
-    Swiper,
-    SwiperSlide,
-} from "swiper/react";
-
-import {
-    ChevronLeft,
-    ChevronRight,
-} from "lucide-react";
-
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ProductGalleryProps {
     images: string[];
@@ -31,13 +19,20 @@ export function ProductGallery({
     images,
     productName,
 }: ProductGalleryProps) {
+    /*
+     * هدف:
+     * نمایش Placeholder زمانی که محصول هیچ تصویری ندارد.
+     *
+     * محل استفاده:
+     * ابتدای ProductGallery قبل از Render شدن Carousel.
+     *
+     * نحوه کار:
+     * اگر images خالی باشد، به‌جای Gallery یک فضای ثابت با نام برند نمایش داده می‌شود.
+     */
     if (images.length === 0) {
         return (
-            <div className="flex aspect-[4/5] items-center justify-center bg-secondary">
-                <span
-                    dir="ltr"
-                    className="font-heading text-3xl tracking-[0.12em] text-foreground/10"
-                >
+            <div className="flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-secondary">
+                <span dir="ltr" className="font-heading text-3xl tracking-[0.12em] text-foreground/10">
                     WATCH STORE
                 </span>
             </div>
@@ -45,121 +40,79 @@ export function ProductGallery({
     }
 
     return (
-        <div
-            className="group relative overflow-hidden bg-secondary"
+        /*
+         * هدف:
+         * جایگزینی Swiper با Carousel رسمی shadcn و Embla.
+         *
+         * محل استفاده:
+         * گالری تصاویر صفحه جزئیات محصول.
+         *
+         * نحوه کار:
+         * هر تصویر داخل یک CarouselItem قرار می‌گیرد و Embla
+         * Drag و Swipe را در موبایل و Desktop مدیریت می‌کند.
+         */
+        <Carousel
+            opts={{
+                align: "start",
+                loop: images.length > 1,
+                dragFree: false,
+            }}
+            className="group relative w-full overflow-hidden bg-secondary"
             dir="ltr"
         >
-            <Swiper
-                modules={[
-                    Autoplay,
-                    Navigation,
-                    Pagination,
-                ]}
-                slidesPerView={1}
-                speed={800}
-                loop={images.length > 1}
-                navigation={{
-                    prevEl: ".product-gallery-prev",
-                    nextEl: ".product-gallery-next",
-                }}
-                pagination={{
-                    clickable: true,
-                }}
-                autoplay={
-                    images.length > 1
-                        ? {
-                            delay: 5000,
-                            disableOnInteraction: false,
-                            pauseOnMouseEnter: true,
-                        }
-                        : false
-                }
-                className="aspect-[4/5]"
-            >
+            {/*
+       * هدف:
+       * نگهداری تمام تصاویر محصول داخل Track اصلی Carousel.
+       *
+       * محل استفاده:
+       * بخش اصلی ProductGallery.
+       *
+       * نحوه کار:
+       * هر CarouselItem دقیقاً عرض کامل Gallery را می‌گیرد
+       * تا در هر لحظه فقط یک تصویر نمایش داده شود.
+       */}
+            <CarouselContent className="ml-0">
                 {images.map((image, index) => (
-                    <SwiperSlide
-                        key={`${image}-${index}`}
-                    >
-                        <div className="relative h-full w-full">
+                    <CarouselItem key={`${image}-${index}`} className="basis-full pl-0">
+                        <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary">
                             <Image
                                 src={image}
-                                alt={`${productName} - تصویر ${index + 1
-                                    }`}
+                                alt={`${productName} - تصویر ${index + 1}`}
                                 fill
                                 priority={index === 0}
+                                draggable={false}
                                 sizes="(max-width: 1024px) 100vw, 55vw"
-                                className="object-cover"
+                                className="select-none object-cover"
                             />
                         </div>
-                    </SwiperSlide>
+                    </CarouselItem>
                 ))}
-            </Swiper>
+            </CarouselContent>
 
+            {/*
+       * هدف:
+       * نمایش دکمه‌های قبلی و بعدی به شکلی که در موبایل همیشه قابل مشاهده باشند.
+       *
+       * محل استفاده:
+       * روی خود تصویر ProductGallery.
+       *
+       * نحوه کار:
+       * در موبایل opacity همیشه 100 است؛ در Desktop دکمه‌ها هنگام Hover روی Gallery ظاهر می‌شوند.
+       * CarouselPrevious و CarouselNext مستقیماً به Embla متصل هستند.
+       */}
             {images.length > 1 ? (
                 <>
-                    <button
-                        type="button"
+                    <CarouselPrevious
                         aria-label="تصویر قبلی"
-                        className="
-                        product-gallery-prev
-                        luxury-transition
-                        absolute
-                        left-5
-                        top-1/2
-                        z-20
-                        flex
-                        size-11
-                        -translate-y-1/2
-                        items-center
-                        justify-center
-                        border
-                        border-white/25
-                        bg-black/20
-                        text-white
-                        opacity-0
-                        backdrop-blur-sm
-                        hover:bg-black/40
-                        group-hover:opacity-100
-                        "
-                    >
-                        <ChevronLeft
-                            className="size-4"
-                            strokeWidth={1.5}
-                        />
-                    </button>
+                        className="luxury-transition !inset-y-auto !top-1/2 !bottom-auto !my-0 left-3 z-20 size-10 -translate-y-1/2 rounded-none border-white/25 bg-black/25 text-white opacity-100 backdrop-blur-sm hover:bg-black/45 hover:text-white md:left-5 md:size-11 md:opacity-0 md:group-hover:opacity-100"
+                    />
 
-                    <button
-                        type="button"
+                    <CarouselNext
                         aria-label="تصویر بعدی"
-                        className="
-                        product-gallery-next
-                        luxury-transition
-                        absolute
-                        right-5
-                        top-1/2
-                        z-20
-                        flex
-                        size-11
-                        -translate-y-1/2
-                        items-center
-                        justify-center
-                        border
-                        border-white/25
-                        bg-black/20
-                        text-white
-                        opacity-0
-                        backdrop-blur-sm
-                        hover:bg-black/40
-                        group-hover:opacity-100
-                        "
-                    >
-                        <ChevronRight
-                            className="size-4"
-                            strokeWidth={1.5}
-                        />
-                    </button>
+                        className="luxury-transition !inset-y-auto !top-1/2 !bottom-auto !my-0 right-3 z-20 size-10 -translate-y-1/2 rounded-none border-white/25 bg-black/25 text-white opacity-100 backdrop-blur-sm hover:bg-black/45 hover:text-white md:right-5 md:size-11 md:opacity-0 md:group-hover:opacity-100"
+                    />
                 </>
             ) : null}
-        </div>
+        </Carousel>
     );
 }

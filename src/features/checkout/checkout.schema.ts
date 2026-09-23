@@ -1,17 +1,11 @@
+import { getMinimumDeliveryDate, parseIsoDate } from "@/features/checkout/delivery-date";
 import { z } from "zod";
 
 const iranianMobileRegex = /^09\d{9}$/;
 
 const postalCodeRegex = /^\d{10}$/;
 
-function getMinimumDeliveryDate() {
-    const date = new Date();
 
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 7);
-
-    return date;
-}
 
 function isValidFutureDeliveryDate(
     value: string,
@@ -20,15 +14,9 @@ function isValidFutureDeliveryDate(
         return false;
     }
 
-    const selectedDate = new Date(
-        `${value}T00:00:00`,
-    );
+    const selectedDate = parseIsoDate(value);
 
-    if (
-        Number.isNaN(
-            selectedDate.getTime(),
-        )
-    ) {
+    if (!selectedDate) {
         return false;
     }
 

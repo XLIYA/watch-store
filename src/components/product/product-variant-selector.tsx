@@ -1,4 +1,6 @@
 "use client";
+import { formatNumber } from "@/lib/format";
+
 
 import type { ProductVariant } from "@/types/product";
 
@@ -121,9 +123,7 @@ export function ProductVariantSelector({
                     </span>
 
                     <span>
-                        {selectedVariant.quantity.toLocaleString(
-                            "fa-IR",
-                        )}{" "}
+                        {formatNumber(selectedVariant.quantity)}{" "}
                         عدد
                     </span>
                 </div>
