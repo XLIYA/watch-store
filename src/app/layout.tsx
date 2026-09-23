@@ -1,3 +1,4 @@
+import { brand } from "@/config/brand";
 import type { Metadata } from "next";
 
 import {
@@ -27,8 +28,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Watch Store",
-  description: "Luxury Watch Store",
+  title: { default: brand.title, template: `%s | ${brand.title}` },
+  icons: { icon: brand.mark, apple: brand.mark },
+  description: brand.description,
 };
 
 export default function RootLayout({
