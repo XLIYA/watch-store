@@ -7,7 +7,7 @@ const jwt = require("../server/node_modules/jsonwebtoken");
 async function fixture(t) {
   const app = createServer({ quiet: true, dbPath: {
     users: [{ id: 1, username: "admin-test", password: "test-password", name: "Test", role: "admin" }, { id: 2, username: "customer", password: "test-password", role: "customer" }],
-    products: [{ id: 1, price: 100 }], orders: [{ id: 1, status: "pending" }], category: [], subcategory: [],
+    products: [{ id: 1, price: 100, name: "Test", brand: "Test", slug: "test", category: 1, subcategory: 1, description: "<p>Test</p>", thumbnail: "/images/test.jpg", images: ["/images/test.jpg"], quantity: 5, variants: [], isHero: false, heroOrder: null }], orders: [{ id: 1, status: "pending" }], category: [{id:1}], subcategory: [{id:1,category:1}],
   }, auth: { accessSecret: "test-access-secret", refreshSecret: "test-refresh-secret" } });
   const server = app.listen(0, "127.0.0.1");
   await new Promise(resolve => server.once("listening", resolve));
