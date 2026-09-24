@@ -1,63 +1,58 @@
-import { CategoryLinks } from "@/components/layout/category-links";
 import Link from "next/link";
-
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { CategoryLinks } from "./category-links";
+import { brand } from "@/config/brand";
 
+/** فوتر مشترک خانه، کاتالوگ و خرید؛ لینک گروه‌ها از API و هویت بصری از تنظیمات برند می‌آید. */
 export function SiteFooter() {
-    return (
-        <footer dir="rtl" className="border-t border-border/70">
-            <div className="site-container py-12">
-                {/*
-                 * هدف:
-                 * نمایش لوگوی فروشگاه و لینک‌های اصلی Footer با چیدمان RTL.
-                 *
-                 * محل استفاده:
-                 * بخش بالایی Footer سایت.
-                 *
-                 * نحوه کار:
-                 * در موبایل لوگو و لینک‌ها زیر هم و در صفحات بزرگ‌تر
-                 * در یک ردیف نمایش داده می‌شوند.
-                 */}
-                <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-                    <BrandLogo href="/shop" />
-
-                    <nav aria-label="لینک‌های پایین سایت" className="flex flex-wrap items-center justify-start gap-x-6 gap-y-3 text-right text-sm text-muted-foreground">
-                        <CategoryLinks className="luxury-transition hover:text-foreground" />
-
-                        <Link href="/cart" className="luxury-transition hover:text-foreground">
-                            سبد خرید
-                        </Link>
-                    </nav>
-                </div>
-
-                <div className="luxury-divider my-8" />
-
-                {/*
-                 * هدف:
-                 * نمایش اطلاعات پایانی Footer به زبان فارسی.
-                 *
-                 * محل استفاده:
-                 * پایین‌ترین بخش Footer.
-                 *
-                 * نحوه کار:
-                 * سال به‌صورت فارسی نمایش داده می‌شود و نام برند
-                 * انگلیسی باقی می‌ماند چون نام تجاری فروشگاه است.
-                 */}
-                <div className="flex flex-col gap-2 text-right text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
-                    <p>
-                        ©{" "}
-                        {new Intl.NumberFormat("fa-IR", {
-                            useGrouping: false,
-                        }).format(new Date().getFullYear())}
-                        {" "}
-                        Watch Store
-                    </p>
-
-                    <p>
-                        تجربه خرید ساعت‌های لوکس
-                    </p>
-                </div>
-            </div>
-        </footer>
-    );
+  return (
+    <footer className="bg-ink text-ivory">
+      <div className="site-container">
+        <div className="grid gap-10 py-16 md:grid-cols-[1.5fr_1fr_1fr]">
+          <div>
+            <BrandLogo />
+            <p className="mt-6 max-w-sm text-sm leading-8 text-ivory/60">
+              {brand.description}
+            </p>
+            <p
+              className="mt-8 text-right text-xl leading-10 text-gold-light"
+              dir="rtl"
+            >
+              زمان، به سلیقهٔ شما.
+            </p>
+          </div>
+          <div>
+            <h2 className="mb-5 text-sm text-gold-light">مجموعه‌ها</h2>
+            <nav
+              aria-label="مجموعه‌های پایین سایت"
+              className="grid gap-3 text-xs"
+            >
+              <CategoryLinks className="w-fit text-ivory/65 transition-colors hover:text-white" />
+            </nav>
+          </div>
+          <div>
+            <h2 className="mb-5 text-sm text-gold-light">خانهٔ ساعت</h2>
+            <nav
+              aria-label="دسترسی سریع"
+              className="grid gap-4 text-xs text-ivory/65"
+            >
+              <Link href="/shop">کاتالوگ ساعت‌ها</Link>
+              <Link href="/cart">سبد خرید</Link>
+              <Link href="/admin/login">مدیریت فروشگاه</Link>
+            </nav>
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-between gap-3 border-t border-white/10 py-6 text-[10px] text-ivory/45">
+          <p>
+            ©{" "}
+            {new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(
+              new Date().getFullYear(),
+            )}{" "}
+            {brand.name}
+          </p>
+          <p>زمان، به سلیقهٔ شما.</p>
+        </div>
+      </div>
+    </footer>
+  );
 }
