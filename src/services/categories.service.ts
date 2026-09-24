@@ -2,22 +2,27 @@ import { endpoints } from "@/config/api";
 import { getErrorStatus } from "@/services/api/api-error";
 import { apiClient } from "@/services/api/api-client";
 
-import type {
-  Category,
-  Subcategory,
-} from "@/types/category";
+import type { Category, Subcategory } from "@/types/category";
+
+/** تنها انتخاب ویترین تغییر می‌کند؛ محصولات و گروه‌های غیرمنتخب همچنان از کاتالوگ قابل دسترسی‌اند. */
+export async function updateCategoryFeatured(id: number, featured: boolean) {
+  return (
+    await apiClient.patch<Category>(
+      endpoints.category(id),
+      { featured },
+      { requiresAuth: true },
+    )
+  ).data;
+}
 
 export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
-  const response = await apiClient.get<Category[]>(
-    endpoints.categories,
-    {
-      signal,
-      params: {
-        _sort: "homeOrder",
-        _order: "asc",
-      },
+  const response = await apiClient.get<Category[]>(endpoints.categories, {
+    signal,
+    params: {
+      _sort: "homeOrder",
+      _order: "asc",
     },
-  );
+  });
 
   return response.data;
 }
@@ -25,14 +30,11 @@ export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
 export async function getCategoryBySlug(
   slug: string,
 ): Promise<Category | null> {
-  const response = await apiClient.get<Category[]>(
-    endpoints.categories,
-    {
-      params: {
-        slug,
-      },
+  const response = await apiClient.get<Category[]>(endpoints.categories, {
+    params: {
+      slug,
     },
-  );
+  });
 
   return response.data[0] ?? null;
 }
@@ -46,12 +48,9 @@ export async function getSubcategories(
     params.category = categoryId;
   }
 
-  const response = await apiClient.get<Subcategory[]>(
-    endpoints.subcategories,
-    {
-      params,
-    },
-  );
+  const response = await apiClient.get<Subcategory[]>(endpoints.subcategories, {
+    params,
+  });
 
   return response.data;
 }
@@ -59,14 +58,11 @@ export async function getSubcategories(
 export async function getSubcategoryBySlug(
   slug: string,
 ): Promise<Subcategory | null> {
-  const response = await apiClient.get<Subcategory[]>(
-    endpoints.subcategories,
-    {
-      params: {
-        slug,
-      },
+  const response = await apiClient.get<Subcategory[]>(endpoints.subcategories, {
+    params: {
+      slug,
     },
-  );
+  });
 
   return response.data[0] ?? null;
 }
@@ -75,10 +71,9 @@ export async function getCategoryById(
   categoryId: number,
 ): Promise<Category | null> {
   try {
-    const response =
-      await apiClient.get<Category>(
-        endpoints.category(categoryId),
-      );
+    const response = await apiClient.get<Category>(
+      endpoints.category(categoryId),
+    );
 
     return response.data;
   } catch (error) {
@@ -91,10 +86,9 @@ export async function getSubcategoryById(
   subcategoryId: number,
 ): Promise<Subcategory | null> {
   try {
-    const response =
-      await apiClient.get<Subcategory>(
-        endpoints.subcategory(subcategoryId),
-      );
+    const response = await apiClient.get<Subcategory>(
+      endpoints.subcategory(subcategoryId),
+    );
 
     return response.data;
   } catch (error) {
