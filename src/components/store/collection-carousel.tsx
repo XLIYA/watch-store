@@ -36,7 +36,11 @@ export function CollectionCarousel({
                 : "basis-[88%] pr-5 md:basis-1/2 lg:basis-[42%]"
             }
           >
-            <article className="group relative overflow-hidden rounded-3xl bg-forest">
+            {/* مجموعهٔ غیرمنتخب بخش محصولات ندارد؛ لینک سرگروه به همین کارت می‌رسد تا مقصد آن همیشه موجود باشد. */}
+            <article
+              id={!category.featured ? `collection-${category.slug}` : undefined}
+              className="group relative scroll-mt-28 overflow-hidden rounded-3xl bg-forest"
+            >
               <Link
                 href={categoryHref(category.slug)}
                 className="relative isolate block aspect-[4/3] overflow-hidden"
