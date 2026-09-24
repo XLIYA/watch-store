@@ -23,6 +23,7 @@ import { getProducts } from "@/services/products.service";
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getApiErrorMessage } from "@/services/api/api-error";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface HeaderSearchProps {
@@ -71,60 +72,25 @@ export function HeaderSearch({
 
     return (
         <div
-            className="fixed inset-0 z-[70] bg-background"
+            className="fixed inset-0 z-[70] overflow-y-auto bg-background"
             role="dialog"
             aria-modal="true"
             aria-label="جستجوی محصولات"
         >
-            {/* Search header */}
-            <div className="border-b border-border">
-                <div className="site-container">
-                    <div className="flex h-[72px] items-center gap-4">
-                        <Search
-                            className="size-5 shrink-0 text-muted-foreground"
-                            strokeWidth={1.5}
-                        />
-
-                        <input
-                            autoFocus
-                            type="search"
-                            value={query}
-                            onChange={(event) =>
-                                { setQuery(event.target.value); setPage(1); }
-                            }
-                            placeholder="نام ساعت، برند یا محصول را جستجو کنید..."
-                            className="
-                h-full
-                min-w-0
-                flex-1
-                bg-transparent
-                text-base
-                outline-none
-                placeholder:text-muted-foreground/60
-                md:text-lg
-              "
-                        />
-
-                        {isLoading &&
-                            shouldSearch ? (
-                            <Loader2
-                                className="size-4 animate-spin text-muted-foreground"
-                                strokeWidth={1.5}
-                            />
-                        ) : null}
-
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="luxury-transition flex size-10 shrink-0 items-center justify-center hover:bg-secondary"
-                            aria-label="بستن جستجو"
-                        >
-                            <X
-                                className="size-[18px]"
-                                strokeWidth={1.5}
-                            />
-                        </button>
+            {/* قاب مشترک ورودی و آیکون در Discover فوکوس را نشان می‌دهد؛ حلقهٔ داخلی حذف شده تا دو بوردر دیده نشود. */}
+            <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 backdrop-blur-sm">
+                <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-5 md:py-7">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-card px-4 transition-[border-color,box-shadow] duration-200 focus-within:border-forest/60 focus-within:ring-2 focus-within:ring-forest/10">
+                        <Search aria-hidden="true" className="size-5 shrink-0 text-forest" strokeWidth={1.5} />
+                        <Input autoFocus type="search" aria-label="جستجوی ساعت‌ها" value={query}
+                            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+                            placeholder="نام ساعت یا برند را جستجو کنید…"
+                            className="h-14 min-w-0 flex-1 rounded-none border-0 bg-transparent px-0 text-right shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base" />
+                        {isLoading && shouldSearch ? <Loader2 aria-label="در حال جستجو" className="size-4 shrink-0 animate-spin text-forest" /> : null}
                     </div>
+                    <Button type="button" variant="ghost" size="icon" onClick={onClose} className="size-11 shrink-0 rounded-full hover:bg-forest/10 hover:text-forest" aria-label="بستن جستجو">
+                        <X className="size-5" strokeWidth={1.5} />
+                    </Button>
                 </div>
             </div>
 
@@ -133,10 +99,10 @@ export function HeaderSearch({
                 {!shouldSearch ? (
                     <div className="py-20 text-center">
                         <p
-                            dir="ltr"
-                            className="font-heading text-4xl tracking-[0.08em] text-foreground/10 md:text-6xl"
+                            dir="auto"
+                            className="text-right text-4xl text-foreground/10 md:text-6xl"
                         >
-                            DISCOVER
+                            کشف ساعت‌ها
                         </p>
 
                         <p className="mt-5 text-sm text-muted-foreground">
@@ -180,9 +146,7 @@ export function HeaderSearch({
                                 <p
                                     dir="ltr"
                                     className="section-eyebrow"
-                                >
-                                    SEARCH RESULTS
-                                </p>
+                                >نتایج جستجو</p>
 
                                 <p className="mt-2 text-sm text-muted-foreground">
                                     {formatNumber(total)}{" "}
