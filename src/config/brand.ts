@@ -3,6 +3,7 @@ export const brand = {
   name: "WATCH STORE",
   title: "خانهٔ ساعت",
   tagline: "زمان، به سلیقهٔ شما.",
-  description: "مجموعه‌ای منتخب از ساعت‌های کلاسیک و معاصر؛ برای لحظه‌هایی که می‌مانند.",
+  description:
+    "مجموعه‌ای منتخب از ساعت‌های کلاسیک و معاصر؛ برای لحظه‌هایی که می‌مانند.",
   mark: "/brand-mark.svg",
 } as const;
