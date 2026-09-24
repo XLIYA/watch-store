@@ -1,5 +1,6 @@
 // سرویس نقشه client مستقل دارد و هیچ کوکی یا توکن فروشگاه به آن ارسال نمی‌شود.
 export const mapConfig = {
+  reverseGeocodingUrl: process.env.NEXT_PUBLIC_REVERSE_GEOCODING_URL || "https://photon.komoot.io/reverse",
   geocodingUrl:
     process.env.NEXT_PUBLIC_GEOCODING_URL || "https://photon.komoot.io/api",
   tilesUrl:
