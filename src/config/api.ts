@@ -11,6 +11,7 @@ export const apiConfig = {
 
 // نام endpointها قرارداد API است؛ آدرس محیط فقط در env تعیین می‌شود.
 export const endpoints = {
+  upload: "/upload",
   products: "/products",
   product: (id: number) => `/products/${encodeURIComponent(id)}`,
   categories: "/category",

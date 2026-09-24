@@ -1,9 +1,7 @@
+import { brand } from "@/config/brand";
 import type { Metadata } from "next";
 
-import {
-  Cormorant_Garamond,
-  Geist_Mono,
-} from "next/font/google";
+import { Cormorant_Garamond, Geist_Mono } from "next/font/google";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -27,8 +25,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Watch Store",
-  description: "Luxury Watch Store",
+  title: { default: brand.title, template: `%s | ${brand.title}` },
+  icons: { icon: brand.mark, apple: brand.mark },
+  description: brand.description,
 };
 
 export default function RootLayout({
@@ -53,16 +52,11 @@ export default function RootLayout({
          */}
         <StoreProvider>
           <QueryProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
+            <TooltipProvider>{children}</TooltipProvider>
           </QueryProvider>
         </StoreProvider>
 
-        <Toaster
-          position="top-center"
-          richColors
-        />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

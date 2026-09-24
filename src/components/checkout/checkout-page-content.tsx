@@ -1,5 +1,6 @@
 "use client";
 import { formatNumber } from "@/lib/format";
+import { PersianDigitInput } from "@/components/ui/persian-digit-input";
 
 import { selectCartTotals } from "@/features/cart/cart.selectors";
 
@@ -7,25 +8,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import {
-    ArrowRight,
-    Loader2,
-    ShoppingBag,
-} from "lucide-react";
+import { ArrowRight, Loader2, ShoppingBag } from "lucide-react";
 
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
-import {
-    Controller,
-    useForm,
-    useWatch,
-} from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -34,484 +27,363 @@ import { toast } from "sonner";
 import { DeliveryDatePicker } from "@/components/checkout/delivery-date-picker";
 
 import {
-    checkoutSchema,
-    type CheckoutFormValues,
+  checkoutSchema,
+  type CheckoutFormValues,
 } from "@/features/checkout/checkout.schema";
 
 import {
-    DEFAULT_CHECKOUT_VALUES,
-    DELIVERY_TIME_SLOTS,
+  DEFAULT_CHECKOUT_VALUES,
+  DELIVERY_TIME_SLOTS,
 } from "@/features/checkout/checkout.constants";
 
 import { useHydrated } from "@/hooks/use-hydrated";
 
-import {
-    useAppDispatch,
-    useAppSelector,
-} from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import { DeliveryLocationPicker } from "@/components/checkout/delivery-location-picker";
 
-import { syncCartStock, getStockChangeMessage } from "@/features/checkout/sync-cart-stock";
+import {
+  syncCartStock,
+  getStockChangeMessage,
+} from "@/features/checkout/sync-cart-stock";
 
-import { createOrder } from "@/services/orders.service";
+import { useCreateOrderMutation } from "@/features/checkout/mutations";
+import { useAddressSuggestion } from "@/features/checkout/use-address-suggestion";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 import { validateCheckoutStock } from "@/features/checkout/validate-checkout-stock";
 
 export function CheckoutPageContent() {
-    const router = useRouter();
-    const dispatch = useAppDispatch();
+  const router = useRouter();
+  const createOrder = useCreateOrderMutation();
+  const dispatch = useAppDispatch();
 
-    const isHydrated =
-        useHydrated();
+  const isHydrated = useHydrated();
 
-    const items = useAppSelector(
-        (state) =>
-            state.cart.items,
-    );
+  const items = useAppSelector((state) => state.cart.items);
 
-    const {
-        register,
-        control,
-        handleSubmit,
-        setValue,
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
 
-        formState: {
-            errors,
-            isSubmitting,
-        },
-    } =
-        useForm<CheckoutFormValues>({
-            resolver:
-                zodResolver(
-                    checkoutSchema,
-                ),
+    formState: { errors, isSubmitting },
+  } = useForm<CheckoutFormValues>({
+    resolver: zodResolver(checkoutSchema),
 
-            defaultValues:
-                DEFAULT_CHECKOUT_VALUES,
+    defaultValues: DEFAULT_CHECKOUT_VALUES,
 
-            mode: "onBlur",
+    mode: "onBlur",
+  });
+
+  const addressSuggestion = useAddressSuggestion(address => setValue("address", address, {shouldDirty: true, shouldValidate: true}));
+  const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
+
+  const onSubmit = async (data: CheckoutFormValues) => {
+    if (items.length === 0) {
+      toast.error("سبد خرید شما خالی است.");
+
+      router.push("/cart");
+
+      return;
+    }
+
+    /*
+     * Zod با superRefine این دو مقدار را
+     * کنترل می‌کند، ولی TypeScript هنوز
+     * نوع آن‌ها را number | null می‌داند.
+     */
+    if (data.latitude === null || data.longitude === null) {
+      toast.warning("موقعیت تحویل مشخص نشده است.", {
+        description: "لطفاً محل تحویل را روی نقشه انتخاب کنید.",
+      });
+
+      return;
+    }
+
+    try {
+      /*
+       * آخرین بررسی موجودی درست
+       * قبل از ایجاد Order.
+       */
+      const stockResult = await validateCheckoutStock(items);
+
+      // همان نتیجه و تغییرات سبد در هر دو صفحه اعمال می‌شود.
+      syncCartStock(stockResult, dispatch);
+      if (!stockResult.isValid) {
+        toast.warning(getStockChangeMessage(stockResult), {
+          action: { label: "بررسی سبد", onClick: () => router.push("/cart") },
         });
+        return;
+      }
 
-    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
+      const orderItems = items.map((item) => {
+        const product = stockResult.products.get(item.productId);
 
-    const onSubmit = async (
-        data: CheckoutFormValues,
-    ) => {
-        if (items.length === 0) {
-            toast.error(
-                "سبد خرید شما خالی است.",
-            );
+        if (!product) {
+          throw new Error(
+            `Product ${item.productId} not found during checkout.`,
+          );
+        }
 
-            router.push("/cart");
+        const variant = product.variants.find(
+          (currentVariant) => currentVariant.id === item.variantId,
+        );
 
-            return;
+        if (!variant) {
+          throw new Error(
+            `Variant ${item.variantId} not found during checkout.`,
+          );
         }
 
         /*
-         * Zod با superRefine این دو مقدار را
-         * کنترل می‌کند، ولی TypeScript هنوز
-         * نوع آن‌ها را number | null می‌داند.
+         * اطلاعات Order از Backend معتبر
+         * گرفته می‌شود، نه localStorage.
          */
-        if (
-            data.latitude === null ||
-            data.longitude === null
-        ) {
-            toast.warning(
-                "موقعیت تحویل مشخص نشده است.",
-                {
-                    description:
-                        "لطفاً محل تحویل را روی نقشه انتخاب کنید.",
-                },
-            );
+        const unitPrice = product.price;
 
-            return;
-        }
+        return {
+          lineId: item.lineId,
 
-        try {
-            /*
-             * آخرین بررسی موجودی درست
-             * قبل از ایجاد Order.
-             */
-            const stockResult =
-                await validateCheckoutStock(
-                    items,
-                );
+          productId: product.id,
 
-            // همان نتیجه و تغییرات سبد در هر دو صفحه اعمال می‌شود.
-            syncCartStock(stockResult, dispatch);
-            if (!stockResult.isValid) {
-                toast.warning(getStockChangeMessage(stockResult), {
-                    action: { label: "بررسی سبد", onClick: () => router.push("/cart") },
-                });
-                return;
-            }
+          variantId: variant.id,
 
-            const orderItems = items.map(
-                (item) => {
-                    const product =
-                        stockResult.products.get(
-                            item.productId,
-                        );
+          name: product.name,
 
-                    if (!product) {
-                        throw new Error(
-                            `Product ${item.productId} not found during checkout.`,
-                        );
-                    }
+          thumbnail: product.thumbnail || product.images?.[0] || "",
 
-                    const variant =
-                        product.variants.find(
-                            (currentVariant) =>
-                                currentVariant.id ===
-                                item.variantId,
-                        );
+          colorName: variant.name,
 
-                    if (!variant) {
-                        throw new Error(
-                            `Variant ${item.variantId} not found during checkout.`,
-                        );
-                    }
+          colorHex: variant.hex,
 
-                    /*
-                     * اطلاعات Order از Backend معتبر
-                     * گرفته می‌شود، نه localStorage.
-                     */
-                    const unitPrice =
-                        product.price;
+          unitPrice,
 
-                    return {
-                        lineId:
-                            item.lineId,
+          quantity: item.quantity,
 
-                        productId:
-                            product.id,
+          totalPrice: unitPrice * item.quantity,
+        };
+      });
 
-                        variantId:
-                            variant.id,
+      const itemsCount = orderItems.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      );
 
-                        name:
-                            product.name,
+      const subtotal = orderItems.reduce(
+        (total, item) => total + item.totalPrice,
+        0,
+      );
 
-                        thumbnail:
-                            product.thumbnail ||
-                            product.images?.[0] ||
-                            "",
+      /*
+       * فعلاً ارسال رایگان است.
+       * بعداً اگر Shipping Rules
+       * اضافه شد این مقدار تغییر می‌کند.
+       */
+      const shippingCost = 0;
 
-                        colorName:
-                            variant.name,
+      const totalPrice = subtotal + shippingCost;
 
-                        colorHex:
-                            variant.hex,
+      /*
+       * ایجاد سفارش قبل از پرداخت.
+       *
+       * در این مرحله هنوز موجودی
+       * Backend کم نمی‌شود.
+       */
+      const order = await createOrder.mutateAsync({
+        customer: {
+          fullName: data.fullName,
 
-                        unitPrice,
+          mobile: data.mobile,
+        },
 
-                        quantity:
-                            item.quantity,
+        delivery: {
+          postalCode: data.postalCode,
 
-                        totalPrice:
-                            unitPrice *
-                            item.quantity,
-                    };
-                },
-            );
+          address: data.address,
 
-            const itemsCount =
-                orderItems.reduce(
-                    (total, item) =>
-                        total +
-                        item.quantity,
-                    0,
-                );
+          plaque: data.plaque,
 
-            const subtotal =
-                orderItems.reduce(
-                    (total, item) =>
-                        total +
-                        item.totalPrice,
-                    0,
-                );
+          unit: data.unit || undefined,
 
-            /*
-             * فعلاً ارسال رایگان است.
-             * بعداً اگر Shipping Rules
-             * اضافه شد این مقدار تغییر می‌کند.
-             */
-            const shippingCost = 0;
+          latitude: data.latitude,
 
-            const totalPrice =
-                subtotal +
-                shippingCost;
+          longitude: data.longitude,
 
-            /*
-             * ایجاد سفارش قبل از پرداخت.
-             *
-             * در این مرحله هنوز موجودی
-             * Backend کم نمی‌شود.
-             */
-            const order =
-                await createOrder({
-                    customer: {
-                        fullName:
-                            data.fullName,
+          deliveryDate: data.deliveryDate,
 
-                        mobile:
-                            data.mobile,
-                    },
+          deliveryTime: data.deliveryTime,
 
-                    delivery: {
-                        postalCode:
-                            data.postalCode,
+          note: data.note || undefined,
+        },
 
-                        address:
-                            data.address,
+        items: orderItems,
 
-                        plaque:
-                            data.plaque,
+        itemsCount,
 
-                        unit:
-                            data.unit ||
-                            undefined,
+        subtotal,
 
-                        latitude:
-                            data.latitude,
+        shippingCost,
 
-                        longitude:
-                            data.longitude,
+        totalPrice,
 
-                        deliveryDate:
-                            data.deliveryDate,
+        /*
+         * هدف:
+         * ایجاد سفارش جدید در وضعیت اولیه چرخه سفارش.
+         *
+         * محل استفاده:
+         * هنگام ثبت نهایی سفارش در Checkout.
+         *
+         * نحوه کار:
+         * وضعیت سفارش مستقل از وضعیت پرداخت نگهداری می‌شود.
+         * سفارش جدید pending است و پرداخت آن نیز در ابتدا pending خواهد بود.
+         */
+        status: "pending",
 
-                        deliveryTime:
-                            data.deliveryTime,
+        paymentStatus: "pending",
 
-                        note:
-                            data.note ||
-                            undefined,
-                    },
+        paidAt: null,
+      });
 
-                    items:
-                        orderItems,
+      toast.success("سفارش با موفقیت ثبت شد.", {
+        description: "در حال انتقال به مرحله پرداخت...",
+      });
 
-                    itemsCount,
-
-                    subtotal,
-
-                    shippingCost,
-
-                    totalPrice,
-
-                    /*
- * هدف:
- * ایجاد سفارش جدید در وضعیت اولیه چرخه سفارش.
- *
- * محل استفاده:
- * هنگام ثبت نهایی سفارش در Checkout.
- *
- * نحوه کار:
- * وضعیت سفارش مستقل از وضعیت پرداخت نگهداری می‌شود.
- * سفارش جدید pending است و پرداخت آن نیز در ابتدا pending خواهد بود.
- */
-                    status: "pending",
-
-                    paymentStatus: "pending",
-
-                    paidAt:
-                        null,
-                });
-
-            toast.success(
-                "سفارش با موفقیت ثبت شد.",
-                {
-                    description:
-                        "در حال انتقال به مرحله پرداخت...",
-                },
-            );
-
-            /*
-             * Cart هنوز پاک نمی‌شود.
-             * پاک‌شدن فقط بعد از پرداخت موفق.
-             */
-            router.push(
-                `/payment?orderId=${encodeURIComponent(
-                    String(order.id),
-                )}`,
-            );
-        } catch {
-            toast.error(
-                "ثبت سفارش انجام نشد.",
-                {
-                    description:
-                        "ارتباط با سرور با خطا مواجه شد. لطفاً دوباره تلاش کنید.",
-                },
-            );
-        }
-    };
-
-    const latitude = useWatch({ control, name: "latitude" });
-
-    const longitude = useWatch({ control, name: "longitude" });
-
-    /*
-     * Hydration Guard
-     *
-     * Cart از localStorage Hydrate می‌شود.
-     * بنابراین تا Hydration کامل نشده،
-     * Checkout واقعی Render نمی‌شود.
-     */
-    if (!isHydrated) {
-        return (
-            <main className="min-h-[70vh]">
-                <div className="site-container">
-                    <div className="flex min-h-[70vh] items-center justify-center">
-                        <div className="text-center">
-                            <Loader2
-                                className="mx-auto size-5 animate-spin text-muted-foreground"
-                                strokeWidth={
-                                    1.5
-                                }
-                            />
-
-                            <p className="mt-4 text-sm text-muted-foreground">
-                                در حال آماده‌سازی
-                                سفارش...
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        );
+      /*
+       * Cart هنوز پاک نمی‌شود.
+       * پاک‌شدن فقط بعد از پرداخت موفق.
+       */
+      router.push(`/payment?orderId=${encodeURIComponent(String(order.id))}`);
+    } catch {
+      toast.error("ثبت سفارش انجام نشد.", {
+        description: "ارتباط با سرور با خطا مواجه شد. لطفاً دوباره تلاش کنید.",
+      });
     }
+  };
 
-    /*
-     * Checkout بدون Cart
-     */
-    if (
-        items.length === 0
-    ) {
-        return (
-            <main className="min-h-[70vh]">
-                <div className="site-container">
-                    <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
-                        <div className="flex size-20 items-center justify-center rounded-full border border-border">
-                            <ShoppingBag
-                                className="size-8 text-muted-foreground"
-                                strokeWidth={
-                                    1.25
-                                }
-                            />
-                        </div>
+  const latitude = useWatch({ control, name: "latitude" });
 
-                        <h1 className="mt-7 text-2xl font-medium">
-                            سبد خرید شما خالی است
-                        </h1>
+  const longitude = useWatch({ control, name: "longitude" });
 
-                        <p className="mt-3 max-w-md text-sm leading-7 text-muted-foreground">
-                            برای ادامه ثبت سفارش،
-                            ابتدا محصولی به سبد خرید
-                            اضافه کنید.
-                        </p>
-
-                        <Link
-                            href="/shop"
-                            className="luxury-transition mt-8 bg-foreground px-7 py-3.5 text-sm text-background hover:opacity-85"
-                        >
-                            مشاهده فروشگاه
-                        </Link>
-                    </div>
-                </div>
-            </main>
-        );
-    }
-
+  /*
+   * Hydration Guard
+   *
+   * Cart از localStorage Hydrate می‌شود.
+   * بنابراین تا Hydration کامل نشده،
+   * Checkout واقعی Render نمی‌شود.
+   */
+  if (!isHydrated) {
     return (
-        <main className="section-shell">
-            <div className="site-container">
-                {/* Page Header */}
-                <div className="mb-10">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            router.push(
-                                "/cart",
-                            )
-                        }
-                        className="luxury-transition mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowRight
-                            className="size-4"
-                            strokeWidth={
-                                1.5
-                            }
-                        />
+      <main className="min-h-[70vh]">
+        <div className="site-container">
+          <div className="flex min-h-[70vh] items-center justify-center">
+            <div className="text-center">
+              <Loader2
+                className="mx-auto size-5 animate-spin text-muted-foreground"
+                strokeWidth={1.5}
+              />
 
-                        بازگشت به سبد خرید
-                    </button>
+              <p className="mt-4 text-sm text-muted-foreground">
+                در حال آماده‌سازی سفارش...
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-                    <p
-                        dir="ltr"
-                        className="section-eyebrow mb-3"
-                    >
-                        CHECKOUT
-                    </p>
+  /*
+   * Checkout بدون Cart
+   */
+  if (items.length === 0) {
+    return (
+      <main className="min-h-[70vh]">
+        <div className="site-container">
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+            <div className="flex size-20 items-center justify-center rounded-full border border-border">
+              <ShoppingBag
+                className="size-8 text-muted-foreground"
+                strokeWidth={1.25}
+              />
+            </div>
 
-                    <h1 className="section-title">
-                        تکمیل سفارش
-                    </h1>
+            <h1 className="mt-7 text-2xl font-medium">سبد خرید شما خالی است</h1>
 
-                    <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
-                        اطلاعات دریافت‌کننده،
-                        محل تحویل و زمان موردنظر
-                        برای دریافت سفارش را
-                        تکمیل کنید.
-                    </p>
+            <p className="mt-3 max-w-md text-sm leading-7 text-muted-foreground">
+              برای ادامه ثبت سفارش، ابتدا محصولی به سبد خرید اضافه کنید.
+            </p>
+
+            <Link
+              href="/shop"
+              className="luxury-transition mt-8 bg-foreground px-7 py-3.5 text-sm text-background hover:opacity-85"
+            >
+              مشاهده فروشگاه
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="section-shell">
+      <div className="site-container">
+        {/* Page Header */}
+        <div className="mb-10">
+          <button
+            type="button"
+            onClick={() => router.push("/cart")}
+            className="luxury-transition mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowRight className="size-4" strokeWidth={1.5} />
+            بازگشت به سبد خرید
+          </button>
+
+          <p dir="ltr" className="section-eyebrow mb-3">تکمیل خرید</p>
+
+          <h1 className="section-title">تکمیل سفارش</h1>
+
+          <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
+            اطلاعات دریافت‌کننده، محل تحویل و زمان موردنظر برای دریافت سفارش را
+            تکمیل کنید.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-20">
+            {/* Form Content */}
+            <div className="space-y-12">
+              {/* Customer Information */}
+              <section>
+                <div className="mb-7 border-b border-border pb-5">
+                  <p dir="rtl" className="section-eyebrow">اطلاعات خریدار</p>
+
+                  <h2 className="mt-2 text-xl font-medium">
+                    اطلاعات دریافت‌کننده
+                  </h2>
                 </div>
 
-                <form
-                    onSubmit={
-                        handleSubmit(
-                            onSubmit,
-                        )
-                    }
-                    noValidate
-                >
-                    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-20">
-                        {/* Form Content */}
-                        <div className="space-y-12">
-                            {/* Customer Information */}
-                            <section>
-                                <div className="mb-7 border-b border-border pb-5">
-                                    <p
-                                        dir="ltr"
-                                        className="section-eyebrow"
-                                    >
-                                        CUSTOMER
-                                    </p>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {/* Full Name */}
+                  <div className="sm:col-span-2">
+                    <Label
+                      htmlFor="fullName"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      نام و نام خانوادگی
+                    </Label>
 
-                                    <h2 className="mt-2 text-xl font-medium">
-                                        اطلاعات دریافت‌کننده
-                                    </h2>
-                                </div>
-
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    {/* Full Name */}
-                                    <div className="sm:col-span-2">
-                                        <label
-                                            htmlFor="fullName"
-                                            className="mb-2 block text-sm font-medium"
-                                        >
-                                            نام و نام خانوادگی
-                                        </label>
-
-                                        <input
-                                            id="fullName"
-                                            type="text"
-                                            autoComplete="name"
-                                            placeholder="مثلاً محمد رضایی"
-                                            {...register(
-                                                "fullName",
-                                            )}
-                                            className="
+                    <Input
+                      id="fullName"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="مثلاً محمد رضایی"
+                      {...register("fullName")}
+                      className="
                         luxury-transition
                         h-12
                         w-full
@@ -524,42 +396,34 @@ export function CheckoutPageContent() {
                         placeholder:text-muted-foreground/60
                         focus:border-foreground
                       "
-                                        />
+                    />
 
-                                        {errors.fullName ? (
-                                            <p className="mt-2 text-xs text-destructive">
-                                                {
-                                                    errors
-                                                        .fullName
-                                                        .message
-                                                }
-                                            </p>
-                                        ) : null}
-                                    </div>
+                    {errors.fullName ? (
+                      <p className="mt-2 text-xs text-destructive">
+                        {errors.fullName.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-                                    {/* Mobile */}
-                                    <div>
-                                        <label
-                                            htmlFor="mobile"
-                                            className="mb-2 block text-sm font-medium"
-                                        >
-                                            شماره موبایل
-                                        </label>
+                  {/* Mobile */}
+                  <div>
+                    <Label
+                      htmlFor="mobile"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      شماره موبایل
+                    </Label>
 
-                                        <input
-                                            id="mobile"
-                                            type="tel"
-                                            inputMode="numeric"
-                                            autoComplete="tel"
-                                            dir="ltr"
-                                            placeholder="09123456789"
-                                            maxLength={
-                                                11
-                                            }
-                                            {...register(
-                                                "mobile",
-                                            )}
-                                            className="
+                    <PersianDigitInput
+                      id="mobile"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      dir="ltr"
+                      placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                      maxLength={11}
+                      {...register("mobile")}
+                      className="
                         luxury-transition
                         h-12
                         w-full
@@ -573,41 +437,33 @@ export function CheckoutPageContent() {
                         placeholder:text-muted-foreground/60
                         focus:border-foreground
                       "
-                                        />
+                    />
 
-                                        {errors.mobile ? (
-                                            <p className="mt-2 text-xs text-destructive">
-                                                {
-                                                    errors
-                                                        .mobile
-                                                        .message
-                                                }
-                                            </p>
-                                        ) : null}
-                                    </div>
+                    {errors.mobile ? (
+                      <p className="mt-2 text-xs text-destructive">
+                        {errors.mobile.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-                                    {/* Postal Code */}
-                                    <div>
-                                        <label
-                                            htmlFor="postalCode"
-                                            className="mb-2 block text-sm font-medium"
-                                        >
-                                            کد پستی
-                                        </label>
+                  {/* Postal Code */}
+                  <div>
+                    <Label
+                      htmlFor="postalCode"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      کد پستی
+                    </Label>
 
-                                        <input
-                                            id="postalCode"
-                                            type="text"
-                                            inputMode="numeric"
-                                            dir="ltr"
-                                            maxLength={
-                                                10
-                                            }
-                                            placeholder="1234567890"
-                                            {...register(
-                                                "postalCode",
-                                            )}
-                                            className="
+                    <PersianDigitInput
+                      id="postalCode"
+                      type="text"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={10}
+                      placeholder="۱۲۳۴۵۶۷۸۹۰"
+                      {...register("postalCode")}
+                      className="
                         luxury-transition
                         h-12
                         w-full
@@ -621,55 +477,69 @@ export function CheckoutPageContent() {
                         placeholder:text-muted-foreground/60
                         focus:border-foreground
                       "
-                                        />
+                    />
 
-                                        {errors.postalCode ? (
-                                            <p className="mt-2 text-xs text-destructive">
-                                                {
-                                                    errors
-                                                        .postalCode
-                                                        .message
-                                                }
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </section>
+                    {errors.postalCode ? (
+                      <p className="mt-2 text-xs text-destructive">
+                        {errors.postalCode.message}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
 
-                            {/* Delivery Address */}
-                            <section>
-                                <div className="mb-7 border-b border-border pb-5">
-                                    <p
-                                        dir="ltr"
-                                        className="section-eyebrow"
-                                    >
-                                        DELIVERY ADDRESS
-                                    </p>
+              {/* Delivery Address */}
+              <section>
+                <div className="mb-7 border-b border-border pb-5">
+                  <p dir="rtl" className="section-eyebrow">نشانی تحویل</p>
 
-                                    <h2 className="mt-2 text-xl font-medium">
-                                        آدرس تحویل
-                                    </h2>
-                                </div>
+                  <h2 className="mt-2 text-xl font-medium">آدرس تحویل</h2>
+                </div>
 
-                                <div className="space-y-6">
-                                    {/* Address */}
-                                    <div>
-                                        <label
-                                            htmlFor="address"
-                                            className="mb-2 block text-sm font-medium"
-                                        >
-                                            آدرس کامل
-                                        </label>
+                <div className="space-y-6">
+                  {/*
+                   * Map Placeholder
+                   *
+                   * در مرحله بعد با
+                   * نقشه واقعی جایگزین می‌شود
+                   * و latitude / longitude
+                   * داخل React Hook Form
+                   * ذخیره خواهند شد.
+                   */}
+                  <DeliveryLocationPicker
+                    latitude={latitude}
+                    longitude={longitude}
+                    error={errors.latitude?.message}
+                    onChange={(location) => {
+                      void addressSuggestion.suggest(location.latitude, location.longitude);
+                      setValue("latitude", location.latitude, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
 
-                                        <textarea
-                                            id="address"
-                                            rows={4}
-                                            autoComplete="street-address"
-                                            placeholder="استان، شهر، خیابان، کوچه و سایر جزئیات آدرس"
-                                            {...register(
-                                                "address",
-                                            )}
-                                            className="
+                      setValue("longitude", location.longitude, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+
+                  {/* Address */}
+                  <div>
+                    <Label
+                      htmlFor="address"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      آدرس کامل
+                    </Label>
+
+                    <Textarea
+                      id="address"
+                      rows={4}
+                      autoComplete="street-address"
+                      placeholder="استان، شهر، خیابان، کوچه و سایر جزئیات آدرس"
+                      {...register("address", {onChange: addressSuggestion.cancel})}
+                      className="
                         luxury-transition
                         w-full
                         resize-none
@@ -684,77 +554,34 @@ export function CheckoutPageContent() {
                         placeholder:text-muted-foreground/60
                         focus:border-foreground
                       "
-                                        />
+                    />
 
-                                        {errors.address ? (
-                                            <p className="mt-2 text-xs text-destructive">
-                                                {
-                                                    errors
-                                                        .address
-                                                        .message
-                                                }
-                                            </p>
-                                        ) : null}
-                                    </div>
+                    {errors.address ? (
+                      <p className="mt-2 text-xs text-destructive">
+                        {errors.address.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-                                    {/*
-                   * Map Placeholder
-                   *
-                   * در مرحله بعد با
-                   * نقشه واقعی جایگزین می‌شود
-                   * و latitude / longitude
-                   * داخل React Hook Form
-                   * ذخیره خواهند شد.
-                   */}
-                                    <DeliveryLocationPicker
-                                        latitude={latitude}
-                                        longitude={longitude}
-                                        error={
-                                            errors.latitude?.message
-                                        }
-                                        onChange={(
-                                            location,
-                                        ) => {
-                                            setValue(
-                                                "latitude",
-                                                location.latitude,
-                                                {
-                                                    shouldValidate: true,
-                                                    shouldDirty: true,
-                                                },
-                                            );
+<p role="status" className="text-xs text-muted-foreground">{addressSuggestion.loading ? "در حال دریافت آدرس…" : addressSuggestion.message}</p>
+                  {/* Plaque / Unit */}
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {/* Plaque */}
+                    <div>
+                      <Label
+                        htmlFor="plaque"
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        پلاک
+                      </Label>
 
-                                            setValue(
-                                                "longitude",
-                                                location.longitude,
-                                                {
-                                                    shouldValidate: true,
-                                                    shouldDirty: true,
-                                                },
-                                            );
-                                        }}
-                                    />
-
-                                    {/* Plaque / Unit */}
-                                    <div className="grid gap-6 sm:grid-cols-2">
-                                        {/* Plaque */}
-                                        <div>
-                                            <label
-                                                htmlFor="plaque"
-                                                className="mb-2 block text-sm font-medium"
-                                            >
-                                                پلاک
-                                            </label>
-
-                                            <input
-                                                id="plaque"
-                                                type="text"
-                                                inputMode="numeric"
-                                                placeholder="مثلاً ۱۲"
-                                                {...register(
-                                                    "plaque",
-                                                )}
-                                                className="
+                      <Input
+                        id="plaque"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="مثلاً ۱۲"
+                        {...register("plaque")}
+                        className="
                           luxury-transition
                           h-12
                           w-full
@@ -767,41 +594,34 @@ export function CheckoutPageContent() {
                           placeholder:text-muted-foreground/60
                           focus:border-foreground
                         "
-                                            />
+                      />
 
-                                            {errors.plaque ? (
-                                                <p className="mt-2 text-xs text-destructive">
-                                                    {
-                                                        errors
-                                                            .plaque
-                                                            .message
-                                                    }
-                                                </p>
-                                            ) : null}
-                                        </div>
+                      {errors.plaque ? (
+                        <p className="mt-2 text-xs text-destructive">
+                          {errors.plaque.message}
+                        </p>
+                      ) : null}
+                    </div>
 
-                                        {/* Unit */}
-                                        <div>
-                                            <label
-                                                htmlFor="unit"
-                                                className="mb-2 block text-sm font-medium"
-                                            >
-                                                واحد
+                    {/* Unit */}
+                    <div>
+                      <Label
+                        htmlFor="unit"
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        واحد
+                        <span className="mr-2 text-xs font-normal text-muted-foreground">
+                          اختیاری
+                        </span>
+                      </Label>
 
-                                                <span className="mr-2 text-xs font-normal text-muted-foreground">
-                                                    اختیاری
-                                                </span>
-                                            </label>
-
-                                            <input
-                                                id="unit"
-                                                type="text"
-                                                inputMode="numeric"
-                                                placeholder="مثلاً ۳"
-                                                {...register(
-                                                    "unit",
-                                                )}
-                                                className="
+                      <Input
+                        id="unit"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="مثلاً ۳"
+                        {...register("unit")}
+                        className="
                           luxury-transition
                           h-12
                           w-full
@@ -814,161 +634,119 @@ export function CheckoutPageContent() {
                           placeholder:text-muted-foreground/60
                           focus:border-foreground
                         "
-                                            />
+                      />
 
-                                            {errors.unit ? (
-                                                <p className="mt-2 text-xs text-destructive">
-                                                    {
-                                                        errors
-                                                            .unit
-                                                            .message
-                                                    }
-                                                </p>
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
+                      {errors.unit ? (
+                        <p className="mt-2 text-xs text-destructive">
+                          {errors.unit.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-                            {/* Delivery Time */}
-                            <section>
-                                <div className="mb-7 border-b border-border pb-5">
-                                    <p
-                                        dir="ltr"
-                                        className="section-eyebrow"
-                                    >
-                                        DELIVERY TIME
-                                    </p>
+              {/* Delivery Time */}
+              <section>
+                <div className="mb-7 border-b border-border pb-5">
+                  <p dir="rtl" className="section-eyebrow">زمان تحویل</p>
 
-                                    <h2 className="mt-2 text-xl font-medium">
-                                        زمان تحویل
-                                    </h2>
-                                </div>
+                  <h2 className="mt-2 text-xl font-medium">زمان تحویل</h2>
+                </div>
 
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    {/* Persian Date Picker */}
-                                    <Controller
-                                        name="deliveryDate"
-                                        control={control}
-                                        render={({
-                                            field,
-                                        }) => (
-                                            <DeliveryDatePicker
-                                                value={
-                                                    field.value
-                                                }
-                                                onChange={
-                                                    field.onChange
-                                                }
-                                                error={
-                                                    errors
-                                                        .deliveryDate
-                                                        ?.message
-                                                }
-                                            />
-                                        )}
-                                    />
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {/* Persian Date Picker */}
+                  <Controller
+                    name="deliveryDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DeliveryDatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={errors.deliveryDate?.message}
+                      />
+                    )}
+                  />
 
-                                    {/* Delivery Time */}
-                                    <div>
-                                        <label
-                                            htmlFor="deliveryTime"
-                                            className="mb-2 block text-sm font-medium"
-                                        >
-                                            ساعت تحویل
-                                        </label>
+                  {/* Delivery Time */}
+                  <div>
+                    <Label
+                      htmlFor="deliveryTime"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      ساعت تحویل
+                    </Label>
 
-                                        <Controller
-                                            name="deliveryTime"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Select
-                                                    value={field.value}
-                                                    onValueChange={field.onChange}
-                                                >
-                                                    <SelectTrigger
-                                                        id="deliveryTime"
-                                                        dir="rtl"
-                                                        className={`
+                    <Controller
+                      name="deliveryTime"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger
+                            id="deliveryTime"
+                            dir="rtl"
+                            className={`
                                                         w-full
-                                                        rounded-none
+                                                        rounded-md
                                                         border-border
                                                         bg-background
                                                         px-4
                                                         data-[size=default]:h-12
-                                                        ${errors.deliveryTime
-                                                                ? "border-destructive"
-                                                                : ""
-                                                            }
+                                                        ${
+                                                          errors.deliveryTime
+                                                            ? "border-destructive"
+                                                            : ""
+                                                        }
                                                         `}
-                                                    >
-                                                        <SelectValue placeholder="انتخاب ساعت" />
-                                                    </SelectTrigger>
+                          >
+                            <SelectValue placeholder="انتخاب ساعت" />
+                          </SelectTrigger>
 
-                                                    <SelectContent
-                                                        dir="rtl"
-                                                        position="popper"
-                                                    >
-                                                        {DELIVERY_TIME_SLOTS.map(
-                                                            (time) => (
-                                                                <SelectItem
-                                                                    key={time}
-                                                                    value={time}
-                                                                >
-                                                                    <span dir="ltr">
-                                                                        {time}
-                                                                    </span>
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
+                          <SelectContent dir="rtl" position="popper">
+                            {DELIVERY_TIME_SLOTS.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                <span dir="ltr">{time}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
 
-                                        <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                            بازه تحویل از ساعت ۱۱ تا ۱۸
-                                        </p>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                      بازه تحویل از ساعت ۱۱ تا ۱۸
+                    </p>
 
-                                        {errors.deliveryTime ? (
-                                            <p className="mt-2 text-xs text-destructive">
-                                                {errors.deliveryTime.message}
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </section>
+                    {errors.deliveryTime ? (
+                      <p className="mt-2 text-xs text-destructive">
+                        {errors.deliveryTime.message}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
 
-                            {/* Order Note */}
-                            <section>
-                                <div className="mb-7 border-b border-border pb-5">
-                                    <p
-                                        dir="ltr"
-                                        className="section-eyebrow"
-                                    >
-                                        NOTE
-                                    </p>
+              {/* Order Note */}
+              <section>
+                <div className="mb-7 border-b border-border pb-5">
+                  <p dir="rtl" className="section-eyebrow">یادداشت سفارش</p>
 
-                                    <h2 className="mt-2 text-xl font-medium">
-                                        توضیحات سفارش
-                                    </h2>
-                                </div>
+                  <h2 className="mt-2 text-xl font-medium">توضیحات سفارش</h2>
+                </div>
 
-                                <label
-                                    htmlFor="note"
-                                    className="sr-only"
-                                >
-                                    توضیحات سفارش
-                                </label>
+                <Label htmlFor="note" className="sr-only">
+                  توضیحات سفارش
+                </Label>
 
-                                <textarea
-                                    id="note"
-                                    rows={4}
-                                    placeholder="اگر توضیح خاصی درباره تحویل سفارش دارید، اینجا بنویسید."
-                                    {...register(
-                                        "note",
-                                    )}
-                                    className="
+                <Textarea
+                  id="note"
+                  rows={4}
+                  placeholder="اگر توضیح خاصی درباره تحویل سفارش دارید، اینجا بنویسید."
+                  {...register("note")}
+                  className="
                     luxury-transition
                     w-full
                     resize-none
@@ -983,165 +761,110 @@ export function CheckoutPageContent() {
                     placeholder:text-muted-foreground/60
                     focus:border-foreground
                   "
-                                />
+                />
 
-                                {errors.note ? (
-                                    <p className="mt-2 text-xs text-destructive">
-                                        {
-                                            errors
-                                                .note
-                                                .message
-                                        }
-                                    </p>
-                                ) : null}
-                            </section>
-                        </div>
+                {errors.note ? (
+                  <p className="mt-2 text-xs text-destructive">
+                    {errors.note.message}
+                  </p>
+                ) : null}
+              </section>
+            </div>
 
-                        {/* Order Summary */}
-                        <aside className="h-fit border border-border p-6 lg:sticky lg:top-24">
-                            <p
-                                dir="ltr"
-                                className="section-eyebrow"
-                            >
-                                YOUR ORDER
-                            </p>
+            {/* Order Summary */}
+            <aside className="surface h-fit p-6 lg:sticky lg:top-24">
+              <p dir="rtl" className="section-eyebrow">سفارش شما</p>
 
-                            <h2 className="mt-3 text-xl font-medium">
-                                خلاصه سفارش
-                            </h2>
+              <h2 className="mt-3 text-xl font-medium">خلاصه سفارش</h2>
 
-                            {/* Products */}
-                            <div className="mt-7 divide-y divide-border border-y border-border">
-                                {items.map(
-                                    (item) => (
-                                        <div
-                                            key={
-                                                item.lineId
-                                            }
-                                            className="flex gap-4 py-5"
-                                        >
-                                            {/* Thumbnail */}
-                                            <Link
-                                                href={`/product/${item.productId}`}
-                                                className="relative size-20 shrink-0 overflow-hidden bg-secondary"
-                                            >
-                                                {item.thumbnail ? (
-                                                    <Image
-                                                        src={
-                                                            item.thumbnail
-                                                        }
-                                                        alt={
-                                                            item.name
-                                                        }
-                                                        fill
-                                                        sizes="80px"
-                                                        className="object-cover"
-                                                    />
-                                                ) : null}
-                                            </Link>
+              {/* Products */}
+              <div className="mt-7 divide-y divide-border border-y border-border">
+                {items.map((item) => (
+                  <div key={item.lineId} className="flex gap-4 py-5">
+                    {/* Thumbnail */}
+                    <Link
+                      href={`/product/${item.productId}`}
+                      className="relative size-20 shrink-0 overflow-hidden bg-secondary"
+                    >
+                      {item.thumbnail ? (
+                        <Image
+                          src={item.thumbnail}
+                          alt={item.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </Link>
 
-                                            {/* Product Information */}
-                                            <div className="min-w-0 flex-1">
-                                                <Link
-                                                    href={`/product/${item.productId}`}
-                                                    dir="ltr"
-                                                    className="block truncate font-heading text-lg font-medium"
-                                                >
-                                                    {
-                                                        item.name
-                                                    }
-                                                </Link>
+                    {/* Product Information */}
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/product/${item.productId}`}
+                        dir="ltr"
+                        className="block truncate font-heading text-lg font-medium"
+                      >
+                        {item.name}
+                      </Link>
 
-                                                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <span
-                                                        className="size-2.5 rounded-full border border-black/10"
-                                                        style={{
-                                                            backgroundColor:
-                                                                item.colorHex,
-                                                        }}
-                                                    />
+                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <span
+                          className="size-2.5 rounded-full border border-black/10"
+                          style={{
+                            backgroundColor: item.colorHex,
+                          }}
+                        />
 
-                                                    <span>
-                                                        {
-                                                            item.colorName
-                                                        }
-                                                    </span>
+                        <span>{item.colorName}</span>
 
-                                                    <span>
-                                                        ×
-                                                    </span>
+                        <span>×</span>
 
-                                                    <span>
-                                                        {formatNumber(item.quantity)}
-                                                    </span>
-                                                </div>
+                        <span>{formatNumber(item.quantity)}</span>
+                      </div>
 
-                                                <p className="mt-3 text-xs font-medium">
-                                                    {formatNumber((
-                                                        item.unitPrice *
-                                                        item.quantity
-                                                    ))}{" "}
-                                                    تومان
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ),
-                                )}
-                            </div>
+                      <p className="mt-3 text-xs font-medium">
+                        {formatNumber(item.unitPrice * item.quantity)} تومان
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                            {/* Totals */}
-                            <div className="space-y-4 py-6 text-sm">
-                                <div className="flex items-center justify-between gap-4">
-                                    <span className="text-muted-foreground">
-                                        تعداد کالا
-                                    </span>
+              {/* Totals */}
+              <div className="space-y-4 py-6 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">تعداد کالا</span>
 
-                                    <span>
-                                        {formatNumber(totalQuantity)}
-                                    </span>
-                                </div>
+                  <span>{formatNumber(totalQuantity)}</span>
+                </div>
 
-                                <div className="flex items-center justify-between gap-4">
-                                    <span className="text-muted-foreground">
-                                        جمع کالاها
-                                    </span>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">جمع کالاها</span>
 
-                                    <span>
-                                        {formatNumber(totalPrice)}{" "}
-                                        تومان
-                                    </span>
-                                </div>
+                  <span>{formatNumber(totalPrice)} تومان</span>
+                </div>
 
-                                <div className="flex items-center justify-between gap-4">
-                                    <span className="text-muted-foreground">
-                                        هزینه ارسال
-                                    </span>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">هزینه ارسال</span>
 
-                                    <span>
-                                        رایگان
-                                    </span>
-                                </div>
-                            </div>
+                  <span>رایگان</span>
+                </div>
+              </div>
 
-                            {/* Final Total */}
-                            <div className="flex items-center justify-between gap-5 border-t border-border pt-6">
-                                <span className="font-medium">
-                                    مبلغ قابل پرداخت
-                                </span>
+              {/* Final Total */}
+              <div className="flex items-center justify-between gap-5 border-t border-border pt-6">
+                <span className="font-medium">مبلغ قابل پرداخت</span>
 
-                                <span className="text-lg font-medium">
-                                    {formatNumber(totalPrice)}{" "}
-                                    تومان
-                                </span>
-                            </div>
+                <span className="text-lg font-medium">
+                  {formatNumber(totalPrice)} تومان
+                </span>
+              </div>
 
-                            {/* Submit */}
-                            <button
-                                type="submit"
-                                disabled={
-                                    isSubmitting
-                                }
-                                className="
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="
                   luxury-transition
                   mt-7
                   flex
@@ -1158,34 +881,28 @@ export function CheckoutPageContent() {
                   disabled:cursor-wait
                   disabled:opacity-60
                 "
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2
-                                            className="size-4 animate-spin"
-                                            strokeWidth={
-                                                1.5
-                                            }
-                                        />
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2
+                      className="size-4 animate-spin"
+                      strokeWidth={1.5}
+                    />
+                    در حال بررسی...
+                  </>
+                ) : (
+                  "ادامه و ثبت سفارش"
+                )}
+              </button>
 
-                                        در حال بررسی...
-                                    </>
-                                ) : (
-                                    "ادامه و ثبت سفارش"
-                                )}
-                            </button>
-
-                            <p className="mt-4 text-center text-xs leading-6 text-muted-foreground">
-                                با ادامه فرایند،
-                                موجودی محصولات و
-                                اطلاعات سفارش پیش
-                                از پرداخت مجدداً
-                                بررسی خواهد شد.
-                            </p>
-                        </aside>
-                    </div>
-                </form>
-            </div>
-        </main>
-    );
+              <p className="mt-4 text-center text-xs leading-6 text-muted-foreground">
+                با ادامه فرایند، موجودی محصولات و اطلاعات سفارش پیش از پرداخت
+                مجدداً بررسی خواهد شد.
+              </p>
+            </aside>
+          </div>
+        </form>
+      </div>
+    </main>
+  );
 }

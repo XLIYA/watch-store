@@ -1,0 +1,9 @@
+{
+  "maxImageBytes": 2097152,
+  "imageMime": "image/jpeg",
+  "maxImages": 8,
+  "nameMaxLength": 120,
+  "descriptionMaxLength": 20000,
+  "pageSize": 12,
+  "featuredCount": 6
+}

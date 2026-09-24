@@ -1,89 +1,62 @@
-
-import { formatNumber } from "@/lib/format";
 import Image from "next/image";
 import Link from "next/link";
-
+import { ArrowUpLeft, Watch } from "lucide-react";
+import { formatPrice } from "@/lib/format";
 import type { Product } from "@/types/product";
-
-interface ProductCardProps {
-    product: Product;
-    priority?: boolean;
-}
-
+/** کارت مشترک از مرجع تصویری پیروی می‌کند؛ قیمت روی عکس و اطلاعات روی گرادیان خوانا باقی می‌مانند. */
 export function ProductCard({
-    product,
-    priority = false,
-}: ProductCardProps) {
-    const productImage =
-        product.thumbnail || product.images?.[0];
-
-    const isOutOfStock = product.quantity <= 0;
-
-    return (
-        <article className="group min-w-0">
-            <Link
-                href={`/product/${product.id}`}
-                className="block"
-                aria-label={`مشاهده ${product.name}`}
-            >
-                <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
-                    {productImage ? (
-                        <Image
-                            src={productImage}
-                            alt={product.name}
-                            fill
-                            priority={priority}
-                            sizes="(max-width: 640px) 78vw, (max-width: 1024px) 40vw, 25vw"
-                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
-                        />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span
-                                dir="ltr"
-                                className="font-heading text-2xl tracking-[0.12em] text-foreground/10"
-                            >
-                                WATCH STORE
-                            </span>
-                        </div>
-                    )}
-
-                    <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/[0.03]" />
-
-                    {isOutOfStock ? (
-                        <div className="absolute inset-x-0 bottom-0 bg-ink/85 px-4 py-3 text-center text-xs text-white">
-                            ناموجود
-                        </div>
-                    ) : null}
-                </div>
-
-                <div className="pt-5">
-                    <p
-                        dir="ltr"
-                        className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground"
-                    >
-                        {product.brand}
-                    </p>
-
-                    <h3
-                        dir="ltr"
-                        className="mt-2 truncate font-heading text-xl font-medium tracking-[0.025em] text-foreground sm:text-2xl"
-                    >
-                        {product.name}
-                    </h3>
-
-                    <div className="mt-3 flex items-center justify-between gap-4">
-                        <p className="text-sm text-foreground">
-                            {formatNumber(product.price)} تومان
-                        </p>
-
-                        {!isOutOfStock ? (
-                            <span className="text-[0.7rem] text-muted-foreground">
-                                موجود
-                            </span>
-                        ) : null}
-                    </div>
-                </div>
-            </Link>
-        </article>
-    );
+  product,
+  priority = false,
+}: {
+  product: Product;
+  priority?: boolean;
+}) {
+  const image = product.thumbnail || product.images?.[0];
+  return (
+    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-border bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
+      <Link
+        href={"/product/" + product.id}
+        aria-label={"مشاهده " + product.name}
+        className="relative flex aspect-[3/4.3] flex-col justify-end overflow-hidden"
+      >
+        {image && (
+          <Image
+            src={image}
+            alt={product.name}
+            fill
+            priority={priority}
+            sizes="(max-width:640px) 85vw,(max-width:1024px) 42vw,28vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/65 to-transparent" />
+        <span className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/90 px-4 py-2.5 text-xs font-medium text-ink shadow-sm backdrop-blur-md">
+          {formatPrice(product.price)}{" "}
+          <span className="text-[10px]">تومان</span>
+        </span>
+        <div className="relative space-y-3 p-5 text-right text-white">
+          <p dir="auto" className="text-right text-xs text-white/70">
+            {product.brand}
+          </p>
+          <h3
+            dir="auto"
+            className="min-h-12 text-right text-base font-semibold leading-6 line-clamp-2"
+          >
+            {product.name}
+          </h3>
+          <div className="flex items-center justify-between gap-3 text-[11px] text-white/80">
+            <span className="flex items-center gap-1.5">
+              <Watch className="size-3.5" />{" "}
+              {product.quantity > 0 ? "آمادهٔ انتخاب" : "اتمام موجودی"}
+            </span>
+            <span>{product.variants.length.toLocaleString("fa-IR")} رنگ</span>
+          </div>
+          <span className="flex items-center justify-between rounded-full bg-ivory px-5 py-3.5 text-xs font-medium text-forest transition-colors group-hover:bg-gold-light">
+            کشف این ساعت{" "}
+            <ArrowUpLeft className="size-4 transition-transform group-hover:-translate-x-1 group-hover:-translate-y-1" />
+          </span>
+        </div>
+      </Link>
+    </article>
+  );
 }

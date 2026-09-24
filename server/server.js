@@ -4,6 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const multer = require("multer");
 const { createAuth } = require("./auth");
+const { validateProductWrite } = require("./product-validation");
+const productRules = require("../shared/product-rules.json");
 
 // مسیرها از محل فایل ساخته می‌شوند تا اجرای سرور از ریشهٔ پروژه هم درست باشد.
 function createServer(options = {}) {
@@ -66,9 +68,9 @@ function createServer(options = {}) {
 
   const upload = multer({
     dest: uploadDir,
-    limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+    limits: { fileSize: productRules.maxImageBytes, files: 1 },
     fileFilter: (_req, file, callback) => {
-      if (file.mimetype !== "image/jpeg")
+      if (file.mimetype !== productRules.imageMime)
         return callback(new Error("INVALID_IMAGE_TYPE"));
       callback(null, true);
     },
@@ -96,6 +98,7 @@ function createServer(options = {}) {
     }
     next();
   });
+  server.use(validateProductWrite(router.db));
   server.use((req, _res, next) => {
     if (req.file) req.body.image = `/files/${req.file.filename}`;
     if (req.method === "POST") req.body.createdAt = Date.now();

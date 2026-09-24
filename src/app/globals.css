@@ -60,7 +60,7 @@
 
   --font-sans: "Estedad Variable", sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-cormorant);
+  --font-heading: "Estedad Variable", sans-serif;
 
   --radius-sm: calc(var(--radius) * 0.65);
   --radius-md: calc(var(--radius) * 0.85);
@@ -76,54 +76,54 @@
    * Brand palette
    */
 
-  --ivory: #f6f7f9;
-  --ink: #142638;
+  --ivory: #f6f3ed;
+  --ink: #191b19;
   --stone: #d8d3c8;
 
-  --gold: #b59a67;
+  --gold: #a88b52;
   --gold-light: #d5c39c;
 
-  --forest: #17362d;
-  --forest-light: #2f5147;
+  --forest: #0c4546;
+  --forest-light: #24716e;
 
   /*
    * shadcn semantic colors
    */
 
-  --background: #f6f7f9;
-  --foreground: #142638;
+  --background: #f6f3ed;
+  --foreground: #191b19;
 
   --card: #ffffff;
-  --card-foreground: #142638;
+  --card-foreground: #191b19;
 
   --popover: #ffffff;
-  --popover-foreground: #142638;
+  --popover-foreground: #191b19;
 
-  --primary: #142638;
-  --primary-foreground: #f6f7f9;
+  --primary: #0c4546;
+  --primary-foreground: #f6f3ed;
 
-  --secondary: #edf0f3;
-  --secondary-foreground: #142638;
+  --secondary: #eeeae2;
+  --secondary-foreground: #191b19;
 
-  --muted: #edf0f3;
-  --muted-foreground: #657381;
+  --muted: #eeeae2;
+  --muted-foreground: #706d64;
 
   --accent: #17362d;
   --accent-foreground: #ffffff;
 
   --destructive: #b42318;
 
-  --border: #dde3e9;
-  --input: #dde3e9;
-  --ring: #b59a67;
+  --border: #ded9cd;
+  --input: #ded9cd;
+  --ring: #a88b52;
 
   /*
    * Charts
    */
 
   --chart-1: #17362d;
-  --chart-2: #b59a67;
-  --chart-3: #657381;
+  --chart-2: #a88b52;
+  --chart-3: #706d64;
   --chart-4: #2f5147;
   --chart-5: #d5c39c;
 
@@ -141,16 +141,16 @@
    */
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #142638;
+  --sidebar-foreground: #191b19;
 
-  --sidebar-primary: #142638;
+  --sidebar-primary: #191b19;
   --sidebar-primary-foreground: #ffffff;
 
   --sidebar-accent: #f2f0ea;
-  --sidebar-accent-foreground: #142638;
+  --sidebar-accent-foreground: #191b19;
 
-  --sidebar-border: #dde3e9;
-  --sidebar-ring: #b59a67;
+  --sidebar-border: #ded9cd;
+  --sidebar-ring: #a88b52;
 
   /*
    * Motion
@@ -192,49 +192,49 @@
 
 .dark {
   --background: #0e0f0e;
-  --foreground: #f6f7f9;
+  --foreground: #f6f3ed;
 
   --card: #151715;
-  --card-foreground: #f6f7f9;
+  --card-foreground: #f6f3ed;
 
   --popover: #151715;
-  --popover-foreground: #f6f7f9;
+  --popover-foreground: #f6f3ed;
 
-  --primary: #f6f7f9;
-  --primary-foreground: #142638;
+  --primary: #f6f3ed;
+  --primary-foreground: #191b19;
 
   --secondary: #1c1e1c;
-  --secondary-foreground: #f6f7f9;
+  --secondary-foreground: #f6f3ed;
 
   --muted: #1c1e1c;
   --muted-foreground: #aaa59b;
 
-  --accent: #b59a67;
-  --accent-foreground: #142638;
+  --accent: #a88b52;
+  --accent-foreground: #191b19;
 
   --destructive: #e85d4a;
 
   --border: #2b2d2b;
   --input: #2b2d2b;
-  --ring: #b59a67;
+  --ring: #a88b52;
 
-  --chart-1: #b59a67;
+  --chart-1: #a88b52;
   --chart-2: #54776b;
   --chart-3: #aaa59b;
   --chart-4: #d5c39c;
   --chart-5: #6e8d82;
 
   --sidebar: #111211;
-  --sidebar-foreground: #f6f7f9;
+  --sidebar-foreground: #f6f3ed;
 
-  --sidebar-primary: #b59a67;
-  --sidebar-primary-foreground: #142638;
+  --sidebar-primary: #a88b52;
+  --sidebar-primary-foreground: #191b19;
 
   --sidebar-accent: #1c1e1c;
-  --sidebar-accent-foreground: #f6f7f9;
+  --sidebar-accent-foreground: #f6f3ed;
 
   --sidebar-border: #2b2d2b;
-  --sidebar-ring: #b59a67;
+  --sidebar-ring: #a88b52;
 }
 
 @layer base {
@@ -447,18 +447,18 @@
  * این قواعد در layout مدیریت فعال می‌شوند تا استایل هر صفحه دوباره نوشته نشود. */
 @layer components {
   .admin-shell {
-    --sidebar: #142638;
-    --sidebar-foreground: #eef3f8;
-    --sidebar-accent: #263c50;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #34495d;
+    --sidebar: #f1eee7;
+    --sidebar-foreground: #191b19;
+    --sidebar-accent: #e5dfd1;
+    --sidebar-accent-foreground: #191b19;
+    --sidebar-border: #ded9cd;
   }
   .admin-shell [data-sidebar="sidebar"] {
     background: var(--sidebar);
     color: var(--sidebar-foreground);
   }
   .admin-shell [data-sidebar="group-label"] {
-    color: var(--gold-light);
+    color: var(--muted-foreground);
   }
   .admin-shell [data-sidebar="menu-button"][data-active="true"] {
     box-shadow: inset -3px 0 0 var(--gold);
@@ -486,3 +486,95 @@
     transition: background-color var(--motion-fast);
   }
 }
+
+/* مقیاس مشترک فرم و کارت در فروشگاه و مدیریت؛ اختلاف گوشه‌ها فقط با اندازهٔ جزء تعیین می‌شود. */
+@layer components {
+  .surface {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--card);
+  }
+  .form-field {
+    display: grid;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    outline-offset: 3px;
+  }
+  .form-field textarea {
+    min-height: 9rem;
+    resize: vertical;
+  }
+  .form-field input[type="checkbox"] {
+    width: 1rem;
+    min-height: 1rem;
+  }
+  .form-field [role="alert"] {
+    color: var(--destructive);
+    font-size: 0.75rem;
+  }
+  .editorial-title {
+    font-size: clamp(2.4rem, 5vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: -0.04em;
+  }
+  .section-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--muted-foreground);
+    font-size: 0.7rem;
+  }
+  .section-kicker::before {
+    content: "";
+    width: 2rem;
+    height: 1px;
+    background: var(--gold);
+  }
+  .product-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition:
+      transform 0.35s,
+      box-shadow 0.35s;
+  }
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 42px -24px #191b1950;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* کنترل‌های فارسی از فونت واحد استفاده می‌کنند؛ spinner بومی عدد با ورودی سفارشی تداخل ندارد. */
+button, input, select, textarea { font: inherit; }
+a, button:not(:disabled), [role="button"], summary, label[for], [role="option"] { cursor: pointer; }
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+.prose-content ul { list-style: disc; padding-inline-start: 1.5rem; }
+.prose-content ol { list-style: decimal; padding-inline-start: 1.5rem; }
+.prose-content p { margin-block: .5rem; }
+@keyframes hero-arrive { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.hero-arrive { animation: hero-arrive .75s cubic-bezier(.2,.7,.2,1) both; }
+
+:where(p,h1,h2,h3)[dir] { text-align: right; }
