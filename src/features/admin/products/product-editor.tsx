@@ -1,97 +1,505 @@
 "use client";
-
 import { useState } from "react";
 import Image from "next/image";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PriceInput } from "@/components/ui/price-input";
+import { ColorPicker } from "@/components/ui/color-picker";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { useCategories } from "@/features/catalog/use-categories";
 import { getSubcategories } from "@/services/categories.service";
-import { saveProduct, uploadProductImage } from "@/services/products.service";
+import { productImageError } from "@/services/products.service";
 import { getApiErrorMessage } from "@/services/api/api-error";
+import { useSaveProduct, useImageUploadMutation } from "./mutations";
 import { productSchema, type ProductFormValues } from "./product.schema";
 import type { Product } from "@/types/product";
 import rules from "../../../../shared/product-rules.json";
 
-/** هر بار بازشدن مودال یک فرم تازه می‌سازد؛ draft محصول قبلی به ایجاد یا ویرایش بعدی نشت نمی‌کند. */
-export function ProductEditor({ product, onClose }: { product?: Product; onClose: () => void }) {
-  const queryClient = useQueryClient();
+/** ایجاد و ویرایش همین فرم را مصرف می‌کنند؛ Controller قرارداد کنترل‌های Radix را به React Hook Form وصل می‌کند. */
+export function ProductEditor({
+  product,
+  onClose,
+}: {
+  product?: Product;
+  onClose: () => void;
+}) {
   const categories = useCategories();
-  const groups = useQuery({ queryKey: ["catalog", "subcategories"], queryFn: () => getSubcategories() });
+  const groups = useQuery({
+    queryKey: ["catalog", "subcategories"],
+    queryFn: () => getSubcategories(),
+  });
   const [images, setImages] = useState(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [imageError, setImageError] = useState("");
-  const form = useForm<ProductFormValues>({ resolver: zodResolver(productSchema), defaultValues: product ?? {
-    name: "", brand: "", slug: "", category: 0, subcategory: 0, description: "", price: 0, quantity: 0, variants: [], isHero: false, heroOrder: null,
-  } });
-  const category = useWatch({ control: form.control, name: "category" });
-  const variants = useFieldArray({ control: form.control, name: "variants", keyName: "fieldKey" });
-  const mutation = useMutation({
-    mutationFn: (values: ProductFormValues) => saveProduct({ ...values, thumbnail: images[0], images }, product?.id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(product ? "تغییرات محصول ذخیره شد." : "محصول جدید ثبت شد.");
-      onClose();
+  const [confirmClose, setConfirmClose] = useState(false);
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: product ?? {
+      name: "",
+      brand: "",
+      slug: "",
+      category: 0,
+      subcategory: 0,
+      description: "",
+      price: 0,
+      quantity: 0,
+      variants: [],
+      isHero: false,
+      heroOrder: null,
     },
   });
+  const category = useWatch({ control: form.control, name: "category" });
+  const variants = useFieldArray({
+    control: form.control,
+    name: "variants",
+    keyName: "fieldKey",
+  });
+  const mutation = useSaveProduct(() => {
+    toast.success(product ? "تغییرات محصول ذخیره شد." : "محصول جدید ثبت شد.");
+    onClose();
+  });
+  const upload = useImageUploadMutation();
   const busy = mutation.isPending || uploading;
-
-  /** تصویر قبل از ذخیرهٔ محصول آپلود می‌شود؛ نتایج موفق حفظ می‌شوند تا خطای فایل بعدی باعث آپلود دوباره نشود. */
+  /** ابتدا کل انتخاب اعتبارسنجی می‌شود؛ آپلودهای موفق قبل از خطای شبکه در draft حفظ می‌شوند. */
   async function uploadFiles(files: FileList | null) {
     if (!files?.length) return;
     setImageError("");
-    if (images.length + files.length > rules.maxImages) { setImageError(`حداکثر ${rules.maxImages} تصویر مجاز است.`); return; }
-    if ([...files].some(file => file.type !== rules.imageMime || file.size > rules.maxImageBytes)) { setImageError("تصاویر باید JPEG و حداکثر ۲ مگابایت باشند."); return; }
+    if (images.length + files.length > rules.maxImages) {
+      setImageError("تعداد تصاویر از حد مجاز بیشتر است.");
+      return;
+    }
+    const error = [...files].map(productImageError).find(Boolean);
+    if (error) {
+      setImageError(error);
+      return;
+    }
     setUploading(true);
-    try { for (const file of [...files]) { const url = await uploadProductImage(file); setImages(current => [...current, url]); } }
-    catch (error) { setImageError(getApiErrorMessage(error)); }
-    finally { setUploading(false); }
+    try {
+      for (const file of [...files]) {
+        const url = await upload.mutateAsync(file);
+        setImages((current) => [...current, url]);
+      }
+    } catch (error) {
+      setImageError(getApiErrorMessage(error));
+    } finally {
+      setUploading(false);
+    }
   }
-
-  /** بسته‌شدن تصادفی، draft را از بین نمی‌برد؛ هنگام ارسال نیز مودال تا دریافت پاسخ باز می‌ماند. */
+  /** خروج از فرم دارای تغییر به مودال تأیید می‌رود؛ بستن هنگام درخواست فعال مسدود است. */
   function close() {
     if (busy) return;
-    const changed = form.formState.isDirty || JSON.stringify(images) !== JSON.stringify(product?.images ?? []);
-    if (!changed || window.confirm("تغییرات ذخیره نشده‌اند. از فرم خارج می‌شوید؟")) onClose();
+    if (
+      form.formState.isDirty ||
+      JSON.stringify(images) !== JSON.stringify(product?.images ?? [])
+    )
+      setConfirmClose(true);
+    else onClose();
   }
-
-  /** همان handler برای ایجاد و ویرایش استفاده می‌شود؛ شرط تصویر خارج schema است چون فایل‌ها چرخهٔ آپلود مستقل دارند. */
   function submit(values: ProductFormValues) {
-    if (!images.length) { setImageError("حداقل یک تصویر محصول لازم است."); return; }
-    mutation.mutate(values);
+    if (!images.length) {
+      setImageError("حداقل یک تصویر محصول لازم است.");
+      return;
+    }
+    mutation.mutate({
+      id: product?.id,
+      payload: { ...values, thumbnail: images[0], images },
+    });
   }
-
-  return <Dialog open onOpenChange={open => { if (!open) close(); }}>
-    <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl" dir="rtl" onInteractOutside={event => event.preventDefault()}>
-      <DialogHeader className="text-right"><DialogTitle>{product ? "ویرایش محصول" : "محصول تازه"}</DialogTitle><DialogDescription>مشخصات، تصاویر و موجودی ساعت را مدیریت کنید.</DialogDescription></DialogHeader>
-      {(categories.isError || groups.isError) && <div role="alert" className="text-destructive">دریافت گروه‌ها ناموفق بود. <Button variant="link" onClick={() => { void categories.refetch(); void groups.refetch(); }}>تلاش دوباره</Button></div>}
-      <form onSubmit={form.handleSubmit(submit)} className="space-y-7" noValidate>
-        <fieldset disabled={busy} className="grid gap-5 sm:grid-cols-2">
-          <legend className="mb-4 font-medium">هویت محصول</legend>
-          {([['name','نام محصول'],['brand','برند'],['slug','شناسهٔ انگلیسی در آدرس']] as const).map(([name,label]) => <label className="form-field" key={name}>{label}<input {...form.register(name)} aria-invalid={!!form.formState.errors[name]} dir={name === "slug" ? "ltr" : undefined} /><span role="alert">{form.formState.errors[name]?.message}</span></label>)}
-          <label className="form-field">سرگروه<select {...form.register("category", {valueAsNumber:true, onChange: () => form.setValue("subcategory", 0, {shouldDirty:true})})} disabled={categories.isPending}><option value={0}>انتخاب سرگروه</option>{categories.data?.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select><span role="alert">{form.formState.errors.category?.message}</span></label>
-          <label className="form-field">گروه<select {...form.register("subcategory", {valueAsNumber:true})} disabled={groups.isPending || !category}><option value={0}>انتخاب گروه</option>{groups.data?.filter(item => item.category === category).map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select><span role="alert">{form.formState.errors.subcategory?.message}</span></label>
-          {([['price','قیمت (تومان)'],['quantity','موجودی کل']] as const).map(([name,label]) => <label className="form-field" key={name}>{label}<input type="number" min="0" step={name === "quantity" ? "1" : "any"} {...form.register(name,{valueAsNumber:true})} /><span role="alert">{form.formState.errors[name]?.message}</span></label>)}
-        </fieldset>
-        <fieldset disabled={busy} className="space-y-4"><legend className="mb-3 font-medium">تصاویر محصول</legend><p className="text-xs text-muted-foreground">تصویر اول به‌عنوان تصویر اصلی نمایش داده می‌شود. JPEG، حداکثر ۲ مگابایت برای هر تصویر.</p>
-          <div className="flex flex-wrap gap-3">{images.map((src,index) => <div className="relative size-24 overflow-hidden rounded-lg border" key={src}><Image unoptimized src={src} fill sizes="96px" className="object-cover" alt={`تصویر ${index+1}`} /><button type="button" className="absolute left-1 top-1 rounded-md bg-card p-1" aria-label={`حذف تصویر ${index+1}`} onClick={() => setImages(current => current.filter((_,i)=>i!==index))}><Trash2 className="size-4"/></button></div>)}</div>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed p-5 text-sm"><Upload className="size-4"/>{uploading ? "در حال آپلود…" : "انتخاب تصاویر"}<input className="sr-only" type="file" accept={rules.imageMime} multiple onChange={event => { void uploadFiles(event.target.files); event.target.value=""; }} /></label>{imageError && <p role="alert" className="text-sm text-destructive">{imageError}</p>}
-        </fieldset>
-        <fieldset disabled={busy} className="space-y-3"><legend className="mb-3 font-medium">رنگ‌ها و موجودی هر رنگ</legend>
-          {variants.fields.map((item,index) => <div key={item.fieldKey} className="grid grid-cols-[1fr_3rem_5rem_auto] items-end gap-2"><label className="form-field">نام رنگ<input {...form.register(`variants.${index}.name`)} /></label><label className="form-field">رنگ<input type="color" {...form.register(`variants.${index}.hex`)} /></label><label className="form-field">موجودی<input type="number" min="0" {...form.register(`variants.${index}.quantity`,{valueAsNumber:true})} /></label><Button type="button" variant="ghost" aria-label="حذف رنگ" onClick={()=>variants.remove(index)}><Trash2/></Button></div>)}
-          {form.formState.errors.variants && <p role="alert" className="text-sm text-destructive">نام و موجودی رنگ‌ها را بررسی کنید؛ شناسه‌ها باید یکتا باشند.</p>}
-          <Button type="button" variant="outline" onClick={()=>variants.append({id:crypto.randomUUID(),name:"",hex:"#191b19",quantity:0})}><Plus/>افزودن رنگ</Button>
-        </fieldset>
-        <label className="form-field">توضیحات HTML<textarea {...form.register("description")} disabled={busy} dir="auto" placeholder="<p>توضیحات محصول</p>"/><span role="alert">{form.formState.errors.description?.message}</span><span className="text-xs text-muted-foreground">پاراگراف، فهرست و متن برجسته پشتیبانی می‌شوند؛ محتوای ناامن هنگام ذخیره پاک می‌شود.</span></label>
-        <fieldset disabled={busy} className="flex flex-wrap items-center gap-5"><label className="flex items-center gap-2 text-sm"><input type="checkbox" {...form.register("isHero")}/>نمایش در ویترین اصلی</label><label className="form-field">ترتیب ویترین<input type="number" min="0" {...form.register("heroOrder",{setValueAs:value=>value===""?null:Number(value)})}/><span role="alert">{form.formState.errors.heroOrder?.message}</span></label></fieldset>
-        {mutation.isError && <p role="alert" className="text-sm text-destructive">{getApiErrorMessage(mutation.error)}</p>}
-        <div className="sticky bottom-0 flex justify-end gap-3 border-t bg-card py-4"><Button type="button" variant="outline" disabled={busy} onClick={close}>انصراف</Button><Button disabled={busy || categories.isPending || groups.isPending || categories.isError || groups.isError}>{busy && <Loader2 className="animate-spin"/>}ذخیرهٔ محصول</Button></div>
-      </form>
-    </DialogContent>
-  </Dialog>;
+  return (
+    <>
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
+      >
+        <DialogContent
+          dir="rtl"
+          className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
+          onInteractOutside={(event) => event.preventDefault()}
+        >
+          <DialogHeader className="shrink-0 border-b px-6 py-5 text-right">
+            <DialogTitle>{product ? "ویرایش محصول" : "محصول تازه"}</DialogTitle>
+            <DialogDescription>
+              اطلاعات ساعت، تصاویر و موجودی را یکجا مدیریت کنید.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={form.handleSubmit(submit)}
+            noValidate
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-6 py-6">
+              {(categories.isError || groups.isError) && (
+                <div role="alert">
+                  دریافت گروه‌ها ناموفق بود.
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => {
+                      void categories.refetch();
+                      void groups.refetch();
+                    }}
+                  >
+                    تلاش دوباره
+                  </Button>
+                </div>
+              )}
+              <fieldset disabled={busy} className="grid gap-5 sm:grid-cols-2">
+                <legend className="mb-4 font-medium">هویت محصول</legend>
+                {(
+                  [
+                    ["name", "نام محصول"],
+                    ["brand", "برند"],
+                    ["slug", "شناسهٔ انگلیسی در آدرس"],
+                  ] as const
+                ).map(([name, label]) => (
+                  <div className="grid gap-2" key={name}>
+                    <Label htmlFor={name}>{label}</Label>
+                    <Input
+                      id={name}
+                      {...form.register(name)}
+                      className="text-right"
+                      aria-invalid={!!form.formState.errors[name]}
+                    />
+                    <p role="alert" className="text-xs text-destructive">
+                      {form.formState.errors[name]?.message}
+                    </p>
+                  </div>
+                ))}
+                {(["category", "subcategory"] as const).map((name) => (
+                  <div className="grid gap-2" key={name}>
+                    <Label htmlFor={name}>
+                      {name === "category" ? "سرگروه" : "گروه"}
+                    </Label>
+                    <Controller
+                      name={name}
+                      control={form.control}
+                      render={({ field }) => (
+                        <Select
+                          dir="rtl"
+                          value={field.value ? String(field.value) : ""}
+                          onValueChange={(value) => {
+                            field.onChange(Number(value));
+                            if (name === "category")
+                              form.setValue("subcategory", 0, {
+                                shouldDirty: true,
+                              });
+                          }}
+                          disabled={
+                            busy ||
+                            categories.isPending ||
+                            groups.isPending ||
+                            (name === "subcategory" && !category)
+                          }
+                        >
+                          <SelectTrigger
+                            id={name}
+                            className="w-full"
+                            onBlur={field.onBlur}
+                          >
+                            <SelectValue placeholder="انتخاب کنید" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(name === "category"
+                              ? categories.data
+                              : groups.data?.filter(
+                                  (item) => item.category === category,
+                                )
+                            )?.map((item) => (
+                              <SelectItem key={item.id} value={String(item.id)}>
+                                {item.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <p role="alert" className="text-xs text-destructive">
+                      {form.formState.errors[name]?.message}
+                    </p>
+                  </div>
+                ))}
+                <div className="grid gap-2">
+                  <Label htmlFor="product-price">قیمت (تومان)</Label>
+                  <Controller
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <PriceInput
+                        id="product-price"
+                        disabled={busy}
+                        value={field.value}
+                        onBlur={field.onBlur}
+                        onValueChange={(value) =>
+                          field.onChange(value === "" ? NaN : Number(value))
+                        }
+                      />
+                    )}
+                  />
+                  <p role="alert" className="text-xs text-destructive">
+                    {form.formState.errors.price?.message}
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="product-quantity">موجودی کل</Label>
+                  <Input
+                    id="product-quantity"
+                    type="number"
+                    min="0"
+                    {...form.register("quantity", { valueAsNumber: true })}
+                  />
+                  <p role="alert" className="text-xs text-destructive">
+                    {form.formState.errors.quantity?.message}
+                  </p>
+                </div>
+              </fieldset>
+              <fieldset disabled={busy} className="space-y-4">
+                <legend className="mb-3 font-medium">تصاویر محصول</legend>
+                <p className="text-xs text-muted-foreground">
+                  تصویر اول تصویر اصلی است؛ حداکثر{" "}
+                  {rules.maxImages.toLocaleString("fa-IR")} فایل JPEG و{" "}
+                  {(rules.maxImageBytes / 1024 / 1024).toLocaleString("fa-IR")}{" "}
+                  مگابایت برای هر تصویر.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {images.map((src, index) => (
+                    <div
+                      key={src}
+                      className="relative size-24 overflow-hidden rounded-lg border"
+                    >
+                      <Image
+                        unoptimized
+                        src={src}
+                        fill
+                        sizes="96px"
+                        alt={"تصویر " + (index + 1)}
+                        className="object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon-sm"
+                        className="absolute left-1 top-1"
+                        aria-label={"حذف تصویر " + (index + 1)}
+                        onClick={() =>
+                          setImages((current) =>
+                            current.filter((_, i) => i !== index),
+                          )
+                        }
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Label
+                  htmlFor="product-images"
+                  className="flex cursor-pointer justify-center gap-2 rounded-lg border border-dashed p-5"
+                >
+                  <Upload className="size-4" />
+                  {uploading ? "در حال آپلود…" : "انتخاب تصاویر"}
+                </Label>
+                <Input
+                  id="product-images"
+                  type="file"
+                  className="sr-only"
+                  accept={rules.imageMime}
+                  multiple
+                  onChange={(event) => {
+                    void uploadFiles(event.target.files);
+                    event.target.value = "";
+                  }}
+                />
+                {imageError && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {imageError}
+                  </p>
+                )}
+              </fieldset>
+              <fieldset disabled={busy} className="space-y-4">
+                <legend className="mb-3 font-medium">
+                  رنگ‌ها و موجودی هر رنگ
+                </legend>
+                {variants.fields.map((item, index) => (
+                  <div
+                    key={item.fieldKey}
+                    className="grid grid-cols-[minmax(0,1fr)_3rem_5rem_auto] items-end gap-2"
+                  >
+                    <div className="grid gap-2">
+                      <Label htmlFor={"variant-name-" + index}>نام رنگ</Label>
+                      <Input
+                        id={"variant-name-" + index}
+                        {...form.register(`variants.${index}.name`)}
+                      />
+                    </div>
+                    <Controller
+                      control={form.control}
+                      name={`variants.${index}.hex`}
+                      render={({ field }) => (
+                        <ColorPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={busy}
+                        />
+                      )}
+                    />
+                    <div className="grid gap-2">
+                      <Label htmlFor={"variant-stock-" + index}>موجودی</Label>
+                      <Input
+                        id={"variant-stock-" + index}
+                        type="number"
+                        min="0"
+                        {...form.register(`variants.${index}.quantity`, {
+                          valueAsNumber: true,
+                        })}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="حذف رنگ"
+                      onClick={() => variants.remove(index)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                ))}
+                {form.formState.errors.variants && (
+                  <p role="alert" className="text-sm text-destructive">
+                    نام، کد رنگ و موجودی را بررسی کنید؛ جمع موجودی رنگ‌ها نباید
+                    بیشتر از موجودی کل باشد.
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    variants.append({
+                      id: crypto.randomUUID(),
+                      name: "",
+                      hex: "#165650",
+                      quantity: 0,
+                    })
+                  }
+                >
+                  <Plus />
+                  افزودن رنگ
+                </Button>
+              </fieldset>
+              <div className="space-y-3">
+                <Label>توضیحات محصول</Label>
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={busy}
+                    />
+                  )}
+                />
+                <p role="alert" className="text-xs text-destructive">
+                  {form.formState.errors.description?.message}
+                </p>
+              </div>
+              <fieldset
+                disabled={busy}
+                className="flex flex-wrap items-center gap-5"
+              >
+                <Controller
+                  control={form.control}
+                  name="isHero"
+                  render={({ field }) => (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="product-hero"
+                        checked={field.value}
+                        disabled={busy}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                      />
+                      <Label htmlFor="product-hero">نمایش در ویترین اصلی</Label>
+                    </div>
+                  )}
+                />
+                <div className="grid gap-2">
+                  <Label htmlFor="hero-order">ترتیب ویترین</Label>
+                  <Input
+                    id="hero-order"
+                    type="number"
+                    min="0"
+                    {...form.register("heroOrder", {
+                      setValueAs: (value) =>
+                        value === "" ? null : Number(value),
+                    })}
+                  />
+                  <p role="alert" className="text-xs text-destructive">
+                    {form.formState.errors.heroOrder?.message}
+                  </p>
+                </div>
+              </fieldset>
+              {mutation.isError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {getApiErrorMessage(mutation.error)}
+                </p>
+              )}
+            </div>
+            {/* footer بیرون ناحیهٔ scroll است تا padding فرم زیر دکمه‌ها شکاف ایجاد نکند. */}
+            <div className="flex shrink-0 justify-end gap-3 border-t bg-card px-6 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={close}
+              >
+                انصراف
+              </Button>
+              <Button
+                disabled={
+                  busy ||
+                  categories.isPending ||
+                  groups.isPending ||
+                  categories.isError ||
+                  groups.isError
+                }
+              >
+                {busy && <Loader2 className="animate-spin" />}ذخیرهٔ محصول
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmClose}
+        onOpenChange={setConfirmClose}
+        onConfirm={onClose}
+      />
+    </>
+  );
 }
