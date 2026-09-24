@@ -23,7 +23,7 @@ export function FeaturedCategories() {
         {query.data?.map((category) => (
           <label key={category.id} className="flex items-center gap-2 text-sm">
             <Checkbox
-              
+
               className="accent-primary"
               checked={category.featured}
               disabled={mutation.isPending}
