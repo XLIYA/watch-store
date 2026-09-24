@@ -24,6 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getApiErrorMessage } from "@/services/api/api-error";
 import { Input } from "@/components/ui/input";
+import { useCategories, categoryHref } from "@/features/catalog/use-categories";
 import { Button } from "@/components/ui/button";
 
 interface HeaderSearchProps {
@@ -33,6 +34,7 @@ interface HeaderSearchProps {
 export function HeaderSearch({
     onClose,
 }: HeaderSearchProps) {
+    const { data: categories = [] } = useCategories();
     const [query, setQuery] = useState("");
     const [page, setPage] = useState(1);
     const normalizedQuery = query.trim();
@@ -97,13 +99,26 @@ export function HeaderSearch({
             {/* Results */}
             <div className="site-container py-10 md:py-14">
                 {!shouldSearch ? (
-                    <div className="py-20 text-center">
+                    <div className="mx-auto max-w-5xl py-8 text-center md:py-12">
+                        <Search aria-hidden="true" className="mx-auto mb-6 size-10 text-forest/60" strokeWidth={1} />
+                        {/* حذف dir مستقل مانع اعمال قانون عمومی راست‌چین روی عنوان وسط‌چین Discover می‌شود. */}
                         <p
-                            dir="auto"
-                            className="text-right text-4xl text-foreground/10 md:text-6xl"
+                            className="text-center text-4xl text-forest md:text-5xl"
                         >
                             کشف ساعت‌ها
                         </p>
+                        {/* مجموعه‌ها از کش مشترک هدر می‌آیند؛ عکس و نام ثابت در رابط تکرار نمی‌شوند. */}
+                        {categories.length > 0 && <div className="mt-10">
+                            <p className="mb-5 text-xs text-muted-foreground">یا از مجموعه‌های ما شروع کنید</p>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                                {categories.map(category => <Link key={category.id} href={categoryHref(category.slug)} onClick={onClose} className="group overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-forest/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forest">
+                                    <div className="relative aspect-square overflow-hidden bg-secondary">
+                                        {category.coverImage && <Image src={category.coverImage} alt="" fill sizes="(max-width:640px) 45vw, 160px" className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transform-none" />}
+                                    </div>
+                                    <span className="block px-2 py-4 text-sm text-forest">{category.name}</span>
+                                </Link>)}
+                            </div>
+                        </div>}
 
                         <p className="mt-5 text-sm text-muted-foreground">
                             برای شروع جستجو حداقل دو
