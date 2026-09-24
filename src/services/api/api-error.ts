@@ -10,6 +10,11 @@ export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     if (!error.response)
       return "ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.";
+    if (
+      error.response.data?.code === "INVALID_PRODUCT" &&
+      typeof error.response.data.message === "string"
+    )
+      return error.response.data.message;
     if (error.response.data?.code === "INVALID_CREDENTIALS")
       return "نام کاربری یا رمز عبور صحیح نیست.";
     switch (error.response.status) {

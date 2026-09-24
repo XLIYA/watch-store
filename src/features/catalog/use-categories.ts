@@ -15,4 +15,4 @@ export function useCategories() {
   });
 }
 
-export const categoryHref = (slug: string) => `/collections/${encodeURIComponent(slug)}`;
+export { categoryHref } from "./catalog-navigation";

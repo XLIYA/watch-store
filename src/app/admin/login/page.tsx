@@ -1,18 +1,19 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { LockKeyhole, Loader2, UserRound, Watch } from "lucide-react";
+import { LockKeyhole, Loader2, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginAdmin } from "@/services/auth.service";
+import { useLoginMutation } from "@/features/auth/mutations";
 import { getApiErrorMessage } from "@/services/api/api-error";
-import { useQueryClient } from "@tanstack/react-query";
-import { sessionQueryKey } from "@/features/auth/use-admin-session";
+
+
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, "نام کاربری را وارد کنید."),
@@ -24,7 +25,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const login = useLoginMutation();
 
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -45,10 +46,7 @@ export default function AdminLoginPage() {
     setServerError(null);
 
     try {
-      const session = await loginAdmin(values);
-      await queryClient.cancelQueries({ queryKey: ["admin"] });
-      queryClient.removeQueries({ queryKey: ["admin"] });
-      queryClient.setQueryData(sessionQueryKey, session);
+      await login.mutateAsync(values);
       router.replace("/admin/orders");
     } catch (error) {
       setServerError(getApiErrorMessage(error));
@@ -64,15 +62,11 @@ export default function AdminLoginPage() {
         <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-muted/50 blur-3xl" />
       </div>
 
-      <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-card shadow-2xl shadow-primary/5 lg:grid-cols-2">
+      <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-primary/5 lg:grid-cols-2">
         {/* این معرفی فقط در صفحهٔ ورود است؛ ستون جدا فرم را خواناتر می‌کند و در موبایل بالای فرم می‌آید. */}
         <aside className="relative flex flex-col justify-between bg-primary p-8 text-primary-foreground sm:p-12">
-          <Watch className="mb-12 size-10 text-gold" strokeWidth={1} />
+          <BrandLogo className="mb-12 text-ivory" />
           <div className="mb-6 text-right">
-            <p dir="ltr" className="text-xs tracking-[0.3em] text-gold">
-              WATCH STORE
-            </p>
-
             <h1 className="mt-6 text-3xl font-medium leading-relaxed">
               ورود به پنل مدیریت
             </h1>

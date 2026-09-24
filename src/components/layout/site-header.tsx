@@ -2,6 +2,7 @@
 
 import { useCategories, categoryHref } from "@/features/catalog/use-categories";
 
+import { useAdminSession } from "@/features/auth/use-admin-session";
 import { useState } from "react";
 
 import Link from "next/link";
@@ -25,6 +26,8 @@ import { useAppSelector } from "@/store/hooks";
 
 
 export function SiteHeader() {
+    const session = useAdminSession();
+    const isAdmin = session.data?.user.role === "admin";
     const { data: categories = [] } = useCategories();
     const navigation = categories.map(category => ({ label: category.name, href: categoryHref(category.slug) }));
     const [isMenuOpen, setIsMenuOpen] =
@@ -159,7 +162,7 @@ export function SiteHeader() {
 
                             {/* Admin */}
                             <Link
-                                href="/admin/login"
+                                href={isAdmin ? "/admin/orders" : "/admin/login"}
                                 className="luxury-transition hidden size-10 items-center justify-center hover:bg-secondary sm:flex"
                                 aria-label="مدیریت"
                             >
@@ -251,14 +254,11 @@ export function SiteHeader() {
                     {/* Drawer Navigation */}
                     <nav className="flex flex-1 flex-col px-6 py-8">
                         <Link
-                            href="/shop"
-                            onClick={() =>
+                            href={isAdmin ? "/admin/orders" : "/shop"} onClick={() =>
                                 setIsMenuOpen(false)
                             }
                             className="border-b border-border py-4 text-base"
-                        >
-                            فروشگاه
-                        </Link>
+                        >{isAdmin ? "مشاهدهٔ پنل" : "مشاهدهٔ فروشگاه"}</Link>
 
                         {navigation.map((item) => (
                             <Link
@@ -274,7 +274,7 @@ export function SiteHeader() {
                         ))}
 
                         <Link
-                            href="/admin/login"
+                            href={isAdmin ? "/admin/orders" : "/admin/login"}
                             onClick={() =>
                                 setIsMenuOpen(false)
                             }

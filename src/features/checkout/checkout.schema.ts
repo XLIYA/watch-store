@@ -1,5 +1,6 @@
 import { getMinimumDeliveryDate, parseIsoDate } from "@/features/checkout/delivery-date";
 import { z } from "zod";
+import { normalizeDigits } from "@/lib/digits";
 
 const iranianMobileRegex = /^09\d{9}$/;
 
@@ -46,18 +47,20 @@ export const checkoutSchema = z
         mobile: z
             .string()
             .trim()
-            .regex(
+            .transform(normalizeDigits)
+            .pipe(z.string().regex(
                 iranianMobileRegex,
-                "شماره موبایل باید با 09 شروع شود و 11 رقم باشد.",
-            ),
+                "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.",
+            )),
 
         postalCode: z
             .string()
             .trim()
-            .regex(
+            .transform(normalizeDigits)
+            .pipe(z.string().regex(
                 postalCodeRegex,
                 "کد پستی باید ۱۰ رقم باشد.",
-            ),
+            )),
 
         address: z
             .string()
