@@ -40,13 +40,14 @@ export const productSchema = z
   })
   .superRefine((value, ctx) => {
     if (
-      value.variants.reduce((sum, variant) => sum + variant.quantity, 0) >
+      // فرم مشترک افزودن/ویرایش باید تمام موجودی کل را بین رنگ‌ها تخصیص دهد.
+      value.variants.reduce((sum, variant) => sum + variant.quantity, 0) !==
       value.quantity
     )
       ctx.addIssue({
         code: "custom",
         path: ["quantity"],
-        message: "مجموع موجودی رنگ‌ها از موجودی کل بیشتر است.",
+        message: "مجموع موجودی رنگ‌ها باید دقیقاً برابر موجودی کل محصول باشد.",
       });
     if (
       new Set(value.variants.map((variant) => variant.id)).size !==
