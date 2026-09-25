@@ -51,6 +51,14 @@ test("admin CRUD validates grouping and numbers, sanitizes HTML and persists inv
   delete payload.soldCount;
   payload.slug = "regression-watch";
   payload.description = "<p>Safe</p><script>alert(1)</script>";
+  payload.quantity = payload.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+  // نمونهٔ کاربر: ثبت ۱۰۰ عدد بدون تخصیص موجودی رنگ‌ها باید در API هم رد شود.
+  for (const quantities of [[0, 0], [40, 50], [60, 50]]) {
+    const variants = quantities.map((quantity, index) => ({
+      id: `color-${index}`, name: `Color ${index}`, hex: "#111111", quantity,
+    }));
+    assert.equal((await request("/products", "POST", { ...payload, quantity: 100, variants })).status, 422);
+  }
   const invalid = await request("/products", "POST", {
     ...payload,
     quantity: -1,
@@ -75,9 +83,13 @@ test("admin CRUD validates grouping and numbers, sanitizes HTML and persists inv
   assert.ok(saved.createdAt);
   assert.equal(saved.description, "<p>Safe</p>");
   assert.equal((await request("/products", "POST", payload)).status, 422);
+  for (const method of ["PATCH", "PUT"]) {
+    assert.equal((await request(`/products/${saved.id}`, method, { quantity: payload.quantity + 2 })).status, 422);
+  }
   const patch = await request(`/products/${saved.id}`, "PATCH", {
     price: 12345,
     quantity: payload.quantity + 2,
+    variants: payload.variants.map((variant, index) => ({ ...variant, quantity: variant.quantity + (index === 0 ? 2 : 0) })),
   });
   assert.equal(patch.status, 200);
   const updated = await (await request(`/products/${saved.id}`)).json();
