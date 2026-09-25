@@ -32,7 +32,7 @@ export async function deleteProduct(id: number) {
 /** جدول موجودی فقط فیلدهای تغییرکرده را ارسال می‌کند تا ویرایش هم‌زمان مشخصات محصول از بین نرود. */
 export async function updateProductInventory(
   id: number,
-  patch: Partial<Pick<Product, "price" | "quantity">>,
+  patch: Partial<Pick<Product, "price" | "quantity" | "variants">>,
 ) {
   return (
     await apiClient.patch<Product>(endpoints.product(id), patch, {
