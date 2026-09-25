@@ -1,19 +1,30 @@
 import type { Product } from "@/types/product";
 
-export type InventoryField = "price" | "quantity";
+export type InventoryField = "price" | "quantity" | `variant:${string}`;
+export type InventoryPatch = Partial<Pick<Product, "price" | "quantity" | "variants">>;
 export type InventoryDraft = {
-  original: Pick<Product, InventoryField>;
+  original: Pick<Product, "price" | "quantity" | "variants">;
   values: Partial<Record<InventoryField, string>>;
   error?: string;
 };
 export type InventoryDrafts = Record<number, InventoryDraft>;
 
+/** جدول و هوک از همین نگاشت استفاده می‌کنند؛ کلید رنگ با شناسه پایدار است و به ترتیب ردیف‌ها وابسته نیست. */
+export function inventoryFieldValue(product: InventoryDraft["original"], field: InventoryField): number {
+  if (field === "price" || field === "quantity") return product[field];
+  const variant = product.variants.find(item => `variant:${item.id}` === field);
+  if (!variant) throw new Error("رنگ محصول پیدا نشد؛ فهرست را تازه کنید.");
+  return variant.quantity;
+}
+
 /** مقدار خام حفظ می‌شود تا خالی‌کردن textbox به صفر ناخواسته تبدیل نشود؛ در hook جدول برای ساخت صف ذخیره کاربرد دارد. */
 export function inventoryPatch(
   draft: InventoryDraft,
-): Partial<Pick<Product, InventoryField>> {
-  const patch: Partial<Pick<Product, InventoryField>> = {};
-  for (const field of ["price", "quantity"] as const) {
+): InventoryPatch {
+  const patch: InventoryPatch = {};
+  const variants = draft.original.variants.map(variant => ({ ...variant }));
+  let variantsChanged = false;
+  for (const field of Object.keys(draft.values) as InventoryField[]) {
     const raw = draft.values[field];
     if (raw === undefined) continue;
     const value = Number(raw);
@@ -21,14 +32,29 @@ export function inventoryPatch(
       !raw.trim() ||
       !Number.isFinite(value) ||
       value < 0 ||
-      (field === "quantity" && !Number.isSafeInteger(value))
+      (field !== "price" && !Number.isSafeInteger(value))
     )
       throw new Error(
         "قیمت و موجودی باید معتبر و غیرمنفی باشند؛ موجودی عدد صحیح است.",
       );
-    if (value !== draft.original[field]) patch[field] = value;
+    if (value === inventoryFieldValue(draft.original, field)) continue;
+    if (field === "price" || field === "quantity") patch[field] = value;
+    else {
+      variants.find(variant => `variant:${variant.id}` === field)!.quantity = value;
+      variantsChanged = true;
+    }
   }
+  // کل موجودی و تخصیص رنگ‌ها در یک PATCH ارسال می‌شوند تا هیچ وضعیت نیمه‌ذخیره‌ای ساخته نشود.
+  if (variantsChanged) patch.variants = variants;
+  if (Object.keys(patch).length && variants.reduce((sum, variant) => sum + variant.quantity, 0) !== (patch.quantity ?? draft.original.quantity))
+    throw new Error("مجموع موجودی رنگ‌ها باید دقیقاً برابر موجودی کل محصول باشد.");
   return patch;
+}
+
+/** خطای محلی همان قانون صف ذخیره است؛ جدول پیش از ارسال، ردیف ناهماهنگ را مشخص می‌کند. */
+export function inventoryDraftError(draft?: InventoryDraft): string | undefined {
+  if (!draft) return;
+  try { inventoryPatch(draft); } catch (error) { return error instanceof Error ? error.message : "موجودی معتبر نیست."; }
 }
 
 /** Escape فقط فیلد فعلی را کنار می‌گذارد؛ تغییر قیمت نباید با انصراف از موجودی همان ردیف حذف شود. */
@@ -65,7 +91,7 @@ export async function saveInventoryQueue(
   drafts: InventoryDrafts,
   save: (
     id: number,
-    patch: Partial<Pick<Product, InventoryField>>,
+    patch: InventoryPatch,
   ) => Promise<unknown>,
   onSuccess: (id: number) => void,
   onError: (id: number, error: unknown) => void,
