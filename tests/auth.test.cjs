@@ -36,7 +36,7 @@ async function fixture(t) {
           thumbnail: "/images/test.jpg",
           images: ["/images/test.jpg"],
           quantity: 5,
-          variants: [],
+          variants: [{ id: "black", name: "Black", hex: "#111111", quantity: 5 }],
           isHero: false,
           heroOrder: null,
         },
