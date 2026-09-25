@@ -5,11 +5,13 @@ export interface AdminLoginCredentials { username: string; password: string }
 export interface AdminSession { user: { username: string; name: string; role: "admin" } }
 
 export function removeLegacyTokens() {
-  // فقط مهاجرت از نسخهٔ قبلی؛ localStorage سبد خرید دست‌نخورده می‌ماند.
+
   try {
     localStorage.removeItem("watch-store-admin-access-token");
     localStorage.removeItem("watch-store-admin-refresh-token");
-  } catch { /* غیرفعال‌بودن storage مانع احراز هویت کوکی‌محور نیست. */ }
+  } catch {
+    
+  }
 }
 
 export async function loginAdmin(credentials: AdminLoginCredentials): Promise<AdminSession> {
