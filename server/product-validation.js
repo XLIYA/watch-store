@@ -100,12 +100,12 @@ function validateProductWrite(db) {
       )
     )
       return invalid("رنگ‌های محصول معتبر نیستند.");
-    if (
-      new Set(value.variants.map((v) => v.id)).size !== value.variants.length ||
-      value.variants.reduce((sum, v) => sum + v.quantity, 0) > value.quantity
-    )
+    if (new Set(value.variants.map((v) => v.id)).size !== value.variants.length)
+      return invalid("شناسهٔ رنگ‌ها باید یکتا باشد.");
+    // حتی PATCH مستقیم باید برابری موجودی کل با رنگ‌های محصول نهایی را حفظ کند.
+    if (value.variants.reduce((sum, v) => sum + v.quantity, 0) !== value.quantity)
       return invalid(
-        "مجموع موجودی رنگ‌ها نباید از موجودی کل بیشتر باشد؛ رنگ‌ها را در فرم محصول اصلاح کنید.",
+        "مجموع موجودی رنگ‌ها باید دقیقاً برابر موجودی کل محصول باشد؛ موجودی هر رنگ را در فرم محصول اصلاح کنید.",
       );
     if (
       typeof value.isHero !== "boolean" ||
