@@ -5,6 +5,8 @@ import { Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PriceInput } from "@/components/ui/price-input";
 import { Input } from "@/components/ui/input";
+import { PersianDigitInput } from "@/components/ui/persian-digit-input";
+import { inventoryDraftError } from "@/features/admin/products/inventory-draft";
 import {
   Table,
   TableBody,
@@ -45,7 +47,7 @@ export default function AdminInventoryPage() {
           <h1 className="text-3xl font-medium">قیمت و موجودی</h1>
           <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
             روی عدد کلیک کنید. برای لغو ویرایش هر خانه، Escape را بزنید. تغییرات
-            با دکمهٔ ذخیره ثبت می‌شوند.
+            با دکمهٔ ذخیره ثبت می‌شوند. مجموع موجودی رنگ‌ها باید برابر موجودی کل باشد.
           </p>
         </div>
         <label className="relative">
@@ -90,20 +92,21 @@ export default function AdminInventoryPage() {
         retry={() => void query.refetch()}
       />
       <div className="surface overflow-hidden">
-        <Table className="min-w-[760px] table-fixed" aria-busy={query.isFetching || editor.saving}>
-          <colgroup><col className="w-[30%]"/><col className="w-[12%]"/><col className="w-[23%]"/><col className="w-[15%]"/><col className="w-[20%]"/></colgroup><TableHeader>
+        <Table className="min-w-[1050px] table-fixed" aria-busy={query.isFetching || editor.saving}>
+          <colgroup><col className="w-[23%]"/><col className="w-[10%]"/><col className="w-[17%]"/><col className="w-[12%]"/><col className="w-[23%]"/><col className="w-[15%]"/></colgroup><TableHeader>
             <TableRow>
               <TableHead>محصول</TableHead>
               <TableHead>برند</TableHead>
               <TableHead>قیمت (تومان)</TableHead>
-              <TableHead>موجودی</TableHead>
+              <TableHead>موجودی کل</TableHead>
+              <TableHead>موجودی رنگ‌ها</TableHead>
               <TableHead>وضعیت</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {!query.isPending && !query.isError && !products.length && (
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center">
+                <TableCell colSpan={6} className="py-12 text-center">
                   محصولی پیدا نشد.
                 </TableCell>
               </TableRow>
@@ -140,10 +143,27 @@ export default function AdminInventoryPage() {
                     )}
                   </TableCell>
                 ))}
+                <TableCell>
+                  {/* رنگ‌ها از snapshot همان ویرایش می‌آیند؛ دریافت مجدد لیست نباید draft کاربر را جابه‌جا کند. */}
+                  <div className="space-y-2">
+                    {(editor.drafts[product.id]?.original.variants ?? product.variants).map(variant => {
+                      const field = `variant:${variant.id}` as const;
+                      const value = editor.drafts[product.id]?.values[field];
+                      return <div key={variant.id} className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2 text-xs"><span aria-hidden className="size-3 shrink-0 rounded-full border" style={{backgroundColor: variant.hex}} />{variant.name}</span>
+                        <div className="w-24 shrink-0">
+                          {value !== undefined ? <InventoryValueInput price={false} label={`موجودی رنگ ${variant.name} ${product.name}`} disabled={editor.saving} value={value} onChange={value => editor.edit(product, field, value)} onEscape={() => editor.cancel(product.id, field)} /> :
+                            <Button variant="ghost" className="w-full border border-dashed border-border tabular-nums" disabled={editor.saving || query.isPlaceholderData} aria-label={`ویرایش موجودی رنگ ${variant.name} ${product.name}`} onClick={() => editor.edit(product, field)}>{formatNumber(variant.quantity)}</Button>}
+                        </div>
+                      </div>;
+                    })}
+                    {!product.variants.length && <span className="text-xs text-muted-foreground">برای افزودن رنگ از فرم ویرایش محصول استفاده کنید.</span>}
+                  </div>
+                </TableCell>
                 <TableCell className="max-w-60 text-xs">
-                  {editor.drafts[product.id]?.error ? (
+                  {inventoryDraftError(editor.drafts[product.id]) || editor.drafts[product.id]?.error ? (
                     <span role="alert" className="text-destructive">
-                      {editor.drafts[product.id].error}
+                      {inventoryDraftError(editor.drafts[product.id]) || editor.drafts[product.id].error}
                     </span>
                   ) : editor.changedIds.includes(product.id) ? (
                     <span className="text-foreground">در انتظار ذخیره</span>
@@ -167,4 +187,4 @@ export default function AdminInventoryPage() {
 }
 
 /** هر سلول عرض ثابت دارد؛ قیمت فقط در نمایش فرمت می‌شود و Escape به همان draft مستقل برمی‌گردد. */
-function InventoryValueInput({price,label,disabled,value,onChange,onEscape}:{price:boolean;label:string;disabled:boolean;value:string;onChange:(value:string)=>void;onEscape:()=>void}) {const shared={autoFocus:true,disabled,"aria-label":label,className:"w-full min-w-0 text-right",onKeyDown:(event:React.KeyboardEvent<HTMLInputElement>)=>{if(event.key==="Escape"){event.preventDefault();onEscape();}}};return price?<PriceInput {...shared} value={value} onValueChange={onChange}/>:<Input {...shared} type="number" min="0" step="1" value={value} onChange={event=>onChange(event.target.value)}/>;}
+function InventoryValueInput({price,label,disabled,value,onChange,onEscape}:{price:boolean;label:string;disabled:boolean;value:string;onChange:(value:string)=>void;onEscape:()=>void}) {const shared={autoFocus:true,disabled,"aria-label":label,className:"w-full min-w-0 text-right",onKeyDown:(event:React.KeyboardEvent<HTMLInputElement>)=>{if(event.key==="Escape"){event.preventDefault();onEscape();}}};return price?<PriceInput {...shared} value={value} onValueChange={onChange}/>:<PersianDigitInput {...shared} type="text" inputMode="numeric" value={value} onChange={event=>onChange(event.target.value)}/>;}

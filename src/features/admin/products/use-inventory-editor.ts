@@ -6,8 +6,10 @@ import type { PaginatedResult } from "@/types/pagination";
 import type { Product } from "@/types/product";
 import { useInventoryMutation } from "./mutations";
 import { getApiErrorMessage } from "@/services/api/api-error";
+import { normalizeDigits } from "@/lib/digits";
 import {
   changedInventoryIds,
+  inventoryFieldValue,
   discardInventoryField,
   saveInventoryQueue,
   type InventoryDrafts,
@@ -37,7 +39,7 @@ export function useInventoryEditor() {
   function edit(
     product: Product,
     field: InventoryField,
-    value = String(product[field]),
+    value = String(inventoryFieldValue(drafts[product.id]?.original ?? product, field)),
   ) {
     if (lock.current) return;
     setDrafts((current) => ({
@@ -46,8 +48,10 @@ export function useInventoryEditor() {
         original: current[product.id]?.original ?? {
           price: product.price,
           quantity: product.quantity,
+          variants: product.variants.map(variant => ({ ...variant })),
         },
-        values: { ...current[product.id]?.values, [field]: value },
+        values: { ...current[product.id]?.values, [field]: normalizeDigits(value) },
+        error: undefined,
       },
     }));
   }
