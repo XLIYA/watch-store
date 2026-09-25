@@ -60,7 +60,7 @@ export function useInventoryMutation() {
       patch,
     }: {
       id: number;
-      patch: Partial<Pick<ProductPayload, "price" | "quantity">>;
+      patch: Partial<Pick<ProductPayload, "price" | "quantity" | "variants">>;
     }) => updateProductInventory(id, patch),
   });
 }
