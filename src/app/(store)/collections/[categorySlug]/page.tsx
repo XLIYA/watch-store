@@ -1,3 +1,4 @@
+import { CollectionNavigation, CollectionNavigationLink } from "@/components/store/collection-navigation";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCategories, getSubcategories } from "@/services/categories.service";
@@ -80,83 +81,85 @@ export default async function CollectionPage({
           {formatNumber(result.total)} ساعت در این مجموعه
         </p>
       </header>
-      <div className="grid items-start gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <CatalogSidebar
-          categories={categories}
-          groups={groups}
-          activeId={group.id}
-        />
-        <section aria-label={`ساعت‌های ${group.name}`}>
-          <nav
-            aria-label="مرتب‌سازی محصولات"
-            className="mb-7 flex flex-wrap gap-2"
-          >
-            {sorting.map((option) => (
-              <Link
-                key={option.value}
-                href={collectionPageHref(group.slug, 1, option.value)}
-                aria-current={sort === option.value ? "true" : undefined}
-                className={`rounded-md border px-4 py-2 text-xs ${sort === option.value ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-secondary"}`}
-              >
-                {option.label}
-              </Link>
-            ))}
-          </nav>
-          {result.data.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {result.data.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="surface py-20 text-center">
-              <h2 className="text-xl">هنوز ساعتی در این گروه نیست</h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                مجموعه‌های دیگر را از فهرست انتخاب کنید.
-              </p>
-            </div>
-          )}
-          {result.totalPages > 1 && (
+      <CollectionNavigation>
+        <div className="grid items-start gap-8 lg:grid-cols-[230px_minmax(0,1fr)]">
+          <CatalogSidebar
+            categories={categories}
+            groups={groups}
+            activeId={group.id}
+          />
+          <section aria-label={`ساعت‌های ${group.name}`}>
             <nav
-              aria-label="صفحه‌بندی محصولات"
-              className="mt-10 flex flex-wrap justify-center gap-2"
+              aria-label="مرتب‌سازی محصولات"
+              className="mb-7 flex flex-wrap gap-2"
             >
-              {page > 1 && (
-                <Link
-                  className="surface px-4 py-2"
-                  href={collectionPageHref(group.slug, page - 1, sort)}
+              {sorting.map((option) => (
+                <CollectionNavigationLink
+                  key={option.value}
+                  href={collectionPageHref(group.slug, 1, option.value)}
+                  aria-current={sort === option.value ? "true" : undefined}
+                  className={`rounded-md border px-4 py-2 text-xs ${sort === option.value ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-secondary"}`}
                 >
-                  قبلی
-                </Link>
-              )}
-              {paginationWindow(page, result.totalPages).map(
-                (value, index, items) => (
-                  <span key={value} className="flex items-center gap-2">
-                    {index > 0 && value - items[index - 1] > 1 && (
-                      <span aria-hidden>…</span>
-                    )}
-                    <Link
-                      aria-current={value === page ? "page" : undefined}
-                      className={`rounded-md border px-4 py-2 ${value === page ? "bg-primary text-primary-foreground" : "bg-card"}`}
-                      href={collectionPageHref(group.slug, value, sort)}
-                    >
-                      {formatNumber(value)}
-                    </Link>
-                  </span>
-                ),
-              )}
-              {page < result.totalPages && (
-                <Link
-                  className="surface px-4 py-2"
-                  href={collectionPageHref(group.slug, page + 1, sort)}
-                >
-                  بعدی
-                </Link>
-              )}
+                  {option.label}
+                </CollectionNavigationLink>
+              ))}
             </nav>
-          )}
-        </section>
-      </div>
+            {result.data.length ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {result.data.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="surface py-20 text-center">
+                <h2 className="text-xl">هنوز ساعتی در این گروه نیست</h2>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  مجموعه‌های دیگر را از فهرست انتخاب کنید.
+                </p>
+              </div>
+            )}
+            {result.totalPages > 1 && (
+              <nav
+                aria-label="صفحه‌بندی محصولات"
+                className="mt-10 flex flex-wrap justify-center gap-2"
+              >
+                {page > 1 && (
+                  <CollectionNavigationLink
+                    className="surface px-4 py-2"
+                    href={collectionPageHref(group.slug, page - 1, sort)}
+                  >
+                    قبلی
+                  </CollectionNavigationLink>
+                )}
+                {paginationWindow(page, result.totalPages).map(
+                  (value, index, items) => (
+                    <span key={value} className="flex items-center gap-2">
+                      {index > 0 && value - items[index - 1] > 1 && (
+                        <span aria-hidden>…</span>
+                      )}
+                      <CollectionNavigationLink
+                        aria-current={value === page ? "page" : undefined}
+                        className={`rounded-md border px-4 py-2 ${value === page ? "bg-primary text-primary-foreground" : "bg-card"}`}
+                        href={collectionPageHref(group.slug, value, sort)}
+                      >
+                        {formatNumber(value)}
+                      </CollectionNavigationLink>
+                    </span>
+                  ),
+                )}
+                {page < result.totalPages && (
+                  <CollectionNavigationLink
+                    className="surface px-4 py-2"
+                    href={collectionPageHref(group.slug, page + 1, sort)}
+                  >
+                    بعدی
+                  </CollectionNavigationLink>
+                )}
+              </nav>
+            )}
+          </section>
+        </div>
+      </CollectionNavigation>
     </main>
   );
 }

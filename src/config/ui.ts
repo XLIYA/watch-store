@@ -5,6 +5,8 @@
  * این مقادیر سیاست رابط کاربری‌اند و دادهٔ محصول یا آدرس محیط نیستند.
  */
 export const uiConfig = {
+  landingCollections: 4,
+  landingProductsPerCollection: 4,
   adminPageSize: 10,
   searchDebounceMs: 400,
 } as const;

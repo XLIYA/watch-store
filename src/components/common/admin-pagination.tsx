@@ -11,12 +11,14 @@ interface AdminPaginationProps {
 }
 
 export function AdminPagination({
-  page,
-  totalPages,
+  page: requestedPage,
+  totalPages: requestedTotalPages,
   busy = false,
   onPageChange,
 }: AdminPaginationProps) {
-  if (totalPages <= 1) return null;
+  // حتی نتیجهٔ خالی یک صفحهٔ نمایشی دارد؛ کنترل هر سه جدول همیشه دیده می‌شود.
+  const totalPages = Math.max(1, requestedTotalPages);
+  const page = Math.min(Math.max(1, requestedPage), totalPages);
   // فقط همسایه‌های صفحه ساخته می‌شوند؛ جدول‌های سه بخش مدیریت برای دادهٔ بزرگ آرایهٔ کامل نمی‌سازند.
   const pages = [
     ...new Set([1, page - 2, page - 1, page, page + 1, page + 2, totalPages]),

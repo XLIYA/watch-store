@@ -29,8 +29,10 @@ export function ProductCard({
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/65 to-transparent" />
-        <span className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/90 px-4 py-2.5 text-xs font-medium text-ink shadow-sm backdrop-blur-md">
+        {/* نیمهٔ بالای تصویر بدون رنگ می‌ماند؛ تیرگی فقط پشت اطلاعات پایین کارت قرار دارد. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-forest via-forest/90 to-transparent" />
+        {/* سایهٔ نرم، نشان قیمت را روی تصاویر روشن از پس‌زمینه جدا می‌کند. */}
+        <span className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/90 px-4 py-2.5 text-xs font-medium text-ink shadow-md shadow-ink/15 backdrop-blur-md">
           {formatPrice(product.price)}{" "}
           <span className="text-[10px]">تومان</span>
         </span>
