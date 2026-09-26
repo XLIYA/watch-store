@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { randomBytes, randomUUID } = require("node:crypto");
 
-const ACCESS_COOKIE = "watch-store-access";
-const REFRESH_COOKIE = "watch-store-refresh";
+const { access: ACCESS_COOKIE, refresh: REFRESH_COOKIE } = require("../shared/auth-cookies.json");
 
 function readCookie(req, name) {
   const part = (req.headers.cookie || "")
