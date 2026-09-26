@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "@/services/api/api-error";
 import { normalizeDigits } from "@/lib/digits";
 import {
   changedInventoryIds,
+  closeUnchangedInventoryFields,
   inventoryFieldValue,
   discardInventoryField,
   saveInventoryQueue,
@@ -98,6 +99,7 @@ export function useInventoryEditor() {
             },
           })),
       );
+      setDrafts(closeUnchangedInventoryFields);
       await client.invalidateQueries({ queryKey: ["admin", "products"] });
       await client.invalidateQueries({ queryKey: ["products"] });
       // دادهٔ صفحه‌های سروری فروشگاه نیز پس از تغییر قیمت یا موجودی دوباره دریافت می‌شود.
