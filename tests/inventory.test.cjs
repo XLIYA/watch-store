@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { loadTs } = require("./load-ts.cjs");
 const {
   inventoryPatch,
+  closeUnchangedInventoryFields,
   discardInventoryField,
   changedInventoryIds,
   saveInventoryQueue,
@@ -113,4 +114,18 @@ test("save requests run serially and one failure leaves later rows saveable", as
     "end3",
     "saved3",
   ]);
+});
+
+test("save cleanup closes untouched cells but preserves invalid values and failed changes", () => {
+  const drafts = {
+    1: { original: colorStock, values: { price: "10", quantity: "10", "variant:black": "6" } },
+    2: { original: colorStock, values: { price: "20", quantity: "10" }, error: "Offline" },
+    3: { original: colorStock, values: { quantity: "" } },
+  };
+  const next = closeUnchangedInventoryFields(drafts);
+  assert.equal(next[1], undefined);
+  assert.deepEqual(next[2].values, { price: "20" });
+  assert.equal(next[2].error, "Offline");
+  assert.deepEqual(next[3].values, { quantity: "" });
+  assert.equal(drafts[1].values.price, "10");
 });

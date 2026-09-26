@@ -1,6 +1,6 @@
 "use client";
 import { useId, useState } from "react";
-import Link from "next/link";
+import { CollectionNavigationLink as Link } from "./collection-navigation";
 import { CategoryIcon } from "./category-icon";
 import type { Category, Subcategory } from "@/types/category";
 import { groupHref } from "@/features/catalog/catalog-navigation";

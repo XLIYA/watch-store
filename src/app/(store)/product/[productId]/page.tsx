@@ -151,7 +151,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   {category ? (
                     <Link
                       href={categoryHref(category.slug)}
-                      className="luxury-transition text-muted-foreground hover:text-foreground"
+                      className="rounded-full border border-forest/20 bg-forest/5 px-4 py-2 text-forest transition-colors hover:bg-forest/10"
                     >
                       {category.name}
                     </Link>
@@ -162,9 +162,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   ) : null}
 
                   {subcategory ? (
-                    <span className="text-muted-foreground">
-                      {subcategory.name}
-                    </span>
+                    <Link href={groupHref(subcategory.slug)} className="rounded-full border border-forest/20 px-4 py-2 text-forest underline-offset-4 transition-colors hover:bg-forest/5 hover:underline">
+                      {subcategory.name} ↖
+                    </Link>
                   ) : null}
                 </div>
 
@@ -175,8 +175,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
                 {/* Name */}
                 <h1
-                  dir="ltr"
-                  className="mt-5 font-sans text-4xl font-medium leading-none tracking-[0.04em] sm:text-5xl xl:text-6xl"
+                  dir="auto"
+                  className="mt-5 text-right font-sans text-3xl font-medium leading-relaxed sm:text-4xl"
                 >
                   {product.name}
                 </h1>
@@ -199,13 +199,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   </span>
                 </div>
 
-                {/* Description */}
+                {/* عنوان و قاب مستقل مرز توضیحات را از قیمت و انتخاب رنگ مشخص می‌کند؛ HTML همچنان پاک‌سازی می‌شود. */}
+                <section aria-labelledby="product-description" className="mt-8 rounded-2xl border border-border bg-secondary/30 p-5 sm:p-6">
+                  <h2 id="product-description" className="mb-4 text-base font-medium text-forest">دربارهٔ این ساعت</h2>
                 <div
-                  className="body-copy mt-8 space-y-4"
+                  className="text-sm leading-8 text-muted-foreground [&_p+p]:mt-3 [&_ul]:list-disc [&_ul]:pr-5 [&_ol]:list-decimal [&_ol]:pr-5 [&_strong]:text-foreground"
                   dangerouslySetInnerHTML={{
-                    __html: safeDescription,
+                    __html: safeDescription || "توضیحی برای این ساعت ثبت نشده است.",
                   }}
                 />
+
+                </section>
 
                 {/* Purchase */}
                 <ProductPurchasePanel product={product} />

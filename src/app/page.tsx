@@ -1,3 +1,4 @@
+import { uiConfig } from "@/config/ui";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -19,13 +20,13 @@ export default async function LandingPage() {
     .sort((a, b) => a.landingOrder - b.landingOrder);
   const stories = await Promise.all(
     selected
-      .slice(0, 2)
+      .slice(0, uiConfig.landingCollections)
       .map(async (category) => ({
         category,
         products: (
           await getProducts({
             category: category.id,
-            limit: 3,
+            limit: uiConfig.landingProductsPerCollection,
             sort: "popular",
           })
         ).data,

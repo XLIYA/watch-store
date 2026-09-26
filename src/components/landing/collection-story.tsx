@@ -1,171 +1,56 @@
-import { formatNumber } from "@/lib/format";
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { categoryHref } from "@/features/catalog/catalog-navigation";
-
+import { ArrowUpLeft } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { ScrollReveal } from "@/components/common/scroll-reveal";
-
+import { categoryHref } from "@/features/catalog/catalog-navigation";
+import { formatNumber, formatPrice } from "@/lib/format";
 import type { Category } from "@/types/category";
 import type { Product } from "@/types/product";
 
-interface CollectionStoryProps {
-  category: Category;
-  products: Product[];
-  index: number;
-}
-
-export function CollectionStory({
-  category,
-  products,
-  index,
-}: CollectionStoryProps) {
-  const isReversed = index % 2 !== 0;
-
-  const featuredProduct = products[0];
-
-  const featuredImage =
-    featuredProduct?.images?.[0] ?? featuredProduct?.thumbnail;
-
+/** روایت هر مجموعه در لندینگ: عنوان ثابت کنار اسلایدهای واقعی است تا همهٔ محصولات عکس و مقصد مستقل داشته باشند. */
+export function CollectionStory({ category, products, index }: { category: Category; products: Product[]; index: number }) {
   return (
-    <section className="section-shell overflow-hidden">
-      <div className="site-container">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-          {/* Product image */}
-          <ScrollReveal
-            direction={isReversed ? "left" : "right"}
-            className={isReversed ? "lg:order-2" : ""}
-          >
-            <div className="group relative aspect-[4/5] overflow-hidden rounded-3xl bg-secondary">
-              {featuredProduct && featuredImage ? (
-                <>
-                  <Image
-                    src={featuredImage}
-                    alt={featuredProduct.name}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
-
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
-                    <p
-                      dir="auto"
-                      className="text-xs tracking-[0.18em] text-white/60"
-                    >
-                      {featuredProduct.brand}
-                    </p>
-
-                    <h3
-                      dir="auto"
-                      className="mt-2 font-sans text-3xl font-medium tracking-[0.04em] md:text-4xl"
-                    >
-                      {featuredProduct.name}
-                    </h3>
-
-                    <p className="mt-3 text-sm text-white/60">
-                      {formatNumber(featuredProduct.price)} تومان
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span
-                    dir="auto"
-                    className="font-sans text-5xl tracking-[0.12em] text-foreground/10"
-                  >
-                    {category.slug.toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
-          </ScrollReveal>
-
-          {/* Collection information */}
-          <ScrollReveal
-            direction={isReversed ? "right" : "left"}
-            delay={120}
-            className="max-w-xl"
-          >
-            <p dir="auto" className="section-eyebrow mb-5">
-              مجموعهٔ {formatNumber(index + 1)}
-            </p>
-
-            <h2 className="section-title">{category.name}</h2>
-
-            <p className="body-copy mt-6">
-              مجموعه‌ای منتخب با طراحی دقیق، هویت منحصربه‌فرد و تمرکز بر جزئیاتی
-              که یک ساعت را از یک ابزار ساده به بخشی از سبک شخصی تبدیل می‌کند.
-            </p>
-
-            {products.length > 0 ? (
-              <div className="mt-8 border-y border-border">
-                {products.map((product, productIndex) => (
-                  <Link
-                    key={product.id}
-                    href={`/product/${product.id}`}
-                    className={`
-                        luxury-transition
-                        group/product
-                        flex
-                        items-center
-                        justify-between
-                        gap-5
-                        py-4
-                        hover:opacity-60
-                        ${
-                          productIndex !== products.length - 1
-                            ? "border-b border-border"
-                            : ""
-                        }
-                      `}
-                  >
-                    <div className="min-w-0">
-                      <p
-                        dir="auto"
-                        className="truncate font-sans text-lg font-medium tracking-[0.03em]"
-                      >
-                        {product.name}
-                      </p>
-
-                      <p
-                        dir="auto"
-                        className="mt-1 text-[0.7rem] tracking-[0.12em] text-muted-foreground"
-                      >
-                        {product.brand}
-                      </p>
-                    </div>
-
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatNumber(product.price)} تومان
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-8 text-sm text-muted-foreground">
-                محصولی در این مجموعه موجود نیست.
-              </p>
-            )}
-
-            <Link
-              href={categoryHref(category.slug)}
-              className="
-                luxury-transition
-                mt-8
-                inline-flex
-                border-b
-                border-foreground/40
-                pb-2
-                text-sm
-                hover:border-foreground
-              "
-            >
-              مشاهده مجموعه
+    <section className="site-container py-12 md:py-20" aria-label={`منتخب ${category.name}`}>
+      <ScrollReveal className="border-t border-border pt-10">
+        <Carousel dir="rtl" opts={{ direction: "rtl", align: "start" }} className="grid items-center gap-8 lg:grid-cols-[1fr_1.5fr] lg:gap-16">
+          <div className="max-w-md">
+            <p className="section-kicker mb-4">مجموعهٔ {formatNumber(index + 1)}</p>
+            <h2 className="text-3xl font-medium leading-relaxed md:text-4xl">{category.name}</h2>
+            <p className="mt-5 text-sm leading-8 text-muted-foreground">جزئیات را نزدیک‌تر ببینید؛ ساعت‌ها را ورق بزنید و انتخاب خود را در این مجموعه پیدا کنید.</p>
+            <Link href={categoryHref(category.slug)} className="mt-6 inline-flex items-center gap-3 border-b border-gold pb-2 text-sm transition-colors hover:text-forest">
+              تماشای مجموعه <ArrowUpLeft className="size-4" />
             </Link>
-          </ScrollReveal>
-        </div>
-      </div>
+            <div className="mt-8 flex items-center gap-3">
+              <CarouselPrevious className="static m-0 translate-x-0 translate-y-0 [&_svg]:rotate-180" />
+              <CarouselNext className="static m-0 translate-x-0 translate-y-0 [&_svg]:rotate-180" />
+              <span className="mr-2 text-xs text-muted-foreground">{formatNumber(products.length)} ساعت منتخب</span>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <CarouselContent>
+              {products.map(product => {
+                const image = product.images?.[0] || product.thumbnail;
+                return (
+                  <CarouselItem key={product.id} className="basis-[88%] sm:basis-1/2">
+                    <Link href={`/product/${product.id}`} className="group block rounded-3xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forest">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-secondary">
+                        {image && <Image src={image} alt={product.name} fill sizes="(max-width:640px) 80vw,30vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />}
+                      </div>
+                      <p dir="auto" className="mt-4 truncate text-right text-xs text-muted-foreground">{product.brand}</p>
+                      <h3 dir="auto" className="mt-2 line-clamp-2 min-h-12 text-right text-sm font-medium leading-6">{product.name}</h3>
+                      <p className="mt-2 text-xs text-forest">{formatPrice(product.price)} تومان</p>
+                    </Link>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            {!products.length && <p className="py-12 text-center text-muted-foreground">هنوز محصولی در این مجموعه نیست.</p>}
+          </div>
+        </Carousel>
+      </ScrollReveal>
     </section>
   );
 }

@@ -149,7 +149,8 @@ export default function AdminInventoryPage() {
                     {(editor.drafts[product.id]?.original.variants ?? product.variants).map(variant => {
                       const field = `variant:${variant.id}` as const;
                       const value = editor.drafts[product.id]?.values[field];
-                      return <div key={variant.id} className="flex items-center justify-between gap-2">
+                      // فاصلهٔ ثابت، تعداد را کنار رنگ نگه می‌دارد؛ عرض ستون نباید این دو را از هم جدا کند.
+                      return <div key={variant.id} className="flex items-center justify-start gap-3">
                         <span className="flex min-w-0 items-center gap-2 text-xs"><span aria-hidden className="size-3 shrink-0 rounded-full border" style={{backgroundColor: variant.hex}} />{variant.name}</span>
                         <div className="w-24 shrink-0">
                           {value !== undefined ? <InventoryValueInput price={false} label={`موجودی رنگ ${variant.name} ${product.name}`} disabled={editor.saving} value={value} onChange={value => editor.edit(product, field, value)} onEscape={() => editor.cancel(product.id, field)} /> :
