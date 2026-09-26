@@ -105,3 +105,17 @@ export async function saveInventoryQueue(
     }
   }
 }
+
+/** پس از ذخیرهٔ جدول، سلول‌های بدون تغییر بسته می‌شوند؛ ورودی خالی و تغییر شکست‌خورده برای اصلاح باقی می‌مانند. */
+export function closeUnchangedInventoryFields(drafts: InventoryDrafts): InventoryDrafts {
+  const next: InventoryDrafts = {};
+  for (const [id, draft] of Object.entries(drafts)) {
+    const values = { ...draft.values };
+    for (const field of Object.keys(values) as InventoryField[]) {
+      const raw = values[field];
+      if (raw?.trim() && Number(raw) === inventoryFieldValue(draft.original, field)) delete values[field];
+    }
+    if (Object.keys(values).length) next[Number(id)] = { ...draft, values };
+  }
+  return next;
+}
