@@ -13,7 +13,7 @@ export function ProductCard({
 }) {
   const image = product.thumbnail || product.images?.[0];
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-forest bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-border bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
       <Link
         href={"/product/" + product.id}
         aria-label={"مشاهده " + product.name}
@@ -31,7 +31,8 @@ export function ProductCard({
         )}
         {/* نیمهٔ بالای تصویر بدون رنگ می‌ماند؛ تیرگی فقط پشت اطلاعات پایین کارت قرار دارد. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-forest via-forest/90 to-transparent" />
-        <span className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/90 px-4 py-2.5 text-xs font-medium text-ink shadow-sm backdrop-blur-md">
+        {/* سایهٔ نرم، نشان قیمت را روی تصاویر روشن از پس‌زمینه جدا می‌کند. */}
+        <span className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/90 px-4 py-2.5 text-xs font-medium text-ink shadow-md shadow-ink/15 backdrop-blur-md">
           {formatPrice(product.price)}{" "}
           <span className="text-[10px]">تومان</span>
         </span>
