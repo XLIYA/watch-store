@@ -13,7 +13,7 @@ export function ProductCard({
 }) {
   const image = product.thumbnail || product.images?.[0];
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-border bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-forest bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
       <Link
         href={"/product/" + product.id}
         aria-label={"مشاهده " + product.name}
