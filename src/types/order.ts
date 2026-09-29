@@ -95,7 +95,19 @@ export interface Order {
     createdAt: number;
 
     paidAt: number | null;
+    deliveredAt?: number | null;
 }
 
-// زمان ثبت و شناسه متعلق به سرورند؛ سایر فیلدها با مدل Order مشترک هستند.
-export type CreateOrderPayload = Omit<Order, "id" | "createdAt">;
+// Checkout فقط انتخاب مشتری را می‌فرستد؛ مبلغ، snapshot کالا و وضعیت پرداخت را سرور می‌سازد.
+export interface CreateOrderPayload {
+  requestId: string;
+  customer: OrderCustomer;
+  delivery: OrderDelivery;
+  items: Pick<OrderItem, "productId" | "variantId" | "quantity" | "unitPrice">[];
+}
+export interface CheckoutResponse { id: string | number; paymentUrl: string; resultUrl: string }
+export interface PaymentSummary extends CheckoutResponse {
+  totalPrice: number; itemsCount: number; paymentStatus: PaymentStatus; status: OrderStatus;
+  paidAt: number | null; createdAt: number;
+  items: Pick<OrderItem, "lineId" | "quantity">[];
+}
