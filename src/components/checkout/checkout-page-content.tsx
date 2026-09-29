@@ -1,4 +1,7 @@
 "use client";
+import { checkoutRequestId } from "@/features/checkout/checkout-request";
+import { getApiErrorMessage } from "@/services/api/api-error";
+
 import { formatNumber } from "@/lib/format";
 import { PersianDigitInput } from "@/components/ui/persian-digit-input";
 
@@ -34,6 +37,7 @@ import {
 import {
   DEFAULT_CHECKOUT_VALUES,
   DELIVERY_TIME_SLOTS,
+  SHIPPING_COST,
 } from "@/features/checkout/checkout.constants";
 
 import { useHydrated } from "@/hooks/use-hydrated";
@@ -120,133 +124,14 @@ export function CheckoutPageContent() {
         return;
       }
 
-      const orderItems = items.map((item) => {
-        const product = stockResult.products.get(item.productId);
-
-        if (!product) {
-          throw new Error(
-            `Product ${item.productId} not found during checkout.`,
-          );
-        }
-
-        const variant = product.variants.find(
-          (currentVariant) => currentVariant.id === item.variantId,
-        );
-
-        if (!variant) {
-          throw new Error(
-            `Variant ${item.variantId} not found during checkout.`,
-          );
-        }
-
-        /*
-         * اطلاعات Order از Backend معتبر
-         * گرفته می‌شود، نه localStorage.
-         */
-        const unitPrice = product.price;
-
-        return {
-          lineId: item.lineId,
-
-          productId: product.id,
-
-          variantId: variant.id,
-
-          name: product.name,
-
-          thumbnail: product.thumbnail || product.images?.[0] || "",
-
-          colorName: variant.name,
-
-          colorHex: variant.hex,
-
-          unitPrice,
-
-          quantity: item.quantity,
-
-          totalPrice: unitPrice * item.quantity,
-        };
-      });
-
-      const itemsCount = orderItems.reduce(
-        (total, item) => total + item.quantity,
-        0,
-      );
-
-      const subtotal = orderItems.reduce(
-        (total, item) => total + item.totalPrice,
-        0,
-      );
-
-      /*
-       * فعلاً ارسال رایگان است.
-       * بعداً اگر Shipping Rules
-       * اضافه شد این مقدار تغییر می‌کند.
-       */
-      const shippingCost = 0;
-
-      const totalPrice = subtotal + shippingCost;
-
-      /*
-       * ایجاد سفارش قبل از پرداخت.
-       *
-       * در این مرحله هنوز موجودی
-       * Backend کم نمی‌شود.
-       */
-      const order = await createOrder.mutateAsync({
-        customer: {
-          fullName: data.fullName,
-
-          mobile: data.mobile,
-        },
-
-        delivery: {
-          postalCode: data.postalCode,
-
-          address: data.address,
-
-          plaque: data.plaque,
-
-          unit: data.unit || undefined,
-
-          latitude: data.latitude,
-
-          longitude: data.longitude,
-
-          deliveryDate: data.deliveryDate,
-
-          deliveryTime: data.deliveryTime,
-
-          note: data.note || undefined,
-        },
-
-        items: orderItems,
-
-        itemsCount,
-
-        subtotal,
-
-        shippingCost,
-
-        totalPrice,
-
-        /*
-         * هدف:
-         * ایجاد سفارش جدید در وضعیت اولیه چرخه سفارش.
-         *
-         * محل استفاده:
-         * هنگام ثبت نهایی سفارش در Checkout.
-         *
-         * نحوه کار:
-         * وضعیت سفارش مستقل از وضعیت پرداخت نگهداری می‌شود.
-         * سفارش جدید pending است و پرداخت آن نیز در ابتدا pending خواهد بود.
-         */
-        status: "pending",
-
-        paymentStatus: "pending",
-
-        paidAt: null,
-      });
+      // مرورگر تنها انتخاب مشتری را می‌فرستد؛ ساخت snapshot و مبلغ سفارش مسئولیت سرور است.
+      const { fullName, mobile, ...delivery } = data;
+      const payload = {
+        customer: { fullName, mobile },
+        delivery: { ...delivery, latitude: data.latitude, longitude: data.longitude },
+        items: items.map(item => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity, unitPrice: item.unitPrice })),
+      };
+      const order = await createOrder.mutateAsync({ ...payload, requestId: await checkoutRequestId(payload) });
 
       toast.success("سفارش با موفقیت ثبت شد.", {
         description: "در حال انتقال به مرحله پرداخت...",
@@ -256,11 +141,9 @@ export function CheckoutPageContent() {
        * Cart هنوز پاک نمی‌شود.
        * پاک‌شدن فقط بعد از پرداخت موفق.
        */
-      router.push(`/payment?orderId=${encodeURIComponent(String(order.id))}`);
-    } catch {
-      toast.error("ثبت سفارش انجام نشد.", {
-        description: "ارتباط با سرور با خطا مواجه شد. لطفاً دوباره تلاش کنید.",
-      });
+      window.location.assign(order.paymentUrl);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
     }
   };
 
@@ -847,7 +730,7 @@ export function CheckoutPageContent() {
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-muted-foreground">هزینه ارسال</span>
 
-                  <span>رایگان</span>
+                  <span>{SHIPPING_COST === 0 ? "رایگان" : `${formatNumber(SHIPPING_COST)} تومان`}</span>
                 </div>
               </div>
 
@@ -856,7 +739,7 @@ export function CheckoutPageContent() {
                 <span className="font-medium">مبلغ قابل پرداخت</span>
 
                 <span className="text-lg font-medium">
-                  {formatNumber(totalPrice)} تومان
+                  {formatNumber(totalPrice + SHIPPING_COST)} تومان
                 </span>
               </div>
 
