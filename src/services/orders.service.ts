@@ -1,7 +1,7 @@
 import { apiClient } from "@/services/api/api-client";
 import { endpoints } from "@/config/api";
 import { toPaginatedResult } from "@/services/api/pagination";
-import { CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
+import { CheckoutResponse, CreateOrderPayload, Order, OrderStatus, PaymentStatus } from "@/types/order";
 import { PaginatedResult } from "@/types/pagination";
 
 export type AdminOrderStatusFilter =
@@ -22,9 +22,9 @@ export interface GetAdminOrdersParams {
 
 export async function createOrder(
     payload: CreateOrderPayload,
-): Promise<Order> {
+): Promise<CheckoutResponse> {
     const response =
-        await apiClient.post<Order>(
+        await apiClient.post<CheckoutResponse>(
             endpoints.orders,
             payload,
         );
@@ -43,18 +43,9 @@ export async function getOrderById(
     return response.data;
 }
 
-export async function updateOrder(
-    orderId: number | string,
-    payload: Partial<Order>,
-): Promise<Order> {
-    const response =
-        await apiClient.patch<Order>(
-            endpoints.order(orderId),
-            payload,
-            { requiresAuth: true },
-        );
-
-    return response.data;
+/** API تحویل زمان و وضعیت را خودش تعیین می‌کند؛ PATCH دلخواه وضعیت سفارش مجاز نیست. */
+export async function deliverOrder(id: string) {
+  return (await apiClient.post<Order>(endpoints.deliverOrder(id), {}, { requiresAuth: true })).data;
 }
 
 export async function getAdminOrders({
