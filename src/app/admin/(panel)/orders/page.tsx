@@ -47,7 +47,7 @@ import {
   type AdminPaymentStatusFilter,
 } from "@/services/orders.service";
 
-import type { Order } from "@/types/order";
+import { getOrderStatusLabel, getPaymentStatusLabel } from "@/features/admin/orders/status-labels";
 
 const PAGE_SIZE = uiConfig.adminPageSize;
 
@@ -57,48 +57,6 @@ import {
   formatPhoneNumber,
   formatFilterDate,
 } from "@/lib/format";
-
-function getOrderStatusLabel(status: Order["status"]) {
-  switch (status) {
-    case "pending":
-      return "در انتظار بررسی";
-
-    case "processing":
-      return "در حال پردازش";
-
-    case "shipped":
-      return "ارسال شده";
-
-    case "delivered":
-      return "تحویل شده";
-
-    case "cancelled":
-      return "لغو شده";
-  }
-}
-
-/*
- * هدف:
- * تبدیل وضعیت فنی پرداخت به متن فارسی.
- *
- * محل استفاده:
- * ستون وضعیت پرداخت در جدول Admin Orders.
- *
- * نحوه کار:
- * paymentStatus دریافتی از Backend به متن فارسی مناسب تبدیل می‌شود.
- */
-function getPaymentStatusLabel(status: Order["paymentStatus"]) {
-  switch (status) {
-    case "pending":
-      return "در انتظار پرداخت";
-
-    case "paid":
-      return "پرداخت شده";
-
-    case "failed":
-      return "ناموفق";
-  }
-}
 
 export default function AdminOrdersPage() {
   const router = useRouter();
