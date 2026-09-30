@@ -13,8 +13,8 @@ import {
 } from "@/features/cart/cart.slice";
 
 import {
-    loadCartItems,
-    saveCartItems,
+    loadCartState,
+    saveCartState,
 } from "@/features/cart/cart.storage";
 
 import {
@@ -39,7 +39,7 @@ export function StoreProvider({
          * تا SSR/Hydration به مشکل نخورد.
          */
         const storedItems =
-            loadCartItems();
+            loadCartState();
 
         store.dispatch(
             hydrateCart(storedItems),
@@ -49,8 +49,8 @@ export function StoreProvider({
          * اگر آیتم منقضی در Storage بوده،
          * نسخه پاک‌سازی‌شده را ذخیره می‌کنیم.
          */
-        saveCartItems(
-            store.getState().cart.items,
+        saveCartState(
+            store.getState().cart,
         );
 
         /*
@@ -60,9 +60,9 @@ export function StoreProvider({
         const unsubscribe =
             store.subscribe(() => {
                 const items =
-                    store.getState().cart.items;
+                    store.getState().cart;
 
-                saveCartItems(items);
+                saveCartState(items);
             });
 
         /*

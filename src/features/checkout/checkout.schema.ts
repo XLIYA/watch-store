@@ -1,3 +1,4 @@
+import rules from "../../../shared/checkout-rules.json";
 import { getMinimumDeliveryDate, parseIsoDate } from "@/features/checkout/delivery-date";
 import { z } from "zod";
 import { normalizeDigits } from "@/lib/digits";
@@ -113,7 +114,7 @@ export const checkoutSchema = z
                 isValidFutureDeliveryDate,
                 {
                     message:
-                        "تاریخ تحویل باید حداقل ۷ روز بعد از امروز باشد.",
+                        `تاریخ تحویل باید حداقل ${rules.minimumDeliveryDays.toLocaleString("fa-IR")} روز بعد از امروز باشد.`,
                 },
             ),
 
@@ -122,7 +123,7 @@ export const checkoutSchema = z
             .min(
                 1,
                 "ساعت تحویل را انتخاب کنید.",
-            ),
+            ).refine(value => rules.deliveryTimeSlots.includes(value), "ساعت تحویل معتبر نیست."),
 
         note: z
             .string()

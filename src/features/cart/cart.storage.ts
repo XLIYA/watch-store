@@ -8,7 +8,7 @@ export const CART_STORAGE_KEY =
  * اعتبارسنجی کامل Cart Itemهایی که از localStorage خوانده می‌شوند.
  *
  * محل استفاده:
- * داخل loadCartItems قبل از Hydrate شدن Cart در Redux.
+ * داخل loadCartState قبل از Hydrate شدن Cart در Redux.
  *
  * نحوه کار:
  * چون localStorage قابل دستکاری است، فقط بررسی Type کافی نیست.
@@ -137,110 +137,24 @@ function removeDuplicateCartItems(items: CartItem[]): CartItem[] {
     return Array.from(uniqueItems.values());
 }
 
-export function loadCartItems(): CartItem[] {
-    /*
-     * هدف:
-     * جلوگیری از دسترسی به window و localStorage هنگام Render سمت Server.
-     *
-     * محل استفاده:
-     * ابتدای loadCartItems قبل از هرگونه دسترسی به Browser Storage.
-     *
-     * نحوه کار:
-     * اگر کد در محیط Server اجرا شود، window وجود ندارد و تابع بدون خطا
-     * یک Cart خالی برمی‌گرداند. خواندن واقعی Cart فقط داخل Browser انجام می‌شود.
-     */
-    if (typeof window === "undefined") {
-        return [];
-    }
 
-    try {
-        const rawCart =
-            window.localStorage.getItem(
-                CART_STORAGE_KEY,
-            );
-
-        if (!rawCart) {
-            return [];
-        }
-
-        const parsed: unknown =
-            JSON.parse(rawCart);
-
-        if (!Array.isArray(parsed)) {
-            window.localStorage.removeItem(
-                CART_STORAGE_KEY,
-            );
-
-            return [];
-        }
-
-        const now = Date.now();
-        /*
-         * هدف:
-         * آماده‌سازی Cart سالم و بدون Item تکراری قبل از Hydrate شدن Redux.
-         *
-         * محل استفاده:
-         * خروجی نهایی loadCartItems.
-         *
-         * نحوه کار:
-         * ابتدا Itemهای نامعتبر و منقضی‌شده حذف می‌شوند،
-         * سپس removeDuplicateCartItems تضمین می‌کند هر lineId فقط یک بار در Cart وجود داشته باشد.
-         */
-        const validItems = parsed.filter(isCartItem).filter((item) => item.expiresAt > now);
-
-        return removeDuplicateCartItems(validItems);
-
-    } catch {
-        /*
-         * هدف:
-         * پاک‌کردن Cart خراب یا غیرقابل‌خواندن از localStorage.
-         *
-         * محل استفاده:
-         * زمانی که JSON.parse یا خواندن Storage با خطا مواجه شود.
-         *
-         * نحوه کار:
-         * چون در ابتدای تابع وجود window بررسی شده، در این نقطه با اطمینان
-         * می‌توان Storage خراب را حذف کرد و یک Cart خالی برگرداند.
-         */
-        window.localStorage.removeItem(CART_STORAGE_KEY);
-
-        return [];
-    }
+/** اقلام و رسیدهای اعمال‌شده در یک کلید ذخیره می‌شوند تا refresh باعث کسر دوبارهٔ سبد نشود؛ آرایهٔ نسخهٔ قبل نیز خوانده می‌شود. */
+export function loadCartState(): import('./cart.types').CartState {
+  const empty = { items: [], settledOrderIds: [] };
+  if (typeof window === 'undefined') return empty;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || 'null');
+    const items = Array.isArray(parsed) ? parsed : parsed?.items;
+    if (!Array.isArray(items)) return empty;
+    return {
+      items: removeDuplicateCartItems(items.filter(isCartItem).filter(item => item.expiresAt > Date.now())),
+      settledOrderIds: Array.isArray(parsed?.settledOrderIds) ? parsed.settledOrderIds.filter((id: unknown) => typeof id === 'string') : [],
+    };
+  } catch { return empty; }
 }
 
-export function saveCartItems(items: CartItem[]) {
-    /*
-     * هدف:
-     * جلوگیری از تلاش برای ذخیره Cart در localStorage هنگام اجرای سمت Server.
-     *
-     * محل استفاده:
-     * ابتدای saveCartItems قبل از هرگونه دسترسی به Browser Storage.
-     *
-     * نحوه کار:
-     * اگر window وجود نداشته باشد، تابع بدون انجام هیچ عملی متوقف می‌شود.
-     * ذخیره‌سازی Cart فقط داخل Browser انجام خواهد شد.
-     */
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    try {
-        if (items.length === 0) {
-            window.localStorage.removeItem(
-                CART_STORAGE_KEY,
-            );
-
-            return;
-        }
-
-        window.localStorage.setItem(
-            CART_STORAGE_KEY,
-            JSON.stringify(items),
-        );
-    } catch {
-        /*
-         * اگر Storage در مرورگر در دسترس نبود،
-         * Cart داخل Redux همچنان کار می‌کند.
-         */
-    }
+/** یک نوشتن برای هر تغییر Redux؛ در صورت محدودیت مرورگر، state حافظه همچنان قابل استفاده است. */
+export function saveCartState(state: import('./cart.types').CartState) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state)); } catch { /* Storage ممکن است مسدود باشد. */ }
 }

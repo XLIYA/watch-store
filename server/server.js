@@ -3,6 +3,7 @@ const cors = require("cors");
 const fs = require("node:fs");
 const path = require("node:path");
 const multer = require("multer");
+const { registerOrders } = require("./orders");
 const { createAuth } = require("./auth");
 const { validateProductWrite } = require("./product-validation");
 const productRules = require("../shared/product-rules.json");
@@ -50,6 +51,8 @@ function createServer(options = {}) {
   server.post("/auth/logout", auth.logout);
   server.get("/auth/session", auth.requireAdmin, auth.session);
 
+  registerOrders(server, router.db, auth);
+
   server.use((req, res, next) => {
     const entity = req.path.split("/")[1];
     const readOnly = ["GET", "HEAD"].includes(req.method);
@@ -61,7 +64,8 @@ function createServer(options = {}) {
       return next();
     if (readOnly && entity === "files" && req.path.split("/").length === 3)
       return next();
-    if (entity === "orders" && req.method === "POST") return next();
+    if (entity === "orders" && !readOnly)
+      return auth.requireAdmin(req, res, () => res.status(405).json({ code: "USE_ORDER_ACTION" }));
     // قوانین حساس در کد هستند تا PATCH کردن جدول protection راه دورزدن مجوز نباشد.
     return auth.requireAdmin(req, res, next);
   });

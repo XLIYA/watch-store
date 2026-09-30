@@ -50,6 +50,7 @@ interface UpdateItemPricePayload {
 }
 
 const initialState: CartState = {
+  settledOrderIds: [],
   items: [],
 };
 
@@ -362,12 +363,24 @@ const cartSlice = createSlice({
       item.unitPrice = normalizedUnitPrice;
     },
 
+    /** نتیجهٔ تأییدشدهٔ سرور فقط یک‌بار از سبد کم می‌شود؛ بازکردن رسید قدیمی خریدهای جدید را پاک نمی‌کند. */
+    settlePayment: (state, action: PayloadAction<{ id: string; createdAt: number; items: {lineId: string; quantity: number}[] }>) => {
+      const payment = action.payload;
+      if (state.settledOrderIds.includes(payment.id)) return;
+      state.items = state.items.flatMap(item => {
+        const purchased = payment.items.find(line => line.lineId === item.lineId);
+        if (!purchased || item.addedAt > payment.createdAt) return [item];
+        const quantity = item.quantity - purchased.quantity;
+        return quantity > 0 ? [{ ...item, quantity }] : [];
+      });
+      state.settledOrderIds.push(payment.id);
+    },
     hydrateCart: (
       state,
-      action: PayloadAction<CartItem[]>,
+      action: PayloadAction<CartItem[] | CartState>,
     ) => {
-      state.items =
-        action.payload;
+      state.items = Array.isArray(action.payload) ? action.payload : action.payload.items;
+      state.settledOrderIds = Array.isArray(action.payload) ? [] : action.payload.settledOrderIds;
     },
 
     removeExpiredItems: (
@@ -394,6 +407,7 @@ export const {
   updateItemStock,
   updateItemPrice,
   hydrateCart,
+  settlePayment,
   removeExpiredItems,
 } = cartSlice.actions;
 

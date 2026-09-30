@@ -20,5 +20,6 @@ export interface CartItem {
 }
 
 export interface CartState {
+  settledOrderIds: string[];
   items: CartItem[];
 }
