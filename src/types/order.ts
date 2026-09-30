@@ -72,6 +72,7 @@ export interface OrderDelivery {
 }
 
 export interface Order {
+    orderNumber?: string;
     id: number | string;
 
     customer: OrderCustomer;
@@ -107,6 +108,7 @@ export interface CreateOrderPayload {
 }
 export interface CheckoutResponse { id: string | number; paymentUrl: string; resultUrl: string }
 export interface PaymentSummary extends CheckoutResponse {
+  orderNumber: string; expiresAt: number; captcha?: string; failureReason?: "cancelled" | "expired";
   totalPrice: number; itemsCount: number; paymentStatus: PaymentStatus; status: OrderStatus;
   paidAt: number | null; createdAt: number;
   items: Pick<OrderItem, "lineId" | "quantity">[];
