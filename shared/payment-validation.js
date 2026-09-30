@@ -19,9 +19,9 @@ function validatePaymentFields(fields, now = new Date()) {
   const currentYear = Number(parts.find(p => p.type === 'year').value);
   const currentMonth = Number(parts.find(p => p.type === 'month').value);
   const fullYear = year.length === 2 ? Math.floor(currentYear / 100) * 100 + Number(year) : Number(year);
-  if (!/^\d{1,2}$/.test(month) || Number(month) < 1 || Number(month) > 12)
+  if (!/^\d{2}$/.test(month) || Number(month) < 1 || Number(month) > 12)
     errors.month = 'ماه باید بین ۱ تا ۱۲ باشد.';
-  if (!/^(\d{2}|\d{4})$/.test(year) || fullYear < currentYear || (fullYear === currentYear && Number(month) < currentMonth))
+  if (!/^\d{2}$/.test(year) || fullYear < currentYear || (fullYear === currentYear && Number(month) < currentMonth))
     errors.year = 'تاریخ انقضای کارت معتبر نیست.';
   if (!/^\d{5}$/.test(normalizePaymentDigits(fields?.captcha))) errors.captcha = 'کد امنیتی پنج‌رقمی را وارد کنید.';
   if (!/^\d{6}$/.test(normalizePaymentDigits(fields?.pin))) errors.pin = 'رمز شش‌رقمی این پرداخت را وارد کنید.';
