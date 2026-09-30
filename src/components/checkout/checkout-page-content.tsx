@@ -1,4 +1,6 @@
 "use client";
+import { useEffect } from "react";
+import { useDeliveryAvailability } from "@/features/checkout/use-delivery-availability";
 import { checkoutRequestId } from "@/features/checkout/checkout-request";
 import { getApiErrorMessage } from "@/services/api/api-error";
 
@@ -56,6 +58,7 @@ import { useAddressSuggestion } from "@/features/checkout/use-address-suggestion
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 import { validateCheckoutStock } from "@/features/checkout/validate-checkout-stock";
 
@@ -73,6 +76,7 @@ export function CheckoutPageContent() {
     control,
     handleSubmit,
     setValue,
+    setError,
 
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
@@ -84,6 +88,16 @@ export function CheckoutPageContent() {
   });
 
   const addressSuggestion = useAddressSuggestion(address => setValue("address", address, {shouldDirty: true, shouldValidate: true}));
+  const availability = useDeliveryAvailability();
+  const selectedDay = useWatch({ control, name: "deliveryDate" });
+  const selectedTime = useWatch({ control, name: "deliveryTime" });
+  const unavailableTimes = availability.data?.unavailable[selectedDay] || [];
+  useEffect(() => {
+    if (selectedTime && availability.data?.unavailable[selectedDay]?.includes(selectedTime)) {
+      setValue("deliveryTime", "", { shouldValidate: true });
+      setError("deliveryTime", { message: "این ساعت رزرو شده؛ ساعت دیگری انتخاب کنید." });
+    }
+  }, [availability.data, selectedDay, selectedTime, setValue, setError]);
   const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
 
   const onSubmit = async (data: CheckoutFormValues) => {
@@ -109,6 +123,12 @@ export function CheckoutPageContent() {
     }
 
     try {
+      const capacity = await availability.refetch();
+      if (capacity.isError || !capacity.data) { toast.error("دریافت ظرفیت تحویل ممکن نشد؛ دوباره تلاش کنید."); return; }
+      if (capacity.data.unavailable[data.deliveryDate]?.includes(data.deliveryTime)) {
+        setError("deliveryTime", { message: "این ساعت رزرو شده؛ ساعت دیگری انتخاب کنید." });
+        return;
+      }
       /*
        * آخرین بررسی موجودی درست
        * قبل از ایجاد Order.
@@ -143,6 +163,7 @@ export function CheckoutPageContent() {
        */
       window.location.assign(order.paymentUrl);
     } catch (error) {
+      void availability.refetch();
       toast.error(getApiErrorMessage(error));
     }
   };
@@ -535,6 +556,8 @@ export function CheckoutPageContent() {
                   <p dir="rtl" className="section-eyebrow">زمان تحویل</p>
 
                   <h2 className="mt-2 text-xl font-medium">زمان تحویل</h2>
+                  {availability.isFetching && <p role="status" className="mt-3 flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" />در حال بررسی ظرفیت تحویل…</p>}
+                  {availability.isError && <div role="alert" className="mt-3 text-sm text-destructive">ظرفیت تحویل دریافت نشد. <Button type="button" variant="link" onClick={() => availability.refetch()}>تلاش دوباره</Button></div>}
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -545,7 +568,9 @@ export function CheckoutPageContent() {
                     render={({ field }) => (
                       <DeliveryDatePicker
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={value => { field.onChange(value); setValue("deliveryTime", ""); }}
+                        fullyBookedDates={availability.data?.fullyBookedDates}
+                        disabled={availability.isPending || availability.isError}
                         error={errors.deliveryDate?.message}
                       />
                     )}
@@ -566,6 +591,7 @@ export function CheckoutPageContent() {
                       render={({ field }) => (
                         <Select
                           value={field.value}
+                          disabled={!selectedDay || availability.isPending || availability.isError}
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger
@@ -590,8 +616,8 @@ export function CheckoutPageContent() {
 
                           <SelectContent dir="rtl" position="popper">
                             {DELIVERY_TIME_SLOTS.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                <span dir="ltr">{time}</span>
+                              <SelectItem key={time} value={time} disabled={unavailableTimes.includes(time)}>
+                                <span dir="ltr">{time}</span>{unavailableTimes.includes(time) ? " — رزرو شده" : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>
