@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Loader2, Clock3, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PaymentForm } from "./payment-form";
+import styles from "./payment.module.css";
 import { getPayment } from "@/services/payment.service";
 import { getApiErrorMessage } from "@/services/api/api-error";
 import { clearCheckoutAttempt } from "@/features/checkout/checkout-request";
@@ -61,15 +62,15 @@ export function PaymentContent({ id, token, result = false }: { id: string; toke
   const pending = order?.paymentStatus === "pending";
   const busy = mutation.isPending || checking;
   const showResult = result || (order && !pending);
-  return <main className="min-h-screen bg-secondary/40 px-4 py-8 sm:py-14" dir="rtl">
+  return <main className={styles.gateway + " min-h-screen px-4 py-6 sm:py-10"} dir="rtl">
     <div className="mx-auto max-w-4xl">
-      <header className="mb-7 text-center"><p className="section-kicker">خانهٔ ساعت</p><h1 className="mt-3 text-2xl font-medium">{showResult ? "نتیجهٔ پرداخت" : "درگاه پرداخت"}</h1></header>
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{showResult ? "نتیجهٔ پرداخت" : "درگاه پرداخت اینترنتی"}</h1><p className="text-sm text-muted-foreground">خانهٔ ساعت</p></header>
       {!online && <p role="alert" className="mb-5 flex items-center gap-3 rounded-xl border bg-card p-4 text-sm"><WifiOff className="size-5 shrink-0" />{order && !pending ? "ارتباط قطع است؛ آخرین نتیجهٔ تأییدشده نمایش داده می‌شود." : "اتصال اینترنت قطع است. نتیجه هنوز قابل تأیید نیست؛ پس از اتصال دوباره بررسی می‌شود."}</p>}
-      <section className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
         {!id || !token ? <p role="alert" className="p-8">لینک پرداخت کامل نیست.</p> :
           !order ? <div className="p-8">{query.isError ? <p role="alert">{getApiErrorMessage(query.error)}</p> : <p role="status" className="flex items-center gap-2"><Loader2 className="size-5 animate-spin" />{online ? "در حال دریافت سفارش…" : "در انتظار اتصال…"}</p>}</div> :
             <div className={showResult ? "p-6 sm:p-10" : "grid md:grid-cols-[minmax(0,1fr)_260px]"}>
-              <aside className={showResult ? "mb-7 border-b pb-6" : "border-b bg-forest/5 p-6 md:order-2 md:border-r md:border-b-0"}>
+              <aside className={showResult ? "mb-7 border-b pb-6" : "border-b bg-secondary/50 p-6 md:order-2 md:border-r md:border-b-0"}>
                 <h2 className="font-medium">اطلاعات پذیرنده</h2><p className="mt-3 text-sm text-muted-foreground">فروشگاه خانهٔ ساعت</p>
                 <dl className="mt-6 space-y-5 text-sm"><div><dt className="text-muted-foreground">شمارهٔ سفارش</dt><dd className="mt-2 font-medium">{persianDigits(order.orderNumber)}</dd></div><div><dt className="text-muted-foreground">مبلغ قابل پرداخت</dt><dd className="mt-2 text-lg font-medium">{formatPrice(order.totalPrice)} تومان</dd></div></dl>
                 {pending && <p role="timer" className="mt-6 flex items-center gap-2 text-sm"><Clock3 className="size-4" />{seconds === null ? "…" : seconds === 0 ? "مهلت پرداخت پایان یافت" : persianDigits(Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0"))}</p>}
