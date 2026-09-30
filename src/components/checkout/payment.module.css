@@ -1,0 +1,19 @@
+.gateway {
+  --background: #ffffff;
+  --foreground: #253858;
+  --card: #ffffff;
+  --card-foreground: #253858;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #edf2fa;
+  --muted-foreground: #64748b;
+  --border: #dce4ef;
+  --input: #dce4ef;
+  --ring: #93b4f5;
+  --forest: #2563eb;
+  background: #f4f6fb;
+  color: var(--foreground);
+}
+.gateway input { border-radius: .625rem; box-shadow: none; }
+.gateway label { color: #344767; font-weight: 500; }
+.gateway header { border-bottom: 3px solid var(--primary); padding-bottom: 1.25rem; }
