@@ -304,6 +304,7 @@ export default function AdminOrdersPage() {
 
               <SelectContent dir="rtl">
                 <SelectItem value="all">همه سفارش‌ها</SelectItem>
+                <SelectItem value="not_delivered">همهٔ تحویل‌نشده‌ها</SelectItem>
 
                 <SelectItem value="pending">در انتظار بررسی</SelectItem>
 
