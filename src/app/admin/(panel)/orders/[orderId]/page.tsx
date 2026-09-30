@@ -1,4 +1,5 @@
 "use client";
+import { displayOrderNumber } from "../../../../../../shared/order-number";
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -28,7 +29,7 @@ export default function OrderDetailsPage() {
   }
   return <section className="space-y-7">
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div><h1 className="text-2xl font-medium">جزئیات سفارش</h1><p dir="ltr" className="mt-2 break-all text-sm">{order.id}</p><p className="mt-3 text-sm text-muted-foreground">ثبت سفارش: {formatDate(order.createdAt)}</p></div>
+      <div><h1 className="text-2xl font-medium">جزئیات سفارش</h1><p dir="ltr" className="mt-2 break-all text-sm">{formatPhoneNumber(displayOrderNumber(order))}</p><p className="mt-3 text-sm text-muted-foreground">ثبت سفارش: {formatDate(order.createdAt)}</p></div>
       <Button asChild variant="outline"><Link href="/admin/orders">بازگشت به سفارش‌ها</Link></Button>
     </div>
     <div className="surface flex flex-wrap items-center gap-4 p-5">
