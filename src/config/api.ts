@@ -20,6 +20,7 @@ export const endpoints = {
   subcategory: (id: number) => `/subcategory/${encodeURIComponent(id)}`,
   orders: "/orders",
   payment: (id: number | string) => '/payments/' + encodeURIComponent(id),
+  paymentCode: (id: number | string) => '/payments/' + encodeURIComponent(id) + '/code',
   completePayment: (id: number | string) => '/payments/' + encodeURIComponent(id) + '/complete',
   deliverOrder: (id: number | string) => '/orders/' + encodeURIComponent(id) + '/deliver',
   order: (id: number | string) => `/orders/${encodeURIComponent(id)}`,
