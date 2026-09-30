@@ -3,6 +3,7 @@ const { randomBytes, randomUUID, randomInt, createHash } = require('node:crypto'
 const paymentRules = require('../shared/payment-rules.json');
 const { validatePaymentFields, normalizePaymentDigits } = require('../shared/payment-validation');
 const { displayOrderNumber } = require('../shared/order-number');
+const { slotTaken, deliveryAvailability } = require('./delivery-capacity');
 
 /** مسیرهای خرید آزمایشی؛ قیمت و موجودی از DB گرفته می‌شوند و هیچ مبلغ یا وضعیت ارسالی مشتری معتبر فرض نمی‌شود. */
 function registerOrders(server, db, auth) {
@@ -38,6 +39,12 @@ function registerOrders(server, db, auth) {
     next();
   });
 
+  /** تقویم تکمیل سفارش فقط ظرفیت ساعت‌ها را می‌گیرد؛ اطلاعات مشتری در پاسخ عمومی قرار نمی‌گیرد. */
+  server.get('/delivery/availability', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(deliveryAvailability(db.get('orders').value() || []));
+  });
+
   /** قیمت snapshot سفارش تثبیت می‌شود؛ پرداخت مجدداً موجودی را بررسی می‌کند، نه مبلغ مرورگر را. */
   server.post('/orders', (req, res) => {
     const { customer, delivery, items, requestId } = req.body || {};
@@ -58,6 +65,9 @@ function registerOrders(server, db, auth) {
         `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` !== delivery.deliveryDate || date < minimum ||
         !rules.deliveryTimeSlots.includes(delivery.deliveryTime))
       return fail(res, 422, 'اطلاعات تماس، نشانی یا زمان تحویل معتبر نیست.');
+    // تا ذخیره await نداریم؛ دو درخواست هم‌زمان در سرور تک‌پردازشی یک بازه را نمی‌گیرند.
+    if (slotTaken(db.get('orders').value() || [], delivery))
+      return res.status(409).json({ code: 'DELIVERY_SLOT_TAKEN', message: 'این ساعت تحویل رزرو شده؛ زمان دیگری انتخاب کنید.' });
     const lines = [], seen = new Set(), totals = new Map();
     for (const item of items) {
       if (!item || typeof item !== 'object') return fail(res, 422, 'اطلاعات محصول معتبر نیست.');
@@ -137,6 +147,8 @@ function registerOrders(server, db, auth) {
     if (order.paymentStatus !== 'pending') return res.json(summary(order));
     if (req.body.outcome === 'paid') {
       const errors = validatePaymentFields(req.body.fields);
+      if (slotTaken(db.get('orders').value() || [], order.delivery, order.id))
+        return fail(res, 409, 'زمان تحویل دیگر آزاد نیست؛ سفارش را با زمان جدید ثبت کنید.');
       if (Object.keys(errors).length) return res.status(422).json({ code: 'ORDER_ERROR', message: 'اطلاعات پرداخت را اصلاح کنید.', fields: errors });
       if (normalizePaymentDigits(req.body.fields.captcha) !== order.captcha) return fail(res, 422, 'کد امنیتی صحیح نیست.');
       if (!order.pinHash || order.codeExpiresAt <= Date.now() || order.codeAttempts >= paymentRules.maximumCodeAttempts)
