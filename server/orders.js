@@ -1,5 +1,8 @@
 const rules = require('../shared/checkout-rules.json');
-const { randomBytes, randomUUID, createHash } = require('node:crypto');
+const { randomBytes, randomUUID, randomInt, createHash } = require('node:crypto');
+const paymentRules = require('../shared/payment-rules.json');
+const { validatePaymentFields, normalizePaymentDigits } = require('../shared/payment-validation');
+const { displayOrderNumber } = require('../shared/order-number');
 
 /** مسیرهای خرید آزمایشی؛ قیمت و موجودی از DB گرفته می‌شوند و هیچ مبلغ یا وضعیت ارسالی مشتری معتبر فرض نمی‌شود. */
 function registerOrders(server, db, auth) {
@@ -10,9 +13,11 @@ function registerOrders(server, db, auth) {
     return { paymentUrl: `/payment?${query}`, resultUrl: `/payment/result?${query}` };
   };
   // خروجی مشتری عمداً فاقد نشانی و تلفن است؛ توکن فقط اجازهٔ دیدن/پرداخت همین سفارش آزمایشی را می‌دهد.
-  const summary = order => ({ id: order.id, totalPrice: order.totalPrice, itemsCount: order.itemsCount,
+  const summary = order => ({ id: order.id, orderNumber: displayOrderNumber(order), totalPrice: order.totalPrice, itemsCount: order.itemsCount,
     paymentStatus: order.paymentStatus, status: order.status, paidAt: order.paidAt,
-    createdAt: order.createdAt, items: order.items.map(({ lineId, quantity }) => ({ lineId, quantity })), ...links(order) });
+    createdAt: order.createdAt, expiresAt: order.expiresAt, failureReason: order.failureReason,
+    captcha: order.paymentStatus === 'pending' ? order.captcha : undefined,
+    items: order.items.map(({ lineId, quantity }) => ({ lineId, quantity })), ...links(order) });
   const authorized = (req, order) => order && typeof req.query.token === 'string' && req.query.token === order.paymentToken;
   const digits = value => String(value ?? '').replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 1776)).replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 1632));
   const validText = (value, min, max) => typeof value === 'string' && value.trim().length >= min && value.trim().length <= max;
@@ -21,6 +26,17 @@ function registerOrders(server, db, auth) {
     const previous = db.getState();
     try { db.setState(state).write(); } catch (error) { db.setState(previous); throw error; }
   };
+  // خروج آفلاین قابل اتکا نیست؛ پیش از هر درخواست، مهلت سروری سفارش‌های رهاشده بررسی می‌شود، حتی در لیست ادمین.
+  server.use((_req, _res, next) => {
+    const stale = (db.get('orders').value() || []).filter(o => o.paymentToken && o.paymentStatus === 'pending' && (o.expiresAt || o.createdAt + paymentRules.sessionMinutes * 60000) <= Date.now());
+    if (stale.length) {
+      const state = structuredClone(db.getState());
+      const ids = new Set(stale.map(o => o.id));
+      state.orders.forEach(o => { if (ids.has(o.id)) Object.assign(o, { paymentStatus: 'failed', failureReason: 'expired' }); });
+      persist(state);
+    }
+    next();
+  });
 
   /** قیمت snapshot سفارش تثبیت می‌شود؛ پرداخت مجدداً موجودی را بررسی می‌کند، نه مبلغ مرورگر را. */
   server.post('/orders', (req, res) => {
@@ -61,7 +77,10 @@ function registerOrders(server, db, auth) {
     }
     const subtotal = lines.reduce((sum, item) => sum + item.totalPrice, 0);
     if (!Number.isFinite(subtotal)) return fail(res, 422, 'مبلغ سفارش معتبر نیست.');
-    const order = { id: randomUUID(), requestId, fingerprint, paymentToken: randomBytes(32).toString('hex'),
+    let orderNumber;
+    do { orderNumber = String(randomInt(10000000, 100000000)); } while (db.get('orders').find({ orderNumber }).value());
+    const order = { id: randomUUID(), orderNumber, requestId, fingerprint, paymentToken: randomBytes(32).toString('hex'),
+      expiresAt: Date.now() + paymentRules.sessionMinutes * 60000, captcha: String(randomInt(10000, 100000)),
       customer: { fullName: customer.fullName.trim(), mobile: digits(customer.mobile) },
       delivery: { address: delivery.address.trim(), postalCode: digits(delivery.postalCode), plaque: delivery.plaque.trim(),
         unit: delivery.unit?.trim(), note: delivery.note?.trim(), latitude: delivery.latitude, longitude: delivery.longitude,
@@ -76,9 +95,36 @@ function registerOrders(server, db, auth) {
 
   server.get('/payments/:id', (req, res) => {
     res.set('Cache-Control', 'no-store');
+    let order = find(req.params.id);
+    if (!authorized(req, order)) return fail(res, 404, 'لینک پرداخت معتبر نیست.');
+    // لینک‌های صادرشدهٔ نسخهٔ قبل نیز بدون دستکاری دیتابیس کاربر قابل ادامه هستند.
+    if (order.paymentStatus === 'pending' && (!order.captcha || !order.expiresAt)) {
+      const state = structuredClone(db.getState());
+      const target = state.orders.find(o => o.id === order.id);
+      target.captcha ||= String(randomInt(10000, 100000));
+      target.expiresAt ||= order.createdAt + paymentRules.sessionMinutes * 60000;
+      persist(state);
+      order = target;
+    }
+    res.json(summary(order));
+  });
+
+  /** کدهای درگاه ماک در همین صفحه ارائه می‌شوند؛ پیامک بانکی نداریم و رمز فقط به صورت هش در سفارش می‌ماند. */
+  server.post('/payments/:id/code', (req, res) => {
+    res.set('Cache-Control', 'no-store');
     const order = find(req.params.id);
     if (!authorized(req, order)) return fail(res, 404, 'لینک پرداخت معتبر نیست.');
-    res.json(summary(order));
+    if (order.paymentStatus !== 'pending') return fail(res, 409, 'این پرداخت پایان یافته است.');
+    const kind = req.body?.kind;
+    if (!['captcha', 'pin'].includes(kind)) return fail(res, 422, 'نوع کد معتبر نیست.');
+    if (kind === 'pin' && order.codeRequestedAt && Date.now() - order.codeRequestedAt < paymentRules.codeCooldownSeconds * 1000)
+      return fail(res, 429, 'برای دریافت رمز جدید کمی صبر کنید.');
+    const state = structuredClone(db.getState()), target = state.orders.find(o => o.id === order.id);
+    const code = String(randomInt(kind === 'pin' ? 100000 : 10000, kind === 'pin' ? 1000000 : 100000));
+    if (kind === 'captcha') target.captcha = code;
+    else Object.assign(target, { pinHash: createHash('sha256').update(code).digest('hex'), codeRequestedAt: Date.now(), codeExpiresAt: Date.now() + paymentRules.codeSeconds * 1000, codeAttempts: 0 });
+    persist(state);
+    res.json({ code, expiresAt: kind === 'pin' ? target.codeExpiresAt : target.expiresAt });
   });
 
   /** FileSync یک snapshot شامل سفارش و محصولات می‌نویسد؛ در این سرور تک‌پردازشی بین بررسی و ثبت، await وجود ندارد. */
@@ -89,6 +135,19 @@ function registerOrders(server, db, auth) {
     if (!['paid', 'failed'].includes(req.body?.outcome)) return fail(res, 422, 'نتیجهٔ پرداخت معتبر نیست.');
     // پاسخ تکراری همان نتیجهٔ قبلی است؛ شکست دیررس نیز نمی‌تواند پرداخت موفق را تغییر دهد.
     if (order.paymentStatus !== 'pending') return res.json(summary(order));
+    if (req.body.outcome === 'paid') {
+      const errors = validatePaymentFields(req.body.fields);
+      if (Object.keys(errors).length) return res.status(422).json({ code: 'ORDER_ERROR', message: 'اطلاعات پرداخت را اصلاح کنید.', fields: errors });
+      if (normalizePaymentDigits(req.body.fields.captcha) !== order.captcha) return fail(res, 422, 'کد امنیتی صحیح نیست.');
+      if (!order.pinHash || order.codeExpiresAt <= Date.now() || order.codeAttempts >= paymentRules.maximumCodeAttempts)
+        return fail(res, 422, 'رمز معتبر نیست یا منقضی شده؛ رمز جدید دریافت کنید.');
+      if (createHash('sha256').update(normalizePaymentDigits(req.body.fields.pin)).digest('hex') !== order.pinHash) {
+        const state = structuredClone(db.getState());
+        state.orders.find(o => o.id === order.id).codeAttempts = (order.codeAttempts || 0) + 1;
+        persist(state);
+        return fail(res, 422, 'رمز پرداخت صحیح نیست.');
+      }
+    }
     const state = structuredClone(db.getState());
     const target = state.orders.find(o => o.id === order.id);
     if (req.body.outcome === 'paid') {
@@ -100,7 +159,9 @@ function registerOrders(server, db, auth) {
         variant.quantity -= line.quantity; product.quantity -= line.quantity;
       }
       target.paymentStatus = 'paid'; target.paidAt = Date.now(); target.status = 'processing';
-    } else target.paymentStatus = 'failed';
+    } else { target.paymentStatus = 'failed'; target.failureReason = 'cancelled'; }
+    delete target.pinHash;
+    delete target.captcha;
     persist(state);
     res.json(summary(target));
   });
