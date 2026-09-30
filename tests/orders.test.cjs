@@ -28,7 +28,8 @@ async function fixture(t, persistent = false) {
     return { status: response.status, data: await response.json(), response };
   };
   const day = new Date(); day.setDate(day.getDate() + 14);
-  const payload = () => ({ requestId: randomUUID(), customer: { fullName: 'Test Customer', mobile: '09123456789' }, delivery: { postalCode: '1234567890', address: 'Test delivery address', plaque: '1', latitude: 35, longitude: 51, deliveryDate: `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`, deliveryTime: '11:00' }, items: [{ productId: 1, variantId: 'black', quantity: 2, unitPrice: 100 }] });
+  let payloadIndex = 0;
+const payload = () => { const dayForOrder = new Date(day); dayForOrder.setDate(dayForOrder.getDate() + payloadIndex++); return ({ requestId: randomUUID(), customer: { fullName: 'Test Customer', mobile: '09123456789' }, delivery: { postalCode: '1234567890', address: 'Test delivery address', plaque: '1', latitude: 35, longitude: 51, deliveryDate: `${dayForOrder.getFullYear()}-${String(dayForOrder.getMonth()+1).padStart(2,'0')}-${String(dayForOrder.getDate()).padStart(2,'0')}`, deliveryTime: '11:00' }, items: [{ productId: 1, variantId: 'black', quantity: 2, unitPrice: 100 }] }); };
   const create = async (body = payload()) => {
     const result = await request('/orders', body);
     assert.equal(result.status, 201, JSON.stringify(result.data));
@@ -41,7 +42,7 @@ async function fixture(t, persistent = false) {
       const info = await request(`/payments/${order.id}?token=${order.token}`);
       const code = await request(`/payments/${order.id}/code?token=${order.token}`, {kind: 'pin'});
       const year = new Intl.DateTimeFormat('en-US-u-ca-persian', {year: 'numeric'}).formatToParts(new Date()).find(p => p.type === 'year').value;
-      return { cardNumber: '4242424242424242', cvv: '123', month: '12', year: String(Number(year)+1), captcha: info.data.captcha, pin: code.data.code, email: '' };
+      return { cardNumber: '4242424242424242', cvv: '123', month: '12', year: String((Number(year)+1) % 100).padStart(2, '0'), captcha: info.data.captcha, pin: code.data.code, email: '' };
     })());
     const fields = outcome === 'paid' ? await credentials.get(order.id) : undefined;
     return request(`/payments/${order.id}${outcome ? '/complete' : ''}?token=${order.token}`, outcome ? { outcome, fields } : undefined);
@@ -59,11 +60,51 @@ async function fixture(t, persistent = false) {
   return { request, payload, create, payment, login, restart, rewrite };
 }
 
+test('delivery capacity serializes simultaneous bookings and releases a cancelled slot', async t => {
+  const f = await fixture(t), body = f.payload();
+  const responses = await Promise.all([
+    f.request('/orders', body),
+    f.request('/orders', {...body, requestId: randomUUID()}),
+  ]);
+  assert.deepEqual(responses.map(r => r.status).sort(), [201,409]);
+  const booked = responses.find(r => r.status === 201).data;
+  const order = {...booked, token: new URL(booked.paymentUrl, 'http://test').searchParams.get('token')};
+  const available = (await f.request('/delivery/availability')).data;
+  assert.deepEqual(available.unavailable[body.delivery.deliveryDate], [body.delivery.deliveryTime]);
+  assert.equal(JSON.stringify(available).includes(body.customer.mobile), false);
+  await f.payment(order, 'failed');
+  assert.equal((await f.request('/delivery/availability')).data.unavailable[body.delivery.deliveryDate], undefined);
+  assert.equal((await f.request('/orders', {...body, requestId:randomUUID()})).status, 201);
+});
+
+test('expired reservations release capacity while paid orders keep their delivery slot', async t => {
+  const f = await fixture(t, true), body = f.payload(), order = await f.create(body);
+  await f.rewrite(data => {data.orders[0].expiresAt = Date.now()-1;});
+  assert.equal((await f.request('/delivery/availability')).data.unavailable[body.delivery.deliveryDate], undefined);
+  const replacement = await f.create({...body, requestId:randomUUID()});
+  await f.payment(replacement, 'paid');
+  await f.rewrite(data => {data.orders.find(o => o.id === replacement.id).expiresAt = Date.now()-1;});
+  assert.deepEqual((await f.request('/delivery/availability')).data.unavailable[body.delivery.deliveryDate], [body.delivery.deliveryTime]);
+  assert.equal((await f.request('/orders', {...body, requestId:randomUUID()})).status, 409);
+  assert.equal((await f.payment(order)).data.paymentStatus, 'failed');
+});
+
+test('all configured hours make a day unavailable; one released hour reopens it', () => {
+  const {deliveryAvailability} = require('../server/delivery-capacity');
+  const {deliveryTimeSlots} = require('../shared/checkout-rules.json');
+  const orders = deliveryTimeSlots.map(deliveryTime => ({paymentStatus:'paid',status:'processing',delivery:{deliveryDate:'2026-10-15',deliveryTime}}));
+  assert.deepEqual(deliveryAvailability(orders).fullyBookedDates, ['2026-10-15']);
+  orders[0].status = 'cancelled';
+  assert.deepEqual(deliveryAvailability(orders).fullyBookedDates, []);
+});
+
 test('card validation handles Persian digits, checksum, expiry and optional email', () => {
   const { validatePaymentFields } = require('../shared/payment-validation');
-  const valid = { cardNumber: '۴۲۴۲ ۴۲۴۲ ۴۲۴۲ ۴۲۴۲', cvv: '۱۲۳', month: '۱۲', year: '۱۴۱۰', captcha: '۱۲۳۴۵', pin: '۱۲۳۴۵۶', email: '' };
+  const valid = { cardNumber: '۴۲۴۲ ۴۲۴۲ ۴۲۴۲ ۴۲۴۲', cvv: '۱۲۳', month: '۱۲', year: '۱۰', captcha: '۱۲۳۴۵', pin: '۱۲۳۴۵۶', email: '' };
   const now = new Date('2026-09-30');
   assert.deepEqual(validatePaymentFields(valid, now), {});
+  assert.ok(validatePaymentFields({...valid, year: '۱۴۱۰'}, now).year);
+  assert.ok(validatePaymentFields({...valid, month: '۱'}, now).month);
   for (const [key, value] of Object.entries({cardNumber:'4242424242424241', cvv:'ab1', month:'13', year:'1400', captcha:'1234', pin:'123', email:'invalid'}))
     assert.ok(validatePaymentFields({...valid, [key]:value}, now)[key]);
 });
@@ -76,7 +117,7 @@ test('gateway rejects missing fields, wrong captcha and wrong pin; renewed captc
   assert.match(info.orderNumber, /^\d{8}$/);
   const pin = (await f.request(base+'/code'+query, {kind:'pin'})).data.code;
   assert.equal((await f.request(base+'/code'+query, {kind:'pin'})).status, 429);
-  const fields = {cardNumber:'4242424242424242',cvv:'123',month:'12',year:'1410',captcha:info.captcha,pin,email:''};
+  const fields = {cardNumber:'4242424242424242',cvv:'123',month:'12',year:'10',captcha:info.captcha,pin,email:''};
   const changed = (await f.request(base+'/code'+query, {kind:'captcha'})).data.code;
   fields.captcha = changed === '11111' ? '22222' : '11111';
   assert.equal((await f.request(base+'/complete'+query, {outcome:'paid',fields})).status, 422);
@@ -106,7 +147,7 @@ test('expired payment codes are rejected while the session remains unpaid', asyn
   const info = (await f.payment(order)).data;
   const pin = (await f.request(base+'/code'+query, {kind:'pin'})).data.code;
   await f.rewrite(data => { data.orders[0].codeExpiresAt = Date.now()-1; });
-  const response = await f.request(base+'/complete'+query, {outcome:'paid', fields:{cardNumber:'4242424242424242',cvv:'123',month:'12',year:'1410',captcha:info.captcha,pin,email:''}});
+  const response = await f.request(base+'/complete'+query, {outcome:'paid', fields:{cardNumber:'4242424242424242',cvv:'123',month:'12',year:'10',captcha:info.captcha,pin,email:''}});
   assert.equal(response.status, 422);
   assert.equal((await f.payment(order)).data.paymentStatus, 'pending');
 });
