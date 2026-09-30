@@ -6,6 +6,7 @@ import { PaginatedResult } from "@/types/pagination";
 
 export type AdminOrderStatusFilter =
     | "all"
+    | "not_delivered"
     | OrderStatus;
 
 export type AdminPaymentStatusFilter =
@@ -68,7 +69,9 @@ export async function getAdminOrders({
         _order: "desc",
     };
 
-    if (status !== "all") {
+    if (status === "not_delivered") {
+        params.status_ne = "delivered";
+    } else if (status !== "all") {
         params.status = status;
     }
 
