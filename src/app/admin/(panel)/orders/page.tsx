@@ -1,4 +1,5 @@
 "use client";
+import { displayOrderNumber } from "../../../../../shared/order-number";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -478,7 +479,7 @@ export default function AdminOrdersPage() {
             ) : (
               orders.map((order) => (
                 <TableRow key={order.id} className="cursor-pointer" onClick={() => router.push(`/admin/orders/${order.id}`)}>
-                  <TableCell className="font-medium"><Link href={`/admin/orders/${order.id}`} aria-label={`جزئیات سفارش ${order.id}`} className="underline underline-offset-4" onClick={event=>event.stopPropagation()}>#{order.id}</Link></TableCell>
+                  <TableCell className="font-medium"><Link href={`/admin/orders/${order.id}`} aria-label={`جزئیات سفارش ${order.id}`} className="underline underline-offset-4" onClick={event=>event.stopPropagation()}>#{formatPhoneNumber(displayOrderNumber(order))}</Link></TableCell>
 
                   <TableCell>{order.customer.fullName}</TableCell>
 
