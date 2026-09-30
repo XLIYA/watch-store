@@ -19,6 +19,8 @@ interface DeliveryDatePickerProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  fullyBookedDates?: string[];
+  disabled?: boolean;
 }
 
 import {
@@ -32,6 +34,8 @@ export function DeliveryDatePicker({
   value,
   onChange,
   error,
+  fullyBookedDates = [],
+  disabled = false,
 }: DeliveryDatePickerProps) {
   const [open, setOpen] = useState(false);
 
@@ -60,6 +64,7 @@ export function DeliveryDatePicker({
           <Button
             id="deliveryDate"
             type="button"
+            disabled={disabled}
             variant="outline"
             className={cn(
               "h-12 w-full justify-between rounded-md border-border bg-background px-4 font-normal",
@@ -80,9 +85,7 @@ export function DeliveryDatePicker({
             mode="single"
             selected={selectedDate}
             onSelect={handleSelect}
-            disabled={{
-              before: minimumDate,
-            }}
+            disabled={date => date < minimumDate || fullyBookedDates.includes(formatIsoDate(date))}
             defaultMonth={selectedDate ?? minimumDate}
             autoFocus
           />

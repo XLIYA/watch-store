@@ -1,8 +1,9 @@
+import rules from "../../../shared/checkout-rules.json";
 // این قانون باید بین تقویم و schema مشترک باشد تا تاریخ قابل‌انتخاب با تاریخ معتبر فرق نکند.
 export function getMinimumDeliveryDate() {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + 7);
+  date.setDate(date.getDate() + rules.minimumDeliveryDays);
   return date;
 }
 

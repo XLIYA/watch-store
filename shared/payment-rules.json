@@ -1,0 +1,7 @@
+{
+  "sessionMinutes": 10,
+  "codeSeconds": 120,
+  "codeCooldownSeconds": 30,
+  "maximumCodeAttempts": 5,
+  "pollMilliseconds": 10000
+}
