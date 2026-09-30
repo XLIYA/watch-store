@@ -11,7 +11,7 @@ export function getApiErrorMessage(error: unknown): string {
     if (!error.response)
       return "ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.";
     if (
-      ["INVALID_PRODUCT", "ORDER_ERROR"].includes(error.response.data?.code) &&
+      ["INVALID_PRODUCT", "ORDER_ERROR", "DELIVERY_SLOT_TAKEN"].includes(error.response.data?.code) &&
       typeof error.response.data.message === "string"
     )
       return error.response.data.message;
