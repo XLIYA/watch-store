@@ -35,13 +35,81 @@ async function fixture(t, persistent = false) {
     const url = new URL(result.data.paymentUrl, 'http://test.local');
     return { ...result.data, token: url.searchParams.get('token') };
   };
-  const payment = (order, outcome) => request(`/payments/${order.id}${outcome ? '/complete' : ''}?token=${order.token}`, outcome ? { outcome } : undefined);
+  const credentials = new Map();
+  const payment = async (order, outcome) => {
+    if (outcome === 'paid' && !credentials.has(order.id)) credentials.set(order.id, (async () => {
+      const info = await request(`/payments/${order.id}?token=${order.token}`);
+      const code = await request(`/payments/${order.id}/code?token=${order.token}`, {kind: 'pin'});
+      const year = new Intl.DateTimeFormat('en-US-u-ca-persian', {year: 'numeric'}).formatToParts(new Date()).find(p => p.type === 'year').value;
+      return { cardNumber: '4242424242424242', cvv: '123', month: '12', year: String(Number(year)+1), captcha: info.data.captcha, pin: code.data.code, email: '' };
+    })());
+    const fields = outcome === 'paid' ? await credentials.get(order.id) : undefined;
+    return request(`/payments/${order.id}${outcome ? '/complete' : ''}?token=${order.token}`, outcome ? { outcome, fields } : undefined);
+  };
   const login = async () => {
     const { response } = await request('/auth/login', { username: 'fixture-admin', password: 'fixture-password' });
     return response.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
   };
-  return { request, payload, create, payment, login, restart };
+  const rewrite = async edit => {
+    const snapshot = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    edit(snapshot);
+    fs.writeFileSync(dbPath, JSON.stringify(snapshot));
+    await restart();
+  };
+  return { request, payload, create, payment, login, restart, rewrite };
 }
+
+test('card validation handles Persian digits, checksum, expiry and optional email', () => {
+  const { validatePaymentFields } = require('../shared/payment-validation');
+  const valid = { cardNumber: '۴۲۴۲ ۴۲۴۲ ۴۲۴۲ ۴۲۴۲', cvv: '۱۲۳', month: '۱۲', year: '۱۴۱۰', captcha: '۱۲۳۴۵', pin: '۱۲۳۴۵۶', email: '' };
+  const now = new Date('2026-09-30');
+  assert.deepEqual(validatePaymentFields(valid, now), {});
+  for (const [key, value] of Object.entries({cardNumber:'4242424242424241', cvv:'ab1', month:'13', year:'1400', captcha:'1234', pin:'123', email:'invalid'}))
+    assert.ok(validatePaymentFields({...valid, [key]:value}, now)[key]);
+});
+
+test('gateway rejects missing fields, wrong captcha and wrong pin; renewed captcha invalidates previous code', async t => {
+  const f = await fixture(t), order = await f.create();
+  const base = `/payments/${order.id}`, query = `?token=${order.token}`;
+  assert.equal((await f.request(base+'/complete'+query, {outcome:'paid'})).status, 422);
+  const info = (await f.payment(order)).data;
+  assert.match(info.orderNumber, /^\d{8}$/);
+  const pin = (await f.request(base+'/code'+query, {kind:'pin'})).data.code;
+  assert.equal((await f.request(base+'/code'+query, {kind:'pin'})).status, 429);
+  const fields = {cardNumber:'4242424242424242',cvv:'123',month:'12',year:'1410',captcha:info.captcha,pin,email:''};
+  const changed = (await f.request(base+'/code'+query, {kind:'captcha'})).data.code;
+  fields.captcha = changed === '11111' ? '22222' : '11111';
+  assert.equal((await f.request(base+'/complete'+query, {outcome:'paid',fields})).status, 422);
+  fields.captcha = changed;
+  assert.equal((await f.request(base+'/complete'+query, {outcome:'paid',fields:{...fields,pin:pin==='111111'?'222222':'111111'}})).status, 422);
+  assert.equal((await f.request(base+'/complete'+query, {outcome:'paid',fields})).data.paymentStatus, 'paid');
+  const saved = (await f.request('/orders/'+order.id, undefined, await f.login())).data;
+  assert.equal(saved.cardNumber, undefined);
+  assert.equal(saved.cvv, undefined);
+  assert.equal(saved.pinHash, undefined);
+  assert.equal(saved.fields, undefined);
+});
+
+test('abandoned sessions expire without reducing stock and cannot later be paid', async t => {
+  const f = await fixture(t, true), order = await f.create();
+  await f.rewrite(data => { data.orders[0].expiresAt = Date.now()-1; });
+  const result = await f.payment(order);
+  assert.equal(result.data.paymentStatus, 'failed');
+  assert.equal(result.data.failureReason, 'expired');
+  assert.equal((await f.payment(order, 'paid')).data.paymentStatus, 'failed');
+  assert.equal((await f.request('/products/1')).data.quantity, 5);
+});
+
+test('expired payment codes are rejected while the session remains unpaid', async t => {
+  const f = await fixture(t, true), order = await f.create();
+  const base = `/payments/${order.id}`, query = `?token=${order.token}`;
+  const info = (await f.payment(order)).data;
+  const pin = (await f.request(base+'/code'+query, {kind:'pin'})).data.code;
+  await f.rewrite(data => { data.orders[0].codeExpiresAt = Date.now()-1; });
+  const response = await f.request(base+'/complete'+query, {outcome:'paid', fields:{cardNumber:'4242424242424242',cvv:'123',month:'12',year:'1410',captcha:info.captcha,pin,email:''}});
+  assert.equal(response.status, 422);
+  assert.equal((await f.payment(order)).data.paymentStatus, 'pending');
+});
 
 test('payment links, result and stock survive backend restart', async t => {
   const f = await fixture(t, true), order = await f.create();
