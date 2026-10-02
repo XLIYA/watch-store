@@ -109,19 +109,7 @@ export function CheckoutPageContent() {
       return;
     }
 
-    /*
-     * Zod با superRefine این دو مقدار را
-     * کنترل می‌کند، ولی TypeScript هنوز
-     * نوع آن‌ها را number | null می‌داند.
-     */
-    if (data.latitude === null || data.longitude === null) {
-      toast.warning("موقعیت تحویل مشخص نشده است.", {
-        description: "لطفاً محل تحویل را روی نقشه انتخاب کنید.",
-      });
-
-      return;
-    }
-
+    // انتخاب نقشه اختیاری است؛ آدرس تایپ‌شده برای ثبت سفارش کافی است.
     try {
       const capacity = await availability.refetch();
       if (capacity.isError || !capacity.data) { toast.error("دریافت ظرفیت تحویل ممکن نشد؛ دوباره تلاش کنید."); return; }

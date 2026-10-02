@@ -133,23 +133,7 @@ export const checkoutSchema = z
                 "توضیحات سفارش حداکثر می‌تواند ۵۰۰ کاراکتر باشد.",
             )
             .optional(),
-    })
-    .superRefine(
-        (data, ctx) => {
-            if (
-                data.latitude === null ||
-                data.longitude === null
-            ) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["latitude"],
-                    message:
-                        "موقعیت تحویل را روی نقشه انتخاب کنید.",
-                });
-            }
-        },
-    );
-
+    });
 
 export type CheckoutFormValues =
     z.infer<

@@ -54,8 +54,8 @@ export interface OrderDelivery {
 
     unit?: string;
 
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
 
     /*
      * داخل Backend میلادی و استاندارد:

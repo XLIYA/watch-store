@@ -53,14 +53,16 @@ function registerOrders(server, db, auth) {
     const fingerprint = createHash('sha256').update(JSON.stringify({ customer, delivery, items })).digest('hex');
     const existing = db.get('orders').find({ requestId }).value();
     if (existing) return existing.fingerprint === fingerprint ? res.json({ id: existing.id, ...links(existing) }) : fail(res, 409, 'شناسهٔ درخواست قبلاً برای سفارش دیگری استفاده شده است.');
+    // نبود هر دو مختصات مجاز است؛ اگر نقشه استفاده شد، هر دو مقدار باید معتبر باشند.
+    const hasLocation = delivery.latitude != null || delivery.longitude != null;
     const date = new Date(`${delivery.deliveryDate}T00:00:00`);
     const minimum = new Date(); minimum.setHours(0, 0, 0, 0); minimum.setDate(minimum.getDate() + rules.minimumDeliveryDays);
     if (!validText(customer.fullName, 3, 80) || !/^09\d{9}$/.test(digits(customer.mobile)) ||
         !/^\d{10}$/.test(digits(delivery.postalCode)) || !validText(delivery.address, 10, 300) ||
         !validText(delivery.plaque, 1, 10) || (delivery.unit != null && !validText(delivery.unit, 0, 10)) ||
         (delivery.note != null && !validText(delivery.note, 0, 500)) ||
-        !Number.isFinite(delivery.latitude) || Math.abs(delivery.latitude) > 90 ||
-        !Number.isFinite(delivery.longitude) || Math.abs(delivery.longitude) > 180 ||
+        (hasLocation && (!Number.isFinite(delivery.latitude) || Math.abs(delivery.latitude) > 90 ||
+        !Number.isFinite(delivery.longitude) || Math.abs(delivery.longitude) > 180)) ||
         !/^\d{4}-\d{2}-\d{2}$/.test(delivery.deliveryDate) || !Number.isFinite(date.getTime()) ||
         `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` !== delivery.deliveryDate || date < minimum ||
         !rules.deliveryTimeSlots.includes(delivery.deliveryTime))
@@ -93,7 +95,7 @@ function registerOrders(server, db, auth) {
       expiresAt: Date.now() + paymentRules.sessionMinutes * 60000, captcha: String(randomInt(10000, 100000)),
       customer: { fullName: customer.fullName.trim(), mobile: digits(customer.mobile) },
       delivery: { address: delivery.address.trim(), postalCode: digits(delivery.postalCode), plaque: delivery.plaque.trim(),
-        unit: delivery.unit?.trim(), note: delivery.note?.trim(), latitude: delivery.latitude, longitude: delivery.longitude,
+        unit: delivery.unit?.trim(), note: delivery.note?.trim(), latitude: delivery.latitude ?? null, longitude: delivery.longitude ?? null,
         deliveryDate: delivery.deliveryDate, deliveryTime: delivery.deliveryTime },
       items: lines, itemsCount: lines.reduce((sum, item) => sum + item.quantity, 0), subtotal, shippingCost: rules.shippingCost, totalPrice: subtotal + rules.shippingCost,
       status: 'pending', paymentStatus: 'pending', paidAt: null, deliveredAt: null, createdAt: Date.now() };
