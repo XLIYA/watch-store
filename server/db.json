@@ -1694,7 +1694,7 @@
       ],
       "description": "<h2>مجموعهٔ مینیمال</h2><p>ساعت Aurel از مجموعهٔ مینیمال؛ انتخاب رنگ و تعداد از بخش خرید امکان‌پذیر است.</p><h3>رنگ‌بندی</h3><p>مشکی، نقره‌ای و سرمه‌ای</p>",
       "price": 191400000,
-      "quantity": 24,
+      "quantity": 22,
       "variants": [
         {
           "id": "black",
@@ -1706,7 +1706,7 @@
           "id": "silver",
           "name": "نقره‌ای",
           "hex": "#c0c0c0",
-          "quantity": 11
+          "quantity": 9
         },
         {
           "id": "navy",
@@ -11673,6 +11673,607 @@
       "paymentStatus": "failed",
       "createdAt": 1786693980000,
       "paidAt": null
+    },
+    {
+      "customer": {
+        "fullName": "پارسا مقصودی",
+        "mobile": "09024445509"
+      },
+      "delivery": {
+        "postalCode": "1111111111",
+        "address": "استان البرز، کرج، بلوار گلزار غربی",
+        "plaque": "۳۴۲۴",
+        "unit": "۴",
+        "latitude": 35.82194709637559,
+        "longitude": 50.93673706054688,
+        "deliveryDate": "2026-10-04",
+        "deliveryTime": "12:00"
+      },
+      "items": [
+        {
+          "lineId": "34:silver",
+          "productId": 34,
+          "variantId": "silver",
+          "name": "Métiers Artistic 01",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "نقره‌ای",
+          "colorHex": "#BFC0C2",
+          "unitPrice": 510000000,
+          "quantity": 2,
+          "totalPrice": 1020000000
+        },
+        {
+          "lineId": "10:black",
+          "productId": 10,
+          "variantId": "black",
+          "name": "Vintage Sector 40",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 1640000000,
+          "quantity": 2,
+          "totalPrice": 3280000000
+        }
+      ],
+      "itemsCount": 4,
+      "subtotal": 4300000000,
+      "shippingCost": 0,
+      "totalPrice": 4300000000,
+      "status": "pending",
+      "paymentStatus": "pending",
+      "paidAt": null,
+      "createdAt": 1790405150068,
+      "id": 10031
+    },
+    {
+      "id": "a48597ec-9482-48cb-bbfb-0d99617b6e24",
+      "requestId": "9364834d-ad20-4b92-94eb-b9bcc438f368",
+      "fingerprint": "70e5533ceb7671008879d8eb8d7b2376210dae7271384216ea7083dab2aa7edc",
+      "paymentToken": "35f1d4d72aa6ec7d2ee5869eddbbd4d06784c631f0a581ad61adefc654fc9386",
+      "customer": {
+        "fullName": "محمد مبین",
+        "mobile": "09960028362"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، چهارصد دستگاه",
+        "postalCode": "3133964811",
+        "plaque": "۲۳۰",
+        "unit": "۲",
+        "note": "",
+        "latitude": 35.81736239803696,
+        "longitude": 50.98304271697999,
+        "deliveryDate": "2026-10-07",
+        "deliveryTime": "12:00"
+      },
+      "items": [
+        {
+          "lineId": "16:black",
+          "productId": 16,
+          "variantId": "black",
+          "name": "Velmont Réserve",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 232000000,
+          "quantity": 3,
+          "totalPrice": 696000000
+        }
+      ],
+      "itemsCount": 3,
+      "subtotal": 696000000,
+      "shippingCost": 0,
+      "totalPrice": 696000000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790759027205,
+      "deliveredAt": null,
+      "createdAt": 1790759003686
+    },
+    {
+      "id": "282cc894-9a39-4db3-9616-4ff363795a9c",
+      "requestId": "9b68a188-eaff-4cb5-af03-74a7e888bd5a",
+      "fingerprint": "51ba4942dd08e608b0c149034353563032c78d2a72a8b8c280ebdab046f58915",
+      "paymentToken": "8c0ad9cacd9e9b45871ce88945eb04c9a8a31a2769ae506459336721c1d981bf",
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09101877006"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بلوار کاشفی",
+        "postalCode": "1111111111",
+        "plaque": "۱۲",
+        "unit": "۱",
+        "note": "توضیح",
+        "latitude": 35.85639943587855,
+        "longitude": 50.97315073013306,
+        "deliveryDate": "2026-10-07",
+        "deliveryTime": "12:00"
+      },
+      "items": [
+        {
+          "lineId": "10:black",
+          "productId": 10,
+          "variantId": "black",
+          "name": "Vintage Sector 40",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 1640000000,
+          "quantity": 2,
+          "totalPrice": 3280000000
+        }
+      ],
+      "itemsCount": 2,
+      "subtotal": 3280000000,
+      "shippingCost": 0,
+      "totalPrice": 3280000000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790759551639,
+      "deliveredAt": null,
+      "createdAt": 1790759539339
+    },
+    {
+      "id": "b0abd94b-74f7-43e5-b027-e3389b9fc5c8",
+      "orderNumber": "83848489",
+      "requestId": "7bcd0e48-2ac4-416f-ab86-9d15948b3a3e",
+      "fingerprint": "d3f8a12c7fe0db8d9dbd4e01c29e658e96fed76ff85361bd1fe07214b3cc275e",
+      "paymentToken": "fb1c0a8e2587f72517d7b971718e1f9b59f8f3148d94e7936139d4d0fc0b7dfd",
+      "expiresAt": 1790783611785,
+      "customer": {
+        "fullName": "پارسا",
+        "mobile": "09102111700"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بوستان نهم (جهانپور)",
+        "postalCode": "1111111111",
+        "plaque": "۵۴",
+        "unit": "۱",
+        "note": "",
+        "latitude": 35.87199099516985,
+        "longitude": 50.962609648704536,
+        "deliveryDate": "2026-10-07",
+        "deliveryTime": "11:00"
+      },
+      "items": [
+        {
+          "lineId": "9:silver",
+          "productId": 9,
+          "variantId": "silver",
+          "name": "Maison Automatic",
+          "thumbnail": "/images/products/watch-placeholder-3.webp",
+          "colorName": "نقره‌ای",
+          "colorHex": "#BFC0C2",
+          "unitPrice": 152000000,
+          "quantity": 3,
+          "totalPrice": 456000000
+        },
+        {
+          "lineId": "9:black",
+          "productId": 9,
+          "variantId": "black",
+          "name": "Maison Automatic",
+          "thumbnail": "/images/products/watch-placeholder-3.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 152000000,
+          "quantity": 7,
+          "totalPrice": 1064000000
+        }
+      ],
+      "itemsCount": 10,
+      "subtotal": 1520000000,
+      "shippingCost": 0,
+      "totalPrice": 1520000000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790783245468,
+      "deliveredAt": null,
+      "createdAt": 1790783011785,
+      "codeRequestedAt": 1790783209206,
+      "codeExpiresAt": 1790783329206,
+      "codeAttempts": 0
+    },
+    {
+      "id": "8bd83386-c3e0-4327-8f38-0396edfb5a7e",
+      "orderNumber": "50577161",
+      "requestId": "fb2dfb34-946a-4a78-93f7-0ce3a38a838e",
+      "fingerprint": "71dc0284b4fba1753ff8f74a4635ef8f3bc1866a8bf69fbb1161362bb9fea0c3",
+      "paymentToken": "33dc549c5e1241106562dc6fbd13ad4d56c6ac6bbaad3a4644d919f52d01a14d",
+      "expiresAt": 1790784124529,
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09101877006"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بلوار کاشفی",
+        "postalCode": "1111111111",
+        "plaque": "۱۱",
+        "unit": "۱۲",
+        "note": "",
+        "latitude": 35.85638829465463,
+        "longitude": 50.9731936454773,
+        "deliveryDate": "2026-10-07",
+        "deliveryTime": "11:00"
+      },
+      "items": [
+        {
+          "lineId": "39:de6b2abc-122c-476c-b70b-3b256198229f",
+          "productId": 39,
+          "variantId": "de6b2abc-122c-476c-b70b-3b256198229f",
+          "name": "a158wem-7d",
+          "thumbnail": "http://localhost:3002/files/d026b52aa837d0202b72f8073d2922e2",
+          "colorName": "سفید",
+          "colorHex": "#ffffff",
+          "unitPrice": 1500000000,
+          "quantity": 9,
+          "totalPrice": 13500000000
+        }
+      ],
+      "itemsCount": 9,
+      "subtotal": 13500000000,
+      "shippingCost": 0,
+      "totalPrice": 13500000000,
+      "status": "pending",
+      "paymentStatus": "failed",
+      "paidAt": null,
+      "deliveredAt": null,
+      "createdAt": 1790783524529,
+      "failureReason": "cancelled"
+    },
+    {
+      "id": "4d23cfee-1a8a-4840-9385-cddae855b27e",
+      "orderNumber": "57737779",
+      "requestId": "78a687e2-caaa-4ddb-b12b-1666afa5586c",
+      "fingerprint": "092614c27a422b764083de542cebde41f45d38e24386be84887202c2acf5a26b",
+      "paymentToken": "773f8a83508bc1c363e3f1f31088bae583b7f1f6d2ac67faa1cb0efba0ccd65c",
+      "expiresAt": 1790784368904,
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09960028362"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بلوار کاشفی",
+        "postalCode": "3133964811",
+        "plaque": "۱۲",
+        "unit": "۱۲",
+        "note": "",
+        "latitude": 35.85641682705425,
+        "longitude": 50.973172187805176,
+        "deliveryDate": "2026-10-07",
+        "deliveryTime": "11:00"
+      },
+      "items": [
+        {
+          "lineId": "39:de6b2abc-122c-476c-b70b-3b256198229f",
+          "productId": 39,
+          "variantId": "de6b2abc-122c-476c-b70b-3b256198229f",
+          "name": "a158wem-7d",
+          "thumbnail": "http://localhost:3002/files/d026b52aa837d0202b72f8073d2922e2",
+          "colorName": "سفید",
+          "colorHex": "#ffffff",
+          "unitPrice": 1500000000,
+          "quantity": 9,
+          "totalPrice": 13500000000
+        },
+        {
+          "lineId": "14:black",
+          "productId": 14,
+          "variantId": "black",
+          "name": "Épure Ultra Thin",
+          "thumbnail": "/images/products/watch-placeholder-2.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 205000000,
+          "quantity": 1,
+          "totalPrice": 205000000
+        }
+      ],
+      "itemsCount": 10,
+      "subtotal": 13705000000,
+      "shippingCost": 0,
+      "totalPrice": 13705000000,
+      "status": "pending",
+      "paymentStatus": "failed",
+      "paidAt": null,
+      "deliveredAt": null,
+      "createdAt": 1790783768904,
+      "codeRequestedAt": 1790783775347,
+      "codeExpiresAt": 1790783895347,
+      "codeAttempts": 0,
+      "failureReason": "cancelled"
+    },
+    {
+      "id": "e414ce5f-b2e3-4bba-b371-7913c8ef76bf",
+      "orderNumber": "80050923",
+      "requestId": "36819cce-99b3-48ef-bffa-830735bc5d24",
+      "fingerprint": "f305617ee3b3b9c81b1aa1a3d1d27b3847f91590e30c993f6d3b60c35e773524",
+      "paymentToken": "2e6cc7bcc8bf999dc404edb354285d5fd922c0c1e83eb24732a9d8d4424f198f",
+      "expiresAt": 1790853368238,
+      "customer": {
+        "fullName": "پارسا",
+        "mobile": "09102111700"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بوستان نهم (جهانپور)",
+        "postalCode": "1111111111",
+        "plaque": "۴۵",
+        "unit": "۱",
+        "note": "",
+        "latitude": 35.87195857433041,
+        "longitude": 50.96263269554461,
+        "deliveryDate": "2026-10-08",
+        "deliveryTime": "11:00"
+      },
+      "items": [
+        {
+          "lineId": "39:de6b2abc-122c-476c-b70b-3b256198229f",
+          "productId": 39,
+          "variantId": "de6b2abc-122c-476c-b70b-3b256198229f",
+          "name": "a158wem-7d",
+          "thumbnail": "http://localhost:3002/files/d026b52aa837d0202b72f8073d2922e2",
+          "colorName": "سفید",
+          "colorHex": "#ffffff",
+          "unitPrice": 1500000000,
+          "quantity": 1,
+          "totalPrice": 1500000000
+        },
+        {
+          "lineId": "14:black",
+          "productId": 14,
+          "variantId": "black",
+          "name": "Épure Ultra Thin",
+          "thumbnail": "/images/products/watch-placeholder-2.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 205000000,
+          "quantity": 1,
+          "totalPrice": 205000000
+        }
+      ],
+      "itemsCount": 2,
+      "subtotal": 1705000000,
+      "shippingCost": 0,
+      "totalPrice": 1705000000,
+      "status": "delivered",
+      "paymentStatus": "paid",
+      "paidAt": 1790852807392,
+      "deliveredAt": 1790852858358,
+      "createdAt": 1790852768238,
+      "codeRequestedAt": 1790852800694,
+      "codeExpiresAt": 1790852920694,
+      "codeAttempts": 0
+    },
+    {
+      "id": "59ce5e1d-4ee6-4ec8-9619-28ae141e8536",
+      "orderNumber": "10154833",
+      "requestId": "3a0864e5-d9e2-4b50-8b69-503220223812",
+      "fingerprint": "0142a160063b408fa3762689be760c2c7653efc6ace805bfbe42d261d7ab8577",
+      "paymentToken": "337ad748c51d0c25d486addf330365f895bb815a10a8d949b5a6b4fee9b255fa",
+      "expiresAt": 1790888181725,
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09101877006"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بلوار کاشفی",
+        "postalCode": "1234567890",
+        "plaque": "۱۰۱",
+        "unit": "۱",
+        "note": "",
+        "latitude": 35.85641442679838,
+        "longitude": 50.97318205944776,
+        "deliveryDate": "2026-10-09",
+        "deliveryTime": "11:00"
+      },
+      "items": [
+        {
+          "lineId": "28:black",
+          "productId": 28,
+          "variantId": "black",
+          "name": "Circuit Tri Compax",
+          "thumbnail": "/images/products/watch-placeholder-1.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 209000000,
+          "quantity": 1,
+          "totalPrice": 209000000
+        },
+        {
+          "lineId": "37:a6845866-b821-4f14-af8d-625bf62d65d0",
+          "productId": 37,
+          "variantId": "a6845866-b821-4f14-af8d-625bf62d65d0",
+          "name": "a158",
+          "thumbnail": "http://localhost:3002/files/e6037f62a22f8429f174b74c0cf8bd92",
+          "colorName": "صفحه ابی",
+          "colorHex": "#4137ff",
+          "unitPrice": 120000000,
+          "quantity": 1,
+          "totalPrice": 120000000
+        },
+        {
+          "lineId": "37:64f06706-ac6b-4f6c-ab1c-bf2910e32fca",
+          "productId": 37,
+          "variantId": "64f06706-ac6b-4f6c-ab1c-bf2910e32fca",
+          "name": "a158",
+          "thumbnail": "http://localhost:3002/files/e6037f62a22f8429f174b74c0cf8bd92",
+          "colorName": "صفحه مشکی",
+          "colorHex": "#6a6a6a",
+          "unitPrice": 120000000,
+          "quantity": 1,
+          "totalPrice": 120000000
+        },
+        {
+          "lineId": "35:black",
+          "productId": 35,
+          "variantId": "black",
+          "name": "Openworked Reserve",
+          "thumbnail": "/images/products/watch-placeholder-2.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 465000000,
+          "quantity": 1,
+          "totalPrice": 465000000
+        }
+      ],
+      "itemsCount": 4,
+      "subtotal": 914000000,
+      "shippingCost": 0,
+      "totalPrice": 914000000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790887630479,
+      "deliveredAt": null,
+      "createdAt": 1790887581725,
+      "codeRequestedAt": 1790887613268,
+      "codeExpiresAt": 1790887733268,
+      "codeAttempts": 0
+    },
+    {
+      "id": "9b99106f-7479-443b-8395-0124588b56aa",
+      "orderNumber": "57526442",
+      "requestId": "91589bbd-0e0c-4c69-b5be-7a78d2f4ab67",
+      "fingerprint": "206ef1733d5e27ca3948378bef76bba85b0daff72937266b177a975d335f0b0a",
+      "paymentToken": "dee3f924e8d2c5b01956a2759ce160b46464227fbe878175a07b270dbe013b64",
+      "expiresAt": 1790888473831,
+      "captcha": "69837",
+      "customer": {
+        "fullName": "ایلیا",
+        "mobile": "09101877006"
+      },
+      "delivery": {
+        "address": "استان البرز، کرج، بلوار کاشفی",
+        "postalCode": "1234567890",
+        "plaque": "۱",
+        "unit": "۱۲",
+        "note": "",
+        "latitude": 35.85634744384065,
+        "longitude": 50.97320700454738,
+        "deliveryDate": "2026-10-09",
+        "deliveryTime": "12:00"
+      },
+      "items": [
+        {
+          "lineId": "18:black",
+          "productId": 18,
+          "variantId": "black",
+          "name": "Pilot Automatic 42",
+          "thumbnail": "/images/products/watch-placeholder-3.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 149000000,
+          "quantity": 1,
+          "totalPrice": 149000000
+        }
+      ],
+      "itemsCount": 1,
+      "subtotal": 149000000,
+      "shippingCost": 0,
+      "totalPrice": 149000000,
+      "status": "pending",
+      "paymentStatus": "failed",
+      "paidAt": null,
+      "deliveredAt": null,
+      "createdAt": 1790887873831,
+      "failureReason": "expired"
+    },
+    {
+      "id": "dbe25886-a3be-485e-8210-563f3b4bc206",
+      "orderNumber": "33549129",
+      "requestId": "491b9ccb-c6b3-4844-b7d5-b54f46095e74",
+      "fingerprint": "513ee1f07639825bb6f6f91fcc4a2ea1a60279ab879fe196bb615c8bf67d1a0d",
+      "paymentToken": "6e6bd217a505087817b4cb7e8a3475087185ea10dcf24fef371d300c2c23d499",
+      "expiresAt": 1790889404516,
+      "customer": {
+        "fullName": "mohamad mobin khorasani gerde kohi",
+        "mobile": "09960028362"
+      },
+      "delivery": {
+        "address": "400 dastgah,ali dehghan street,alley banat koki",
+        "postalCode": "3133964811",
+        "plaque": "۲۳۰",
+        "unit": "۱",
+        "note": "",
+        "latitude": 35.84438376930385,
+        "longitude": 50.98173519638995,
+        "deliveryDate": "2026-10-09",
+        "deliveryTime": "12:00"
+      },
+      "items": [
+        {
+          "lineId": "18:black",
+          "productId": 18,
+          "variantId": "black",
+          "name": "Pilot Automatic 42",
+          "thumbnail": "/images/products/watch-placeholder-3.webp",
+          "colorName": "مشکی",
+          "colorHex": "#111111",
+          "unitPrice": 149000000,
+          "quantity": 1,
+          "totalPrice": 149000000
+        }
+      ],
+      "itemsCount": 1,
+      "subtotal": 149000000,
+      "shippingCost": 0,
+      "totalPrice": 149000000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790888832011,
+      "deliveredAt": null,
+      "createdAt": 1790888804516,
+      "codeRequestedAt": 1790888826347,
+      "codeExpiresAt": 1790888946347,
+      "codeAttempts": 0
+    },
+    {
+      "id": "9aa5a9cd-653e-400c-bdd1-870087bbdedf",
+      "orderNumber": "92466504",
+      "requestId": "23e4604f-d837-42e2-be43-2bdfa8e882a2",
+      "fingerprint": "0ff1a6d8eb3a443a2fbc03ac6a82e5cc556f4bfbf4b7cc1ae28ecf9174d56798",
+      "paymentToken": "12ad76d9767085785450af322e57c6ecc4f7c96e88ea7afa2ec0f511ae4b0af6",
+      "expiresAt": 1790915731842,
+      "customer": {
+        "fullName": "mohamad mobin khorasani gerde kohi",
+        "mobile": "09960028362"
+      },
+      "delivery": {
+        "address": "400 dastgah,ali dehghan street,alley banat koki",
+        "postalCode": "3133964811",
+        "plaque": "۲۳۰",
+        "unit": "۱",
+        "note": "",
+        "latitude": 35.856421673209134,
+        "longitude": 50.973192517886886,
+        "deliveryDate": "2026-10-09",
+        "deliveryTime": "13:00"
+      },
+      "items": [
+        {
+          "lineId": "51:silver",
+          "productId": 51,
+          "variantId": "silver",
+          "name": "Aurel — مینیمال 03",
+          "thumbnail": "/images/products/watch-placeholder-3.webp",
+          "colorName": "نقره‌ای",
+          "colorHex": "#c0c0c0",
+          "unitPrice": 191400000,
+          "quantity": 2,
+          "totalPrice": 382800000
+        }
+      ],
+      "itemsCount": 2,
+      "subtotal": 382800000,
+      "shippingCost": 0,
+      "totalPrice": 382800000,
+      "status": "processing",
+      "paymentStatus": "paid",
+      "paidAt": 1790915168421,
+      "deliveredAt": null,
+      "createdAt": 1790915131842,
+      "codeRequestedAt": 1790915164273,
+      "codeExpiresAt": 1790915284273,
+      "codeAttempts": 0
     }
   ],
   "whoami": {
