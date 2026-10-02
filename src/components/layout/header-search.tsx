@@ -25,6 +25,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getApiErrorMessage } from "@/services/api/api-error";
 import { Input } from "@/components/ui/input";
 import { useCategories, categoryHref } from "@/features/catalog/use-categories";
+import { ProductCard } from "@/components/store/product-card";
 import { Button } from "@/components/ui/button";
 
 interface HeaderSearchProps {
@@ -159,7 +160,7 @@ export function HeaderSearch({
                         <div className="mb-8 flex items-center justify-between gap-4 border-b border-border pb-5">
                             <div>
                                 <p
-                                    dir="ltr"
+                                    dir="rtl"
                                     className="section-eyebrow"
                                 >نتایج جستجو</p>
 
@@ -176,58 +177,8 @@ export function HeaderSearch({
                             </div>}
                         </div>
 
-                        <div className="grid gap-x-10 gap-y-2 md:grid-cols-2">
-                            {products.map(
-                                (product) => {
-                                    const image =
-                                        product.thumbnail ||
-                                        product.images?.[0];
-
-                                    return (
-                                        <Link
-                                            key={product.id}
-                                            href={`/product/${product.id}`}
-                                            onClick={onClose}
-                                            className="group flex items-center gap-5 border-b border-border py-5"
-                                        >
-                                            <div className="relative size-24 shrink-0 overflow-hidden bg-secondary sm:size-28">
-                                                {image ? (
-                                                    <Image
-                                                        src={image}
-                                                        alt={
-                                                            product.name
-                                                        }
-                                                        fill
-                                                        sizes="112px"
-                                                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                                                    />
-                                                ) : null}
-                                            </div>
-
-                                            <div className="min-w-0 flex-1">
-                                                <p
-                                                    dir="ltr"
-                                                    className="text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground"
-                                                >
-                                                    {product.brand}
-                                                </p>
-
-                                                <h3
-                                                    dir="ltr"
-                                                    className="mt-2 truncate font-heading text-xl font-medium md:text-2xl"
-                                                >
-                                                    {product.name}
-                                                </h3>
-
-                                                <p className="mt-3 text-sm">
-                                                    {formatNumber(product.price)}{" "}
-                                                    تومان
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    );
-                                },
-                            )}
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {products.map(product => <ProductCard key={product.id} product={product} onNavigate={onClose} />)}
                         </div>
                     </>
                 ) : null}

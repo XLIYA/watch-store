@@ -1,5 +1,9 @@
-import { CollectionNavigation, CollectionNavigationLink } from "@/components/store/collection-navigation";
+import {
+  CollectionNavigation,
+  CollectionNavigationLink,
+} from "@/components/store/collection-navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { notFound, redirect } from "next/navigation";
 import { getCategories, getSubcategories } from "@/services/categories.service";
 import { getProducts, type ProductSort } from "@/services/products.service";
@@ -118,45 +122,61 @@ export default async function CollectionPage({
                 </p>
               </div>
             )}
-            {result.totalPages > 1 && (
+            {
               <nav
                 aria-label="صفحه‌بندی محصولات"
-                className="mt-10 flex flex-wrap justify-center gap-2"
+                className="mt-10 flex flex-wrap items-center justify-center gap-2"
+                dir="rtl"
               >
-                {page > 1 && (
-                  <CollectionNavigationLink
-                    className="surface px-4 py-2"
-                    href={collectionPageHref(group.slug, page - 1, sort)}
-                  >
+                {/* ظاهر مشترک با ادمین؛ لینک واقعی، مرتب‌سازی و بازشدن در تب جدید را حفظ می‌کند. */}
+                {page > 1 ? (
+                  <Button asChild variant="outline">
+                    <CollectionNavigationLink
+                      href={collectionPageHref(group.slug, page - 1, sort)}
+                    >
+                      قبلی
+                    </CollectionNavigationLink>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
                     قبلی
-                  </CollectionNavigationLink>
+                  </Button>
                 )}
-                {paginationWindow(page, result.totalPages).map(
+                {paginationWindow(page, Math.max(1, result.totalPages)).map(
                   (value, index, items) => (
                     <span key={value} className="flex items-center gap-2">
                       {index > 0 && value - items[index - 1] > 1 && (
                         <span aria-hidden>…</span>
                       )}
-                      <CollectionNavigationLink
-                        aria-current={value === page ? "page" : undefined}
-                        className={`rounded-md border px-4 py-2 ${value === page ? "bg-primary text-primary-foreground" : "bg-card"}`}
-                        href={collectionPageHref(group.slug, value, sort)}
+                      <Button
+                        asChild
+                        variant={value === page ? "default" : "outline"}
                       >
-                        {formatNumber(value)}
-                      </CollectionNavigationLink>
+                        <CollectionNavigationLink
+                          aria-current={value === page ? "page" : undefined}
+                          href={collectionPageHref(group.slug, value, sort)}
+                        >
+                          {formatNumber(value)}
+                        </CollectionNavigationLink>
+                      </Button>
                     </span>
                   ),
                 )}
-                {page < result.totalPages && (
-                  <CollectionNavigationLink
-                    className="surface px-4 py-2"
-                    href={collectionPageHref(group.slug, page + 1, sort)}
-                  >
+                {page < result.totalPages ? (
+                  <Button asChild variant="outline">
+                    <CollectionNavigationLink
+                      href={collectionPageHref(group.slug, page + 1, sort)}
+                    >
+                      بعدی
+                    </CollectionNavigationLink>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
                     بعدی
-                  </CollectionNavigationLink>
+                  </Button>
                 )}
               </nav>
-            )}
+            }
           </section>
         </div>
       </CollectionNavigation>

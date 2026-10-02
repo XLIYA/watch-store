@@ -7,15 +7,18 @@ import type { Product } from "@/types/product";
 export function ProductCard({
   product,
   priority = false,
+  onNavigate,
 }: {
   product: Product;
   priority?: boolean;
+  onNavigate?: () => void;
 }) {
   const image = product.thumbnail || product.images?.[0];
   return (
     <article className="group relative min-w-0 overflow-hidden rounded-3xl border border-border bg-secondary shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
       <Link
         href={"/product/" + product.id}
+        onClick={onNavigate}
         aria-label={"مشاهده " + product.name}
         className="relative flex aspect-[3/4.3] flex-col justify-end overflow-hidden"
       >

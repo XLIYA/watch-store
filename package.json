@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "backend": "node server/server.js",
-    "test": "node --test tests/*.test.cjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -43,6 +42,7 @@
     "react-leaflet": "^5.0.0",
     "react-leaflet-markercluster": "^5.0.0-rc.0",
     "react-redux": "^9.3.0",
+    "recharts": "^3.8.0",
     "sanitize-html": "^2.17.7",
     "shadcn": "^4.21.0",
     "sonner": "^2.0.8",

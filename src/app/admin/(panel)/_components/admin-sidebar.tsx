@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Boxes,
+  ChartNoAxesCombined,
   LogOut,
   ReceiptText,
   Watch,
@@ -28,6 +29,7 @@ import {
 import { getApiErrorMessage } from "@/services/api/api-error";
 
 const items = [
+  { title: "داشبورد فروش", href: "/admin/dashboard", icon: ChartNoAxesCombined },
   { title: "سفارش‌ها", href: "/admin/orders", icon: ReceiptText },
   { title: "محصولات", href: "/admin/products", icon: Watch },
   { title: "قیمت و موجودی", href: "/admin/inventory", icon: Boxes },
