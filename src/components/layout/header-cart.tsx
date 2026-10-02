@@ -1,233 +1,222 @@
 "use client";
-import { formatNumber } from "@/lib/format";
-
-import { selectCartTotals } from "@/features/cart/cart.selectors";
-
-import { useEffect } from "react";
-
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
+import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-    ShoppingBag,
-    X,
-} from "lucide-react";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { formatNumber, formatPrice } from "@/lib/format";
+import { selectCartTotals } from "@/features/cart/cart.selectors";
+import { setItemQuantity, removeItem } from "@/features/cart/cart.slice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import type { CartItem } from "@/features/cart/cart.types";
 
-import { useAppSelector } from "@/store/hooks";
-
-interface HeaderCartProps {
-    onClose: () => void;
-}
-
-export function HeaderCart({
-    onClose,
-}: HeaderCartProps) {
-    const items = useAppSelector(
-        (state) => state.cart.items,
-    );
-
-    const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
-
-    useEffect(() => {
-        function handleKeyDown(
-            event: KeyboardEvent,
-        ) {
-            if (event.key === "Escape") {
-                onClose();
-            }
-        }
-
-        window.addEventListener(
-            "keydown",
-            handleKeyDown,
-        );
-
-        return () => {
-            window.removeEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-        };
-    }, [onClose]);
-
-    return (
-        <div
-            className="fixed inset-0 z-[80]"
-            role="dialog"
-            aria-modal="true"
-            aria-label="سبد خرید"
-        >
-            {/* Backdrop */}
-            <button
-                type="button"
-                aria-label="بستن سبد خرید"
-                className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-                onClick={onClose}
-            />
-
-            {/* Drawer */}
-            <aside
-                className="
-          absolute
-          left-0
-          top-0
-          flex
-          h-full
-          w-full
-          max-w-md
-          flex-col
-          bg-background
-          shadow-2xl
-        "
-            >
-                {/* Header */}
-                <div className="flex h-[72px] items-center justify-between border-b border-border px-6">
-                    <div className="flex items-center gap-3">
-                        <ShoppingBag
-                            className="size-[18px]"
-                            strokeWidth={1.5}
-                        />
-
-                        <div>
-                            <p className="font-medium">
-                                سبد خرید
-                            </p>
-
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                {formatNumber(totalQuantity)}{" "}
-                                کالا
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="luxury-transition flex size-10 items-center justify-center hover:bg-secondary"
-                        aria-label="بستن سبد خرید"
+/** سبد کناری همان state صفحهٔ سبد را تغییر می‌دهد؛ reducer سقف موجودی را کنترل و storage تغییرات را حفظ می‌کند. */
+export function HeaderCart({ onClose }: { onClose: () => void }) {
+  const dispatch = useAppDispatch();
+  const items = useAppSelector((state) => state.cart.items);
+  const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
+  const [removing, setRemoving] = useState<CartItem | null>(null);
+  return (
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <SheetContent
+        side="left"
+        showCloseButton={false}
+        className="gap-0 data-[side=left]:w-full data-[side=left]:sm:max-w-md"
+        dir="rtl"
+      >
+        <SheetHeader className="flex-row items-center justify-between border-b p-5">
+          <div>
+            <SheetTitle className="flex items-center gap-2">
+              <ShoppingBag className="size-5" />
+              سبد خرید
+            </SheetTitle>
+            <SheetDescription className="mt-2">
+              {formatNumber(totalQuantity)} کالا
+            </SheetDescription>
+          </div>
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" aria-label="بستن سبد خرید">
+              <X />
+            </Button>
+          </SheetClose>
+        </SheetHeader>
+        {!items.length ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 p-8 text-center">
+            <ShoppingBag className="size-12 text-forest" />
+            <p>سبد خرید شما خالی است</p>
+            <Button asChild>
+              <Link href="/shop" onClick={onClose}>
+                مشاهدهٔ ساعت‌ها
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5">
+              {items.map((item) => (
+                <article key={item.lineId} className="flex gap-4 border-b py-5">
+                  <Link
+                    href={`/product/${item.productId}`}
+                    onClick={onClose}
+                    className="relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-secondary"
+                  >
+                    {item.thumbnail && (
+                      <Image
+                        src={item.thumbnail}
+                        alt={item.name}
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    )}
+                  </Link>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <Link
+                      href={`/product/${item.productId}`}
+                      onClick={onClose}
+                      dir="auto"
+                      className="block text-right text-sm font-medium leading-6"
                     >
-                        <X
-                            className="size-[18px]"
-                            strokeWidth={1.5}
-                        />
-                    </button>
-                </div>
-
-                {/* Empty cart */}
-                {items.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-                        <div className="flex size-16 items-center justify-center rounded-full border border-border">
-                            <ShoppingBag
-                                className="size-6 text-muted-foreground"
-                                strokeWidth={1.25}
-                            />
-                        </div>
-
-                        <h2 className="mt-6 text-lg font-medium">
-                            سبد خرید شما خالی است
-                        </h2>
-
-                        <p className="mt-3 max-w-xs text-sm leading-7 text-muted-foreground">
-                            هنوز ساعتی به سبد خرید اضافه
-                            نکرده‌اید.
-                        </p>
-
-                        <Link
-                            href="/shop"
-                            onClick={onClose}
-                            className="luxury-transition mt-8 bg-foreground px-7 py-3 text-sm text-background hover:opacity-85"
+                      {item.name}
+                    </Link>
+                    <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span
+                        className="size-3 rounded-full border"
+                        style={{ backgroundColor: item.colorHex }}
+                      />
+                      {item.colorName}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div
+                        className="flex items-center rounded-full border"
+                        aria-label={`تعداد ${item.name}`}
+                      >
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`کاهش تعداد ${item.name}`}
+                          onClick={() =>
+                            item.quantity === 1
+                              ? setRemoving(item)
+                              : dispatch(
+                                  setItemQuantity({
+                                    lineId: item.lineId,
+                                    quantity: item.quantity - 1,
+                                  }),
+                                )
+                          }
                         >
-                            مشاهده محصولات
-                        </Link>
+                          <Minus className="size-3.5" />
+                        </Button>
+                        <span
+                          className="min-w-7 text-center text-sm"
+                          aria-live="polite"
+                        >
+                          {formatNumber(item.quantity)}
+                        </span>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          disabled={item.quantity >= item.maxQuantity}
+                          aria-label={`افزایش تعداد ${item.name}`}
+                          onClick={() =>
+                            dispatch(
+                              setItemQuantity({
+                                lineId: item.lineId,
+                                quantity: item.quantity + 1,
+                              }),
+                            )
+                          }
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      </div>
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label={`حذف ${item.name}`}
+                        onClick={() => setRemoving(item)}
+                      >
+                        <Trash2 className="size-4 text-muted-foreground" />
+                      </Button>
                     </div>
-                ) : (
-                    <>
-                        {/* Items */}
-                        <div className="flex-1 overflow-y-auto px-6">
-                            {items.map((item) => (
-                                <Link
-                                    key={item.lineId}
-                                    href={`/product/${item.productId}`}
-                                    onClick={onClose}
-                                    className="group flex gap-4 border-b border-border py-6"
-                                >
-                                    <div className="relative h-28 w-24 shrink-0 overflow-hidden bg-secondary">
-                                        {item.thumbnail ? (
-                                            <Image
-                                                src={item.thumbnail}
-                                                alt={item.name}
-                                                fill
-                                                sizes="96px"
-                                                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                                            />
-                                        ) : null}
-                                    </div>
-
-                                    <div className="flex min-w-0 flex-1 flex-col">
-                                        <h3
-                                            dir="ltr"
-                                            className="truncate font-heading text-xl font-medium"
-                                        >
-                                            {item.name}
-                                        </h3>
-
-                                        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                                            <span
-                                                className="size-3 rounded-full border border-black/10"
-                                                style={{
-                                                    backgroundColor:
-                                                        item.colorHex,
-                                                }}
-                                            />
-
-                                            <span>
-                                                {item.colorName}
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-auto flex items-end justify-between gap-4 pt-4">
-                                            <span className="text-xs text-muted-foreground">
-                                                تعداد{" "}
-                                                {formatNumber(item.quantity)}
-                                            </span>
-
-                                            <span className="text-sm">
-                                                {formatNumber((
-                                                    item.unitPrice *
-                                                    item.quantity
-                                                ))}{" "}
-                                                تومان
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-
-                        {/* Summary */}
-                        <div className="border-t border-border bg-background px-6 py-6">
-                            <div className="flex items-center justify-between gap-6">
-                                <span className="text-sm text-muted-foreground">
-                                    مجموع
-                                </span>
-
-                                <span className="font-medium">
-                                    {formatNumber(totalPrice)}{" "}
-                                    تومان
-                                </span>
-                            </div>
-
-                            <Link
-                                href="/cart"
-                                onClick={onClose}
-                                className="luxury-transition mt-6 flex w-full items-center justify-center bg-foreground px-6 py-3.5 text-sm text-background hover:opacity-85"
-                            >
-                                مشاهده سبد خرید
-                            </Link>
-                        </div>
-                    </>
-                )}
-            </aside>
-        </div>
-    );
+                    <p className="text-sm">
+                      {formatPrice(item.unitPrice * item.quantity)} تومان
+                    </p>
+                    {item.quantity >= item.maxQuantity && (
+                      <p className="text-xs text-muted-foreground">
+                        حداکثر موجودی این رنگ
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="space-y-5 border-t bg-card p-5">
+              <p className="flex justify-between text-sm">
+                <span>مجموع</span>
+                <strong aria-live="polite">
+                  {formatPrice(totalPrice)} تومان
+                </strong>
+              </p>
+              <Button asChild className="w-full">
+                <Link href="/cart" onClick={onClose}>
+                  مشاهدهٔ سبد و تکمیل سفارش
+                </Link>
+              </Button>
+            </div>
+          </>
+        )}
+        <AlertDialog
+          open={Boolean(removing)}
+          onOpenChange={(open) => {
+            if (!open) setRemoving(null);
+          }}
+        >
+          <AlertDialogContent dir="rtl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>حذف از سبد خرید؟</AlertDialogTitle>
+              <AlertDialogDescription>
+                {removing?.name} از سبد خرید حذف شود؟
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>انصراف</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (removing) dispatch(removeItem(removing.lineId));
+                  setRemoving(null);
+                }}
+              >
+                حذف محصول
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </SheetContent>
+    </Sheet>
+  );
 }
