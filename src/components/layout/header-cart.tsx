@@ -182,7 +182,7 @@ export function HeaderCart({ onClose }: { onClose: () => void }) {
                   {formatPrice(totalPrice)} تومان
                 </strong>
               </p>
-              <Button asChild className="w-full">
+              <Button asChild className="h-12 w-full text-base">
                 <Link href="/cart" onClick={onClose}>
                   مشاهدهٔ سبد و تکمیل سفارش
                 </Link>
