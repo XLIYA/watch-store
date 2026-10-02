@@ -111,12 +111,13 @@ export function HeaderCart({ onClose }: { onClose: () => void }) {
                     </p>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div
-                        className="flex items-center rounded-full border"
+                        className="flex h-11 items-center border border-border"
                         aria-label={`تعداد ${item.name}`}
                       >
                         <Button
-                          size="icon-sm"
+                          size="icon"
                           variant="ghost"
+                          className="size-10 rounded-none hover:bg-secondary disabled:opacity-25"
                           aria-label={`کاهش تعداد ${item.name}`}
                           onClick={() =>
                             item.quantity === 1
@@ -129,17 +130,18 @@ export function HeaderCart({ onClose }: { onClose: () => void }) {
                                 )
                           }
                         >
-                          <Minus className="size-3.5" />
+                          <Minus className="size-4" strokeWidth={1.5} />
                         </Button>
                         <span
-                          className="min-w-7 text-center text-sm"
+                          className="min-w-12 text-center text-sm"
                           aria-live="polite"
                         >
                           {formatNumber(item.quantity)}
                         </span>
                         <Button
-                          size="icon-sm"
+                          size="icon"
                           variant="ghost"
+                          className="size-10 rounded-none hover:bg-secondary disabled:opacity-25"
                           disabled={item.quantity >= item.maxQuantity}
                           aria-label={`افزایش تعداد ${item.name}`}
                           onClick={() =>
@@ -151,7 +153,7 @@ export function HeaderCart({ onClose }: { onClose: () => void }) {
                             )
                           }
                         >
-                          <Plus className="size-3.5" />
+                          <Plus className="size-4" strokeWidth={1.5} />
                         </Button>
                       </div>
                       <Button
