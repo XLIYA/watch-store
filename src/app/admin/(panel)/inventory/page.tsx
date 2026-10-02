@@ -93,7 +93,7 @@ export default function AdminInventoryPage() {
       />
       <div className="surface overflow-hidden">
         <Table className="min-w-[1050px] table-fixed" aria-busy={query.isFetching || editor.saving}>
-          <colgroup><col className="w-[23%]"/><col className="w-[10%]"/><col className="w-[17%]"/><col className="w-[12%]"/><col className="w-[23%]"/><col className="w-[15%]"/></colgroup><TableHeader>
+          <colgroup><col className="w-[23%]" /><col className="w-[10%]" /><col className="w-[17%]" /><col className="w-[12%]" /><col className="w-[23%]" /><col className="w-[15%]" /></colgroup><TableHeader>
             <TableRow>
               <TableHead>محصول</TableHead>
               <TableHead>برند</TableHead>
@@ -129,7 +129,7 @@ export default function AdminInventoryPage() {
                 {(["price", "quantity"] as const).map((field) => (
                   <TableCell key={field}>
                     {editor.drafts[product.id]?.values[field] !== undefined ? (
-                      <InventoryValueInput price={field === "price"} label={(field === "price" ? "قیمت" : "موجودی") + " " + product.name} disabled={editor.saving} value={editor.drafts[product.id].values[field] ?? ""} onChange={value=>editor.edit(product,field,value)} onEscape={()=>editor.cancel(product.id,field)}/>
+                      <InventoryValueInput price={field === "price"} label={(field === "price" ? "قیمت" : "موجودی") + " " + product.name} disabled={editor.saving} value={editor.drafts[product.id].values[field] ?? ""} onChange={value => editor.edit(product, field, value)} onEscape={() => editor.cancel(product.id, field)} />
                     ) : (
                       <button
                         type="button"
@@ -151,7 +151,7 @@ export default function AdminInventoryPage() {
                       const value = editor.drafts[product.id]?.values[field];
                       // دو ستون هم‌اندازه در همهٔ ردیف‌ها، نام رنگ و تعداد را تراز می‌کنند؛ نام بلند در ستون خودش می‌شکند.
                       return <div key={variant.id} className="grid grid-cols-[6rem_6rem] items-center gap-3">
-                        <span className="flex min-w-0 items-center gap-2 whitespace-normal break-words text-xs"><span aria-hidden className="size-3 shrink-0 rounded-full border" style={{backgroundColor: variant.hex}} />{variant.name}</span>
+                        <span className="flex min-w-0 items-center gap-2 whitespace-normal break-words text-xs"><span aria-hidden className="size-3 shrink-0 rounded-full border" style={{ backgroundColor: variant.hex }} />{variant.name}</span>
                         <div className="w-24 shrink-0">
                           {value !== undefined ? <InventoryValueInput price={false} label={`موجودی رنگ ${variant.name} ${product.name}`} disabled={editor.saving} value={value} onChange={value => editor.edit(product, field, value)} onEscape={() => editor.cancel(product.id, field)} /> :
                             <Button variant="ghost" className="w-full border border-dashed border-border tabular-nums" disabled={editor.saving || query.isPlaceholderData} aria-label={`ویرایش موجودی رنگ ${variant.name} ${product.name}`} onClick={() => editor.edit(product, field)}>{formatNumber(variant.quantity)}</Button>}
@@ -188,4 +188,4 @@ export default function AdminInventoryPage() {
 }
 
 /** هر سلول عرض ثابت دارد؛ قیمت فقط در نمایش فرمت می‌شود و Escape به همان draft مستقل برمی‌گردد. */
-function InventoryValueInput({price,label,disabled,value,onChange,onEscape}:{price:boolean;label:string;disabled:boolean;value:string;onChange:(value:string)=>void;onEscape:()=>void}) {const shared={autoFocus:true,disabled,"aria-label":label,className:"w-full min-w-0 text-right",onKeyDown:(event:React.KeyboardEvent<HTMLInputElement>)=>{if(event.key==="Escape"){event.preventDefault();onEscape();}}};return price?<PriceInput {...shared} value={value} onValueChange={onChange}/>:<PersianDigitInput {...shared} type="text" inputMode="numeric" value={value} onChange={event=>onChange(event.target.value)}/>;}
+function InventoryValueInput({ price, label, disabled, value, onChange, onEscape }: { price: boolean; label: string; disabled: boolean; value: string; onChange: (value: string) => void; onEscape: () => void }) { const shared = { autoFocus: true, disabled, "aria-label": label, className: "w-full min-w-0 text-right", onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => { if (event.key === "Escape") { event.preventDefault(); onEscape(); } } }; return price ? <PriceInput {...shared} value={value} onValueChange={onChange} /> : <PersianDigitInput {...shared} type="text" inputMode="numeric" value={value} onChange={event => onChange(event.target.value)} />; }

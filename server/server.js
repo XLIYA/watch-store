@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const multer = require("multer");
 const { registerOrders } = require("./orders");
+const { buildDashboard } = require("./dashboard");
 const { createAuth } = require("./auth");
 const { validateProductWrite } = require("./product-validation");
 const productRules = require("../shared/product-rules.json");
@@ -52,6 +53,12 @@ function createServer(options = {}) {
   server.get("/auth/session", auth.requireAdmin, auth.session);
 
   registerOrders(server, router.db, auth);
+  // نمودارها endpoint مستقل و محافظت‌شده دارند؛ سفارش‌های مشتری به مرورگر عمومی ارسال نمی‌شوند.
+  server.get("/dashboard", auth.requireAdmin, (req, res) => {
+    const days = Number(req.query.days || 30);
+    if (![7, 30, 90].includes(days)) return res.status(400).json({ code: "INVALID_RANGE" });
+    res.set("Cache-Control", "no-store").json(buildDashboard(router.db.get("orders").value() || [], router.db.get("products").value() || [], days));
+  });
 
   server.use((req, res, next) => {
     const entity = req.path.split("/")[1];
