@@ -69,7 +69,7 @@ function registerOrders(server, db, auth) {
       return fail(res, 422, 'اطلاعات تماس، نشانی یا زمان تحویل معتبر نیست.');
     // تا ذخیره await نداریم؛ دو درخواست هم‌زمان در سرور تک‌پردازشی یک بازه را نمی‌گیرند.
     if (slotTaken(db.get('orders').value() || [], delivery))
-      return res.status(409).json({ code: 'DELIVERY_SLOT_TAKEN', message: 'این ساعت تحویل رزرو شده؛ زمان دیگری انتخاب کنید.' });
+      return res.status(409).json({ code: 'DELIVERY_SLOT_TAKEN', message: 'این بازهٔ تحویل رزرو شده؛ بازهٔ دیگری انتخاب کنید.' });
     const lines = [], seen = new Set(), totals = new Map();
     for (const item of items) {
       if (!item || typeof item !== 'object') return fail(res, 422, 'اطلاعات محصول معتبر نیست.');
