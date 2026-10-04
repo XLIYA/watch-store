@@ -23,6 +23,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from "@/lib/format";
 import type { Category, Subcategory } from "@/types/category";
 
+// منوی راهنما هم‌اندازهٔ ورودی باز می‌شود؛ ارتفاع محدود و اسکرول داخلی از کشیده‌شدن آن جلوگیری می‌کند.
+const finderMenuProps = {
+  dir: "rtl" as const,
+  position: "popper" as const,
+  align: "end" as const,
+  sideOffset: 4,
+  className:
+    "w-[var(--radix-select-trigger-width)] min-w-0 max-h-[min(15rem,var(--radix-select-content-available-height))] p-1 [&_[data-radix-select-viewport]]:!h-auto",
+};
+
 /** راهنما فقط انتخاب کاربر را به فیلترهای واقعی API تبدیل می‌کند؛ پیشنهاد ساختگی یا رتبه‌بندی پنهان ندارد. */
 export function WatchFinder({
   categories,
@@ -33,7 +43,8 @@ export function WatchFinder({
 }) {
   const [category, setCategory] = useState("all");
   const [group, setGroup] = useState("all");
-  const [budget, setBudget] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [validation, setValidation] = useState("");
   const [filters, setFilters] = useState<GetProductsParams | null>(null);
   const [page, setPage] = useState(1);
@@ -46,10 +57,21 @@ export function WatchFinder({
   function find(event: FormEvent) {
     event.preventDefault();
     if (
-      budget &&
-      (!Number.isSafeInteger(Number(budget)) || Number(budget) < 0)
+      [minPrice, maxPrice].some(
+        (value) =>
+          value !== "" &&
+          (!Number.isSafeInteger(Number(value)) || Number(value) < 0),
+      )
     ) {
-      setValidation("بودجه باید عدد صحیح و غیرمنفی باشد.");
+      setValidation("قیمت‌ها باید عدد صحیح و غیرمنفی باشند.");
+      return;
+    }
+    if (
+      minPrice !== "" &&
+      maxPrice !== "" &&
+      Number(minPrice) > Number(maxPrice)
+    ) {
+      setValidation("قیمت شروع نباید بیشتر از قیمت پایان باشد.");
       return;
     }
     setValidation("");
@@ -57,7 +79,8 @@ export function WatchFinder({
     setFilters({
       category: category === "all" ? undefined : Number(category),
       subcategory: group === "all" ? undefined : Number(group),
-      maxPrice: budget === "" ? undefined : Number(budget),
+      minPrice: minPrice === "" ? undefined : Number(minPrice),
+      maxPrice: maxPrice === "" ? undefined : Number(maxPrice),
     });
   }
   return (
@@ -72,7 +95,7 @@ export function WatchFinder({
       </header>
       <form
         onSubmit={find}
-        className="surface grid items-end gap-6 p-6 md:grid-cols-3 md:p-8"
+        className="surface grid items-end gap-6 p-6 md:grid-cols-2 lg:grid-cols-4 md:p-8"
       >
         <div className="space-y-3">
           <Label htmlFor="finder-category">۱. کدام مجموعه؟</Label>
@@ -83,10 +106,13 @@ export function WatchFinder({
               setGroup("all");
             }}
           >
-            <SelectTrigger id="finder-category" className="w-full">
+            <SelectTrigger
+              id="finder-category"
+              className="h-11 w-full data-[size=default]:h-11"
+            >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent dir="rtl">
+            <SelectContent {...finderMenuProps}>
               <SelectItem value="all">همهٔ مجموعه‌ها</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={String(c.id)}>
@@ -103,10 +129,13 @@ export function WatchFinder({
             onValueChange={setGroup}
             disabled={category === "all"}
           >
-            <SelectTrigger id="finder-group" className="w-full">
+            <SelectTrigger
+              id="finder-group"
+              className="h-11 w-full data-[size=default]:h-11"
+            >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent dir="rtl">
+            <SelectContent {...finderMenuProps}>
               <SelectItem value="all">همهٔ گروه‌ها</SelectItem>
               {groups
                 .filter((g) => g.category === Number(category))
@@ -118,27 +147,53 @@ export function WatchFinder({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-3">
-          <Label htmlFor="finder-budget">۳. حداکثر بودجه (تومان)</Label>
-          <PriceInput
-            id="finder-budget"
-            value={budget}
-            onValueChange={setBudget}
-            placeholder="بدون محدودیت"
-            aria-invalid={!!validation}
-            aria-describedby={validation ? "finder-error" : undefined}
-          />
-        </div>
+        <fieldset className="min-w-0 space-y-3 md:col-span-2">
+          <legend className="text-sm font-medium">۳. بازهٔ قیمت (تومان)</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                id: "finder-min-price",
+                label: "از قیمت",
+                value: minPrice,
+                change: setMinPrice,
+              },
+              {
+                id: "finder-max-price",
+                label: "تا قیمت",
+                value: maxPrice,
+                change: setMaxPrice,
+              },
+            ].map((field) => (
+              <div key={field.id} className="min-w-0 space-y-2">
+                <Label
+                  htmlFor={field.id}
+                  className="text-xs text-muted-foreground"
+                >
+                  {field.label}
+                </Label>
+                <PriceInput
+                  id={field.id}
+                  className="h-11"
+                  value={field.value}
+                  onValueChange={field.change}
+                  placeholder="بدون محدودیت"
+                  aria-invalid={!!validation}
+                  aria-describedby={validation ? "finder-error" : undefined}
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
         {validation && (
           <p
             id="finder-error"
             role="alert"
-            className="text-sm text-destructive md:col-span-3"
+            className="text-sm text-destructive md:col-span-2 lg:col-span-4"
           >
             {validation}
           </p>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5 md:col-span-3">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5 md:col-span-2 lg:col-span-4">
           <p className="text-xs leading-6 text-muted-foreground">
             نتایج بر اساس انتخاب شما و با ترتیب محبوب‌ترین‌ها نمایش داده
             می‌شوند.
