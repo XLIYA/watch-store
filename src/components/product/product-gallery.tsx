@@ -1,4 +1,5 @@
 "use client";
+import { ImageCloseup } from "./image-closeup";
 
 import Image from "next/image";
 
@@ -75,6 +76,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         {images.map((image, index) => (
           <CarouselItem key={`${image}-${index}`} className="basis-full pl-0">
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary">
+              <ImageCloseup src={image} name={productName} />
               <Image
                 src={image}
                 alt={`${productName} - تصویر ${index + 1}`}
