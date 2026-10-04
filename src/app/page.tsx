@@ -1,3 +1,5 @@
+import { TryOnTeaser } from "@/components/store/try-on-teaser";
+import { ExperienceIntro } from "@/components/store/experience-intro";
 import { uiConfig } from "@/config/ui";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -19,24 +21,24 @@ export default async function LandingPage() {
     .filter((item) => item.landingEnabled)
     .sort((a, b) => a.landingOrder - b.landingOrder);
   const stories = await Promise.all(
-    selected
-      .slice(0, uiConfig.landingCollections)
-      .map(async (category) => ({
-        category,
-        products: (
-          await getProducts({
-            category: category.id,
-            limit: uiConfig.landingProductsPerCollection,
-            sort: "popular",
-          })
-        ).data,
-      })),
+    selected.slice(0, uiConfig.landingCollections).map(async (category) => ({
+      category,
+      products: (
+        await getProducts({
+          category: category.id,
+          limit: uiConfig.landingProductsPerCollection,
+          sort: "popular",
+        })
+      ).data,
+    })),
   );
   return (
     <>
       <SiteHeader />
       <main>
         <LandingHero products={heroProducts} />
+        <ExperienceIntro />
+        <TryOnTeaser />
         <section className="site-container py-20 md:py-28">
           <ScrollReveal>
             <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
