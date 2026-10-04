@@ -4,7 +4,7 @@ import { useDeliveryAvailability } from "@/features/checkout/use-delivery-availa
 import { checkoutRequestId } from "@/features/checkout/checkout-request";
 import { getApiErrorMessage } from "@/services/api/api-error";
 
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatDeliveryTime } from "@/lib/format";
 import { PersianDigitInput } from "@/components/ui/persian-digit-input";
 
 import { selectCartTotals } from "@/features/cart/cart.selectors";
@@ -95,7 +95,7 @@ export function CheckoutPageContent() {
   useEffect(() => {
     if (selectedTime && availability.data?.unavailable[selectedDay]?.includes(selectedTime)) {
       setValue("deliveryTime", "", { shouldValidate: true });
-      setError("deliveryTime", { message: "این ساعت رزرو شده؛ ساعت دیگری انتخاب کنید." });
+      setError("deliveryTime", { message: "این بازه رزرو شده؛ بازهٔ دیگری انتخاب کنید." });
     }
   }, [availability.data, selectedDay, selectedTime, setValue, setError]);
   const { totalQuantity, totalPrice } = useAppSelector(selectCartTotals);
@@ -114,7 +114,7 @@ export function CheckoutPageContent() {
       const capacity = await availability.refetch();
       if (capacity.isError || !capacity.data) { toast.error("دریافت ظرفیت تحویل ممکن نشد؛ دوباره تلاش کنید."); return; }
       if (capacity.data.unavailable[data.deliveryDate]?.includes(data.deliveryTime)) {
-        setError("deliveryTime", { message: "این ساعت رزرو شده؛ ساعت دیگری انتخاب کنید." });
+        setError("deliveryTime", { message: "این بازه رزرو شده؛ بازهٔ دیگری انتخاب کنید." });
         return;
       }
       /*
@@ -570,7 +570,7 @@ export function CheckoutPageContent() {
                       htmlFor="deliveryTime"
                       className="mb-2 block text-sm font-medium"
                     >
-                      ساعت تحویل
+                      بازهٔ تحویل
                     </Label>
 
                     <Controller
@@ -599,13 +599,13 @@ export function CheckoutPageContent() {
                                                         }
                                                         `}
                           >
-                            <SelectValue placeholder="انتخاب ساعت" />
+                            <SelectValue placeholder="انتخاب بازهٔ تحویل" />
                           </SelectTrigger>
 
                           <SelectContent dir="rtl" position="popper">
                             {DELIVERY_TIME_SLOTS.map((time) => (
                               <SelectItem key={time} value={time} disabled={unavailableTimes.includes(time)}>
-                                <span dir="ltr">{time}</span>{unavailableTimes.includes(time) ? " — رزرو شده" : ""}
+                                <span>{formatDeliveryTime(time)}</span>{unavailableTimes.includes(time) ? " — رزرو شده" : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -614,7 +614,7 @@ export function CheckoutPageContent() {
                     />
 
                     <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                      بازه تحویل از ساعت ۱۱ تا ۱۸
+                      سفارش در بازهٔ انتخاب‌شده تحویل داده می‌شود؛ زمان دقیق در این بازه مشخص نیست.
                     </p>
 
                     {errors.deliveryTime ? (
