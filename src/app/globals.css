@@ -108,20 +108,20 @@
   --muted: #eeeae2;
   --muted-foreground: #706d64;
 
-  --accent: #17362d;
+  --accent: var(--forest);
   --accent-foreground: #ffffff;
 
   --destructive: #b42318;
 
   --border: #ded9cd;
   --input: #ded9cd;
-  --ring: #a88b52;
+  --ring: var(--forest-light);
 
   /*
    * Charts
    */
 
-  --chart-1: #17362d;
+  --chart-1: var(--forest);
   --chart-2: #a88b52;
   --chart-3: #706d64;
   --chart-4: #2f5147;
@@ -143,7 +143,7 @@
   --sidebar: #ffffff;
   --sidebar-foreground: #191b19;
 
-  --sidebar-primary: #191b19;
+  --sidebar-primary: var(--forest);
   --sidebar-primary-foreground: #ffffff;
 
   --sidebar-accent: #f2f0ea;
@@ -321,6 +321,13 @@
   }
   .marker-cluster div {
     @apply font-[inherit];
+  }
+}
+
+/* فضای انتهای صفحه اجازه می‌دهد آخرین لینک فوتر زیر نوار خرید موبایل پنهان نشود. */
+@media (max-width: 1023px) {
+  body:has([data-mobile-purchase]) {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 }
 
@@ -566,15 +573,102 @@
 }
 
 /* کنترل‌های فارسی از فونت واحد استفاده می‌کنند؛ spinner بومی عدد با ورودی سفارشی تداخل ندارد. */
-button, input, select, textarea { font: inherit; }
-a, button:not(:disabled), [role="button"], summary, label[for], [role="option"] { cursor: pointer; }
-input::-webkit-outer-spin-button,input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
-input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
-.prose-content ul { list-style: disc; padding-inline-start: 1.5rem; }
-.prose-content ol { list-style: decimal; padding-inline-start: 1.5rem; }
-.prose-content p { margin-block: .5rem; }
-@keyframes hero-arrive { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.hero-arrive { animation: hero-arrive .75s cubic-bezier(.2,.7,.2,1) both; }
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+a,
+button:not(:disabled),
+[role="button"],
+summary,
+label[for],
+[role="option"] {
+  cursor: pointer;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.prose-content ul {
+  list-style: disc;
+  padding-inline-start: 1.5rem;
+}
+.prose-content ol {
+  list-style: decimal;
+  padding-inline-start: 1.5rem;
+}
+.prose-content p {
+  margin-block: 0.5rem;
+}
+@keyframes hero-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.hero-arrive {
+  animation: hero-arrive 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
 
-:where(p,h1,h2,h3)[dir] { text-align: right; }
+:where(p, h1, h2, h3)[dir] {
+  text-align: right;
+}
+
+/* صفحات کشف، مقایسه و علاقه‌مندی از همین مقیاس استفاده می‌کنند؛ کارت محبوب فعلی و جدول‌های آموزشی حفظ می‌شوند. */
+@layer components {
+  .experience-page {
+    padding-block: clamp(2.5rem, 6vw, 5rem);
+  }
+  .experience-heading {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    max-width: 48rem;
+  }
+  .experience-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 4rem 1.5rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--card);
+  }
+  .experience-empty > svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    stroke-width: 1;
+    color: var(--forest);
+  }
+}
+
+/* فوکوس کیبورد در لینک‌های دست‌نویس هم دیده می‌شود؛ این قاعده رفتار کنترل‌های فرم را تغییر نمی‌دهد. */
+@layer base {
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 4px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
