@@ -122,8 +122,8 @@ export const checkoutSchema = z
             .string()
             .min(
                 1,
-                "ساعت تحویل را انتخاب کنید.",
-            ).refine(value => rules.deliveryTimeSlots.includes(value), "ساعت تحویل معتبر نیست."),
+                "بازهٔ تحویل را انتخاب کنید.",
+            ).refine(value => rules.deliveryTimeSlots.includes(value), "بازهٔ تحویل معتبر نیست."),
 
         note: z
             .string()
