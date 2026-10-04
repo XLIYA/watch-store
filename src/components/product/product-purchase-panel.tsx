@@ -1,8 +1,9 @@
 "use client";
 import { formatNumber } from "@/lib/format";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
+import { MobilePurchaseBar } from "./mobile-purchase-bar";
 import { ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ interface ProductPurchasePanelProps {
 
 export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
   const dispatch = useAppDispatch();
+  const purchaseAnchor = useRef<HTMLButtonElement>(null);
   /*
    * هدف:
    * جلوگیری از Hydration mismatch بین Server و Client برای اطلاعات وابسته به Cart.
@@ -266,8 +268,19 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
     setQuantity(1);
   };
 
+  const purchaseLabel =
+    product.quantity <= 0
+      ? "اتمام موجودی"
+      : !selectedVariant
+        ? "رنگ موجودی برای خرید انتخاب نشده"
+        : variantStock <= 0
+          ? "این رنگ موجود نیست"
+          : availableToAdd > 0
+            ? "افزودن به سبد خرید"
+            : "حداکثر موجودی در سبد خرید";
+
   return (
-    <div className="mt-10 space-y-7">
+    <div className="mt-10 space-y-7 pb-24 lg:pb-0">
       <ProductVariantSelector
         variants={product.variants}
         selectedVariantId={selectedVariantId}
@@ -311,6 +324,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
       </div>
 
       <button
+        ref={purchaseAnchor}
         type="button"
         disabled={!canAddToCart}
         onClick={handleAddToCart}
@@ -336,16 +350,17 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
         <ShoppingBag className="size-[18px]" strokeWidth={1.5} />
 
         {/* ناموجودی سرور با پرشدن ظرفیت سبد متفاوت است؛ پیام دکمه باید علت واقعی غیرفعال‌شدن را نشان دهد. */}
-        {product.quantity <= 0
-          ? "اتمام موجودی"
-          : !selectedVariant
-            ? "رنگ موجودی برای خرید انتخاب نشده"
-            : variantStock <= 0
-              ? "این رنگ موجود نیست"
-              : availableToAdd > 0
-                ? "افزودن به سبد خرید"
-                : "حداکثر موجودی در سبد خرید"}
+        {purchaseLabel}
       </button>
+      <MobilePurchaseBar
+        anchor={purchaseAnchor}
+        price={product.price}
+        quantity={quantity}
+        color={selectedVariant?.name}
+        disabled={!canAddToCart}
+        label={purchaseLabel}
+        onBuy={handleAddToCart}
+      />
     </div>
   );
 }
