@@ -52,10 +52,10 @@ export function WristPreview({
       setApi={setApi}
       opts={{ direction: "rtl", loop: items.length > 1 }}
       dir="rtl"
-      className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16"
+      className="grid items-start gap-6 lg:grid-cols-[1.35fr_1fr] lg:gap-8"
     >
       <div
-        className="relative overflow-hidden rounded-3xl bg-secondary"
+        className="relative overflow-hidden rounded-3xl border border-border/60 bg-secondary lg:sticky lg:top-24"
         style={{ aspectRatio }}
       >
         <Image
@@ -118,45 +118,72 @@ export function WristPreview({
           </CarouselContent>
         </div>
       </div>
-      <div className="space-y-6">
-        <p className="section-kicker">روی مچ ببین</p>
+      <div className="space-y-6 rounded-3xl border border-border/70 bg-card p-5 md:p-7">
+        <div className="flex items-center justify-between gap-3">
+          <p className="section-kicker">انتخاب شما</p>
+          <span className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
+            {formatNumber(items.length)} مدل برای پرو
+          </span>
+        </div>
         <div aria-live="polite">
           <p className="text-sm text-muted-foreground">{item.product.brand}</p>
-          <h2 className="mt-3 text-2xl leading-relaxed">{item.product.name}</h2>
+          <h2
+            dir="auto"
+            className="mt-2 text-right text-xl leading-relaxed md:text-2xl"
+          >
+            {item.product.name}
+          </h2>
           <p className="mt-4 text-lg text-forest">
             {formatPrice(item.product.price)} تومان
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 border-y border-border/70 py-3">
           <CarouselPrevious
             className="static translate-x-0 translate-y-0 [&_svg]:rotate-180"
             aria-label="ساعت قبلی"
           />
-          <span className="text-sm">
-            {formatNumber(selected + 1)} / {formatNumber(items.length)}
+          <span className="text-xs text-muted-foreground">
+            مدل {formatNumber(selected + 1)} از {formatNumber(items.length)}
           </span>
           <CarouselNext
             className="static translate-x-0 translate-y-0 [&_svg]:rotate-180"
             aria-label="ساعت بعدی"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {items.map(({ product }, index) => (
-            <Button
-              key={product.id}
-              variant={index === selected ? "default" : "outline"}
-              onClick={() => api?.scrollTo(index)}
-              aria-pressed={index === selected}
-            >
-              {product.name}
-            </Button>
-          ))}
+        <div>
+          <p className="mb-3 text-sm font-medium">مدل بعدی را انتخاب کنید</p>
+          {/* تصاویر کوچک انتخاب مدل را سریع می‌کنند؛ نام کامل هر دکمه برای صفحه‌خوان و راهنمای ماوس حفظ می‌شود. */}
+          <div
+            className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-4"
+            role="group"
+            aria-label="انتخاب مدل ساعت"
+          >
+            {items.map(({ product, image }, index) => (
+              <Button
+                key={product.id}
+                variant={index === selected ? "default" : "outline"}
+                onClick={() => api?.scrollTo(index)}
+                aria-pressed={index === selected}
+                aria-label={product.name}
+                title={product.name}
+                className="relative h-20 overflow-hidden rounded-xl p-2 transition-transform hover:-translate-y-0.5 motion-reduce:transform-none"
+              >
+                <Image
+                  src={image}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-contain p-2"
+                />
+              </Button>
+            ))}
+          </div>
         </div>
         <ProductSelectionActions
           id={item.product.id}
           name={item.product.name}
         />
-        <Button asChild className="h-12 px-8">
+        <Button asChild className="h-12 w-full px-8">
           <Link href={`/product/${item.product.id}`}>مشخصات و انتخاب ساعت</Link>
         </Button>
         <p className="text-xs leading-7 text-muted-foreground">
