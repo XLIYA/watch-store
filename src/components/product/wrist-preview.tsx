@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { ProductSelectionActions } from "@/components/store/product-selection-actions";
 import { formatPrice, formatNumber } from "@/lib/format";
 import type { Product } from "@/types/product";
-import type { WatchPlacement } from "@/features/catalog/try-on-assets";
+import type {
+  WatchPlacement,
+  WatchImageBounds,
+} from "@/features/catalog/try-on-assets";
 
 /** Embla حرکت و swipe را انجام می‌دهد؛ تنها تصویر شفاف روی دست ثابت قرار می‌گیرد، بدون دوربین یا ادعای اندازه‌گیری. */
 export function WristPreview({
@@ -24,7 +27,12 @@ export function WristPreview({
 }: {
   wristImage: string;
   aspectRatio: string;
-  items: { product: Product; image: string; placement: WatchPlacement }[];
+  items: {
+    product: Product;
+    image: string;
+    placement: WatchPlacement;
+    bounds?: WatchImageBounds;
+  }[];
 }) {
   const [api, setApi] = useState<CarouselApi>();
   const [selected, setSelected] = useState(0);
@@ -60,26 +68,50 @@ export function WristPreview({
         />
         <div className="absolute inset-0">
           <CarouselContent className="ml-0 h-full" viewportClassName="h-full">
-            {items.map(({ product, image, placement }) => (
+            {items.map(({ product, image, placement, bounds }) => (
               <CarouselItem key={product.id} className="relative h-full pl-0">
+                {/* ماسک ثابت دست، بند را در لبهٔ مچ پنهان می‌کند؛ خود تصویر ساعت و جزئیات آن تغییر نمی‌کند. */}
                 <div
-                  className="absolute"
+                  className="absolute inset-0"
                   style={{
-                    left: `${placement.x}%`,
-                    top: `${placement.y}%`,
-                    width: `${placement.width}%`,
-                    transform: `translate(-50%, -50%) rotate(${placement.rotation}deg)`,
+                    maskImage: `url(${wristImage})`,
+                    maskSize: "100% 100%",
+                    maskRepeat: "no-repeat",
                   }}
                 >
-                  <Image
-                    src={image}
-                    alt={product.name}
-                    width={700}
-                    height={1000}
-                    unoptimized
-                    className="h-auto w-full select-none"
-                    draggable={false}
-                  />
+                  <div
+                    className="absolute overflow-hidden"
+                    style={{
+                      left: `${placement.x}%`,
+                      top: `${placement.y}%`,
+                      width: `${placement.width}%`,
+                      transform: `translate(-50%, -50%) rotate(${placement.rotation}deg)`,
+                      aspectRatio: bounds
+                        ? (bounds.width * bounds.aspect) / bounds.height
+                        : "7 / 10",
+                    }}
+                  >
+                    {/* محدودهٔ واقعی پیکسل‌های ساعت اندازه را تعیین می‌کند، نه حاشیهٔ شفاف فایل؛ همهٔ مدل‌ها عرض یکسان دارند. */}
+                    <Image
+                      src={image}
+                      alt={product.name}
+                      width={700}
+                      height={1000}
+                      unoptimized
+                      className="absolute max-w-none select-none"
+                      style={
+                        bounds
+                          ? {
+                              width: `${100 / bounds.width}%`,
+                              height: `${100 / bounds.height}%`,
+                              left: `${(-100 * bounds.x) / bounds.width}%`,
+                              top: `${(-100 * bounds.y) / bounds.height}%`,
+                            }
+                          : { width: "100%", height: "100%" }
+                      }
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </CarouselItem>
             ))}
