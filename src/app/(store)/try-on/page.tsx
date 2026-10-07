@@ -12,6 +12,10 @@ export default async function TryOnPage() {
       <header className="experience-heading">
         <p className="section-kicker">نگاهی پیش از انتخاب</p>
         <h1 className="section-title">ساعت‌ها را روی مچ ورق بزنید</h1>
+        <p className="body-copy mt-4">
+          یک مدل انتخاب کنید، ظاهرش را روی مچ ببینید و ساعت‌های دلخواهتان را
+          کنار هم مقایسه کنید.
+        </p>
       </header>
       {assets?.items.length ? (
         <WristPreview {...assets} />
