@@ -1,3 +1,5 @@
+import { TryOnTeaser } from "@/components/store/try-on-teaser";
+import { ExperienceIntro } from "@/components/store/experience-intro";
 import { getCategories, getSubcategories } from "@/services/categories.service";
 import { CategoryProductSection } from "@/components/store/category-product-section";
 import { CollectionCarousel } from "@/components/store/collection-carousel";
@@ -30,6 +32,8 @@ export default async function ShopPage() {
           <CollectionCarousel categories={categories} groups={groups} compact />
         </div>
       </header>
+      <ExperienceIntro />
+      <TryOnTeaser />
       <div id="collections">
         {collections.map((item) => (
           <CategoryProductSection

@@ -1,3 +1,4 @@
+import { ProductSelectionActions } from "@/components/store/product-selection-actions";
 import { categoryHref, groupHref } from "@/features/catalog/catalog-navigation";
 
 import { formatNumber } from "@/lib/format";
@@ -67,9 +68,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   // گروه کوچک با محصولات محبوب تکمیل می‌شود؛ خود محصول و شناسه‌های تکراری دوباره نمایش داده نمی‌شوند.
   if (similarProducts.length < 6) {
-    const additional = await getProducts({limit: 7, sort: "popular"});
-    const existing = new Set([product.id,...similarProducts.map(item=>item.id)]);
-    similarProducts = [...similarProducts,...additional.data.filter(item=>!existing.has(item.id))].slice(0,6);
+    const additional = await getProducts({ limit: 7, sort: "popular" });
+    const existing = new Set([
+      product.id,
+      ...similarProducts.map((item) => item.id),
+    ]);
+    similarProducts = [
+      ...similarProducts,
+      ...additional.data.filter((item) => !existing.has(item.id)),
+    ].slice(0, 6);
   }
   const images =
     product.images?.length > 0
@@ -162,7 +169,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   ) : null}
 
                   {subcategory ? (
-                    <Link href={groupHref(subcategory.slug)} className="rounded-full border border-forest/20 px-4 py-2 text-forest underline-offset-4 transition-colors hover:bg-forest/5 hover:underline">
+                    <Link
+                      href={groupHref(subcategory.slug)}
+                      className="rounded-full border border-forest/20 px-4 py-2 text-forest underline-offset-4 transition-colors hover:bg-forest/5 hover:underline"
+                    >
                       {subcategory.name} ↖
                     </Link>
                   ) : null}
@@ -180,6 +190,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 >
                   {product.name}
                 </h1>
+
+                <div className="mt-6">
+                  <ProductSelectionActions
+                    id={product.id}
+                    name={product.name}
+                  />
+                </div>
 
                 {/* Price */}
                 <p className="mt-7 text-xl font-medium">
@@ -200,15 +217,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
 
                 {/* عنوان و قاب مستقل مرز توضیحات را از قیمت و انتخاب رنگ مشخص می‌کند؛ HTML همچنان پاک‌سازی می‌شود. */}
-                <section aria-labelledby="product-description" className="mt-8 rounded-2xl border border-border bg-secondary/30 p-5 sm:p-6">
-                  <h2 id="product-description" className="mb-4 text-base font-medium text-forest">دربارهٔ این ساعت</h2>
-                <div
-                  className="text-sm leading-8 text-muted-foreground [&_p+p]:mt-3 [&_ul]:list-disc [&_ul]:pr-5 [&_ol]:list-decimal [&_ol]:pr-5 [&_strong]:text-foreground"
-                  dangerouslySetInnerHTML={{
-                    __html: safeDescription || "توضیحی برای این ساعت ثبت نشده است.",
-                  }}
-                />
-
+                <section
+                  aria-labelledby="product-description"
+                  className="mt-8 rounded-2xl border border-border bg-secondary/30 p-5 sm:p-6"
+                >
+                  <h2
+                    id="product-description"
+                    className="mb-4 text-base font-medium text-forest"
+                  >
+                    دربارهٔ این ساعت
+                  </h2>
+                  <div
+                    className="text-sm leading-8 text-muted-foreground [&_p+p]:mt-3 [&_ul]:list-disc [&_ul]:pr-5 [&_ol]:list-decimal [&_ol]:pr-5 [&_strong]:text-foreground"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        safeDescription || "توضیحی برای این ساعت ثبت نشده است.",
+                    }}
+                  />
                 </section>
 
                 {/* Purchase */}

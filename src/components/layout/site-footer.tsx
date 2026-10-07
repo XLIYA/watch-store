@@ -37,6 +37,9 @@ export function SiteFooter() {
               className="grid gap-4 text-xs text-ivory/65"
             >
               <Link href="/shop">کاتالوگ ساعت‌ها</Link>
+              <Link href="/finder">راهنمای انتخاب ساعت</Link>
+              <Link href="/compare">مقایسهٔ ساعت‌ها</Link>
+              <Link href="/favorites">علاقه‌مندی‌ها</Link>
               <Link href="/cart">سبد خرید</Link>
               <Link href="/admin/login">مدیریت فروشگاه</Link>
             </nav>

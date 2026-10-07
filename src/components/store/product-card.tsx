@@ -1,3 +1,4 @@
+import { ProductSelectionActions } from "@/components/store/product-selection-actions";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpLeft, Watch } from "lucide-react";
@@ -62,6 +63,7 @@ export function ProductCard({
           </span>
         </div>
       </Link>
+      <ProductSelectionActions id={product.id} name={product.name} compact />
     </article>
   );
 }
