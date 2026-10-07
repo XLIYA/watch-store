@@ -12,7 +12,7 @@ export type WatchPlacement = {
   rotation: number;
 };
 
-/** نام فایل، شناسهٔ محصول است؛ تنها تصاویر آماده و محصولات موجود وارد پرو می‌شوند، بدون تغییر قرارداد آپلود JPEG ادمین. */
+/** تصاویر با نگاشت صریح نام فایل به شناسهٔ محصول متصل می‌شوند؛ شمارهٔ ترتیبی عکس نباید قیمت یا لینک محصول دیگری را نمایش دهد. */
 export async function getTryOnAssets() {
   const root = path.join(process.cwd(), "public");
   try {
@@ -21,11 +21,17 @@ export async function getTryOnAssets() {
     return null;
   }
   const files = await readdir(path.join(root, "images/try-on/watches"));
+  const productIds = config.watchProducts as Record<string, number>;
   const candidates = [
     ...new Map(
       files
-        .filter((name) => /^[1-9]\d*\.(png|webp)$/i.test(name))
-        .map((name) => [Number(name.split(".")[0]), name]),
+        .filter(
+          (name) =>
+            /\.(png|webp)$/i.test(name) &&
+            Number.isSafeInteger(productIds[name]) &&
+            productIds[name] > 0,
+        )
+        .map((name) => [productIds[name], name]),
     ).entries(),
   ];
   const overrides = config.products as Record<string, Partial<WatchPlacement>>;
