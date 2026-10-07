@@ -23,14 +23,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from "@/lib/format";
 import type { Category, Subcategory } from "@/types/category";
 
-// منوی راهنما هم‌اندازهٔ ورودی باز می‌شود؛ ارتفاع محدود و اسکرول داخلی از کشیده‌شدن آن جلوگیری می‌کند.
+// هر دو منوی راهنما عرض محدود دارند؛ حداقل عرض داخلی Radix نیز حذف می‌شود تا منو روی فیلد کناری نیفتد.
 const finderMenuProps = {
   dir: "rtl" as const,
   position: "popper" as const,
   align: "end" as const,
   sideOffset: 4,
   className:
-    "w-[var(--radix-select-trigger-width)] min-w-0 max-h-[min(15rem,var(--radix-select-content-available-height))] p-1 [&_[data-radix-select-viewport]]:!h-auto",
+    "finder-select-menu",
 };
 
 /** راهنما فقط انتخاب کاربر را به فیلترهای واقعی API تبدیل می‌کند؛ پیشنهاد ساختگی یا رتبه‌بندی پنهان ندارد. */
