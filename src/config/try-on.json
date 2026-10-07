@@ -1,5 +1,5 @@
 {
-  "wristImage": "/images/try-on/wrist.png",
+  "wristImage": "/images/try-on/wrist-aligned.png",
   "wristAspectRatio": "3 / 2",
   "watchProducts": {
     "1.png": 10,
@@ -15,6 +15,97 @@
     "11.png": 20,
     "12.png": 21
   },
-  "placement": { "x": 50, "y": 55, "width": 28, "rotation": 0 },
-  "products": {}
+  "placement": {
+    "x": 44,
+    "y": 51,
+    "width": 16,
+    "rotation": 0
+  },
+  "products": {},
+  "imageBounds": {
+    "1.png": {
+      "x": 0.3175,
+      "y": 0.1525,
+      "width": 0.3975,
+      "height": 0.74,
+      "aspect": 1
+    },
+    "2.png": {
+      "x": 0.15714285714285714,
+      "y": 0.0775,
+      "width": 0.7607142857142857,
+      "height": 0.8475,
+      "aspect": 0.7
+    },
+    "3.png": {
+      "x": 0.25,
+      "y": 0.105,
+      "width": 0.54,
+      "height": 0.79,
+      "aspect": 1
+    },
+    "4.png": {
+      "x": 0.2375,
+      "y": 0.03,
+      "width": 0.5575,
+      "height": 0.94,
+      "aspect": 1
+    },
+    "5.png": {
+      "x": 0.19666666666666666,
+      "y": 0.1125,
+      "width": 0.65,
+      "height": 0.8225,
+      "aspect": 0.75
+    },
+    "6.png": {
+      "x": 0.34,
+      "y": 0.045,
+      "width": 0.345,
+      "height": 0.91,
+      "aspect": 1
+    },
+    "7.png": {
+      "x": 0.275,
+      "y": 0.0775,
+      "width": 0.45,
+      "height": 0.8575,
+      "aspect": 1
+    },
+    "8.png": {
+      "x": 0.305,
+      "y": 0.045,
+      "width": 0.5175,
+      "height": 0.9175,
+      "aspect": 1
+    },
+    "9.png": {
+      "x": 0.1583011583011583,
+      "y": 0.05,
+      "width": 0.6872586872586872,
+      "height": 0.9,
+      "aspect": 0.6475
+    },
+    "10.png": {
+      "x": 0.22846441947565543,
+      "y": 0.1675,
+      "width": 0.5468164794007491,
+      "height": 0.6175,
+      "aspect": 0.6675
+    },
+    "11.png": {
+      "x": 0.15060240963855423,
+      "y": 0.0075,
+      "width": 0.6987951807228916,
+      "height": 0.9875,
+      "aspect": 0.83
+    },
+    "12.png": {
+      "x": 0.2875,
+      "y": 0.0925,
+      "width": 0.47,
+      "height": 0.81,
+      "aspect": 1
+    }
+  }
 }
