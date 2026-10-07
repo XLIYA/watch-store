@@ -11,6 +11,13 @@ export type WatchPlacement = {
   width: number;
   rotation: number;
 };
+export type WatchImageBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  aspect: number;
+};
 
 /** تصاویر با نگاشت صریح نام فایل به شناسهٔ محصول متصل می‌شوند؛ شمارهٔ ترتیبی عکس نباید قیمت یا لینک محصول دیگری را نمایش دهد. */
 export async function getTryOnAssets() {
@@ -44,6 +51,9 @@ export async function getTryOnAssets() {
         return {
           product,
           image: `/images/try-on/watches/${file}`,
+          bounds: (config.imageBounds as Record<string, WatchImageBounds>)[
+            file
+          ],
           placement: { ...config.placement, ...overrides[String(id)] },
         };
       } catch (error) {
