@@ -1,7 +1,20 @@
 {
   "wristImage": "/images/try-on/wrist.png",
   "wristAspectRatio": "3 / 2",
-  "watchProducts": {},
+  "watchProducts": {
+    "1.png": 10,
+    "2.png": 11,
+    "3.png": 12,
+    "4.png": 13,
+    "5.png": 14,
+    "6.png": 15,
+    "7.png": 16,
+    "8.png": 17,
+    "9.png": 18,
+    "10.png": 19,
+    "11.png": 20,
+    "12.png": 21
+  },
   "placement": { "x": 50, "y": 55, "width": 28, "rotation": 0 },
   "products": {}
 }
