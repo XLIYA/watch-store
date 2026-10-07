@@ -122,8 +122,8 @@ export const checkoutSchema = z
             .string()
             .min(
                 1,
-                "ساعت تحویل را انتخاب کنید.",
-            ).refine(value => rules.deliveryTimeSlots.includes(value), "ساعت تحویل معتبر نیست."),
+                "بازهٔ تحویل را انتخاب کنید.",
+            ).refine(value => rules.deliveryTimeSlots.includes(value), "بازهٔ تحویل معتبر نیست."),
 
         note: z
             .string()
@@ -133,23 +133,7 @@ export const checkoutSchema = z
                 "توضیحات سفارش حداکثر می‌تواند ۵۰۰ کاراکتر باشد.",
             )
             .optional(),
-    })
-    .superRefine(
-        (data, ctx) => {
-            if (
-                data.latitude === null ||
-                data.longitude === null
-            ) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["latitude"],
-                    message:
-                        "موقعیت تحویل را روی نقشه انتخاب کنید.",
-                });
-            }
-        },
-    );
-
+    });
 
 export type CheckoutFormValues =
     z.infer<

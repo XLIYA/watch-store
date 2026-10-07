@@ -177,7 +177,8 @@ export function HeaderSearch({
                             </div>}
                         </div>
 
-                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {/* عرض محدود مخصوص نتایج جستجو است تا کارت مشترک بدون تغییر ظاهر فروشگاه، جمع‌وجورتر نمایش داده شود. */}
+                        <div className="grid grid-cols-[minmax(0,18rem)] justify-center gap-4 sm:grid-cols-[repeat(2,minmax(0,18rem))] lg:grid-cols-[repeat(3,minmax(0,18rem))]">
                             {products.map(product => <ProductCard key={product.id} product={product} onNavigate={onClose} />)}
                         </div>
                     </>

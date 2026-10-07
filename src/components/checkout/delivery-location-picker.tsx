@@ -164,7 +164,7 @@ export function DeliveryLocationPicker({
     <div>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <label className="block text-sm font-medium">
-          موقعیت تحویل روی نقشه
+          موقعیت تحویل روی نقشه (اختیاری)
         </label>
 
         <Button

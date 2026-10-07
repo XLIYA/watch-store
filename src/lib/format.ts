@@ -24,3 +24,6 @@ export const formatDate = (timestamp: number) =>
 export const formatFilterDate = (date: Date) => dateFormatter.format(date);
 export const formatPhoneNumber = (value: string) =>
   value.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
+
+/** نمایش مشترک بازهٔ تحویل در checkout و جزئیات سفارش؛ ساعت سفارش‌های قدیمی نیز حفظ می‌شود. */
+export const formatDeliveryTime = (value: string) => formatPhoneNumber(value).replace("-", " تا ");
