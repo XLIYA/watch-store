@@ -25,6 +25,8 @@ export async function getTryOnAssets() {
   const candidates = [
     ...new Map(
       files
+        // ترتیب طبیعی نام‌ها، عکس ۱۰ را پس از ۹ نگه می‌دارد نه کنار عکس ۱.
+        .sort((a, b) => a.localeCompare(b, "en", { numeric: true }))
         .filter(
           (name) =>
             /\.(png|webp)$/i.test(name) &&
