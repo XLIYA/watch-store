@@ -18,10 +18,10 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 
 /** صفحهٔ مستقل سفارش، وضعیت مالی، زمان‌بندی و اطلاعات ارسال را از snapshot همان سفارش نمایش می‌دهد. */
 export default function OrderDetailsPage() {
-  const { orderId } = useParams<{orderId: string}>();
+  const orderId = useParams<{orderId: string}>()?.orderId;
   const [confirming, setConfirming] = useState(false);
   const delivery = useDeliverOrderMutation();
-  const query = useQuery({queryKey: ["admin", "orders", "detail", orderId], queryFn: () => getOrderById(orderId)});
+  const query = useQuery({queryKey: ["admin", "orders", "detail", orderId], enabled: !!orderId, queryFn: () => getOrderById(orderId!)});
   if (query.isPending) return <div role="status" className="surface flex min-h-56 items-center justify-center gap-3"><Loader2 className="size-5 animate-spin" />در حال دریافت جزئیات سفارش…</div>;
   if (query.isError) return <div role="alert" className="surface space-y-4 p-6"><p>{getApiErrorMessage(query.error)}</p><Button disabled={query.isFetching} onClick={() => query.refetch()}>تلاش دوباره</Button></div>;
   const order = query.data;
@@ -33,7 +33,7 @@ export default function OrderDetailsPage() {
   ];
   /** بستن مودال فقط بعد از موفقیت mutation است؛ خطای شبکه امکان تلاش دوباره را حفظ می‌کند. */
   async function confirmDelivery() {
-    try { await delivery.mutateAsync(orderId); setConfirming(false); } catch { /* خطا در مودال نمایش داده می‌شود. */ }
+    try { await delivery.mutateAsync(String(order.id)); setConfirming(false); } catch { /* خطا در مودال نمایش داده می‌شود. */ }
   }
   return <section className="min-w-0 space-y-6" dir="rtl">
     <header className="flex flex-wrap items-center justify-between gap-4">

@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // parser نسخهٔ جدید ESM است؛ bundling مانع require مستقیم آن در runtime تابع ابری می‌شود.
+  transpilePackages: ["sanitize-html", "htmlparser2"],
+  outputFileTracingIncludes: { '/*': ['./public/images/try-on/**/*'] },
+  async rewrites() {
+    if (!process.env.DATABASE_URL) return [];
+    return ['products', 'category', 'subcategory', 'reviews', 'orders', 'dashboard', 'delivery', 'payments', 'upload', 'files',
+      'auth/login', 'auth/logout', 'auth/refresh-token', 'auth/session'].map((route) => ({
+      source: `/${route}/:path*`, destination: `/api/backend/${route}/:path*`,
+    }));
+  },
   // تصاویر آپلودشده از همان API مجازند؛ wildcard دامنه باز نمی‌شود تا optimizer پراکسی عمومی نشود.
   images: {
     // سرور آموزشی روی loopback اجرا می‌شود؛ مجوز IP داخلی فقط برای همین میزبان تنظیم‌شده فعال است.

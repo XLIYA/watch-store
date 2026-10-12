@@ -46,3 +46,7 @@ next-env.d.ts
 
 # Backend uploads
 /server/uploads/
+
+# Local integration setup tools
+/.agents/
+/skills-lock.json
