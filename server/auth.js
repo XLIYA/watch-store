@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { randomBytes, randomUUID } = require("node:crypto");
+const { randomBytes, randomUUID, scryptSync, timingSafeEqual } = require("node:crypto");
 
 const { access: ACCESS_COOKIE, refresh: REFRESH_COOKIE } = require("../shared/auth-cookies.json");
 
@@ -31,9 +31,8 @@ function createAuth(db, options = {}) {
   const refreshSeconds = options.refreshSeconds || 86400;
   const cookieOptions = { httpOnly: true, secure: production, sameSite: "lax" };
   // login شناسهٔ نشست را اینجا ثبت می‌کند؛ requireAdmin و refresh آن را بررسی و logout لغو می‌کند.
-  // این حافظه مانع استفادهٔ دوباره از توکن کپی‌شده پس از خروج می‌شود؛ restart نشست‌ها را لغو می‌کند.
-  // فقط نشست‌های جدید در حافظه‌اند؛ رمزهای کاربران همچنان متعلق به دیتابیس آموزشی موجود هستند.
-  const sessions = new Map();
+  // در نسخهٔ ابری این Map در تراکنش دیتابیس ذخیره می‌شود؛ در اجرای محلی، restart نشست‌ها را لغو می‌کند.
+  const sessions = options.sessions || new Map();
 
   const clearCookies = (res) => {
     res.clearCookie(ACCESS_COOKIE, { ...cookieOptions, path: "/" });
@@ -74,7 +73,10 @@ function createAuth(db, options = {}) {
       res.set("Cache-Control", "no-store");
       const { username, password } = req.body || {};
       const user = typeof username === "string" ? findUser(username) : null;
-      if (!user || typeof password !== "string" || user.password !== password)
+      const valid = user && typeof password === "string" && password.length <= 256 && (user.passwordHash && /^[a-f0-9]{128}$/.test(user.passwordHash) && user.passwordSalt
+        ? timingSafeEqual(scryptSync(password, user.passwordSalt, 64), Buffer.from(user.passwordHash, "hex"))
+        : !production && user.password === password);
+      if (!valid)
         return fail(res, 401, "INVALID_CREDENTIALS");
       if (user.role !== "admin") return fail(res, 403, "FORBIDDEN");
       for (const [sid, session] of sessions)

@@ -13,7 +13,7 @@ const productRules = require("../shared/product-rules.json");
 function createServer(options = {}) {
   const server = jsonServer.create();
   const router = jsonServer.router(
-    options.dbPath || path.join(__dirname, "db.json"),
+    options.state || options.dbPath || path.join(__dirname, "db.json"),
   );
   const origins =
     options.origins ||
@@ -22,6 +22,7 @@ function createServer(options = {}) {
       .map((value) => value.trim());
   const uploadDir = options.uploadDir || path.join(__dirname, "uploads");
   const auth = createAuth(router.db, options.auth);
+  server.locals.store = router.db;
 
   server.use(
     cors({
@@ -31,7 +32,9 @@ function createServer(options = {}) {
       exposedHeaders: ["X-Total-Count", "Link"],
     }),
   );
-  server.use(jsonServer.defaults({ noCors: true, logger: !options.quiet }));
+  // در ابر، Next فایل‌های عمومی را سرو می‌کند و پاسخ API تا ثبت تراکنش بافر می‌شود.
+  if (!options.state) server.use(jsonServer.defaults({ noCors: true, logger: !options.quiet }));
+  server.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   server.use(jsonServer.bodyParser);
 
   // کوکی خودکار ارسال می‌شود؛ Origin و هدر غیرساده جلوی درخواست تغییردهندهٔ سایت دیگر را می‌گیرند.
@@ -78,7 +81,7 @@ function createServer(options = {}) {
   });
 
   const upload = multer({
-    dest: uploadDir,
+    ...(options.files ? { storage: multer.memoryStorage() } : { dest: uploadDir }),
     limits: { fileSize: productRules.maxImageBytes, files: 1 },
     fileFilter: (_req, file, callback) => {
       if (file.mimetype !== productRules.imageMime)
@@ -86,18 +89,29 @@ function createServer(options = {}) {
       callback(null, true);
     },
   });
-  server.post("/upload", upload.single("image"), (req, res) => {
+  server.post("/upload", upload.single("image"), async (req, res, next) => {
     if (!req.file) return res.status(400).json({ code: "IMAGE_REQUIRED" });
+    if (options.files) {
+      try { const id = await options.files.save(req.file.buffer); return res.json({ image: `/files/${id}` }); }
+      catch (error) { return next(error); }
+    }
     res.json({ ...req.file, image: `/files/${req.file.filename}` });
   });
-  server.get("/files", (_req, res, next) => {
-    fs.readdir(uploadDir, (error, files) =>
+  server.get("/files", async (_req, res, next) => {
+    if (options.files) {
+      try { return res.json(await options.files.list()); } catch (error) { return next(error); }
+    }
+    fs.readdir(/* turbopackIgnore: true */ uploadDir, (error, files) =>
       error ? next(error) : res.json(files),
     );
   });
-  server.get("/files/:fileId", (req, res) => {
+  server.get("/files/:fileId", async (req, res, next) => {
     // نام تولیدشدهٔ multer فقط شناسه است، نه مسیر دلخواه روی فایل‌سیستم.
     if (!/^[a-f0-9]{32}$/.test(req.params.fileId)) return res.sendStatus(404);
+    if (options.files) {
+      try { const buffer = await options.files.read(req.params.fileId); return buffer ? res.type("jpeg").send(buffer) : res.sendStatus(404); }
+      catch (error) { return next(error); }
+    }
     res.type("jpeg").sendFile(req.params.fileId, { root: uploadDir });
   });
   server.use((req, res, next) => {
@@ -110,10 +124,12 @@ function createServer(options = {}) {
     next();
   });
   server.use(validateProductWrite(router.db));
-  server.use((req, _res, next) => {
-    if (req.file) req.body.image = `/files/${req.file.filename}`;
-    if (req.method === "POST") req.body.createdAt = Date.now();
-    next();
+  server.use(async (req, _res, next) => {
+    try {
+      if (req.file) req.body.image = `/files/${options.files ? await options.files.save(req.file.buffer) : req.file.filename}`;
+      if (req.method === "POST") req.body.createdAt = Date.now();
+      next();
+    } catch (error) { next(error); }
   });
   server.use(router);
   server.use((error, _req, res, _next) => {
